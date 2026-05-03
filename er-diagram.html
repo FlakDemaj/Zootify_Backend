@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>ZootifyDb - ER-Diagramm</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; min-height: 100vh; }
+
+  h1 { text-align: center; font-size: 28px; color: #38bdf8; margin-bottom: 8px; }
+  .subtitle { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 40px; }
+
+  .diagram { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; max-width: 1400px; margin: 0 auto; }
+
+  .table-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    width: 340px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .table-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(56,189,248,0.15);
+  }
+
+  .table-header {
+    padding: 16px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .table-header .icon { font-size: 22px; }
+  .table-desc {
+    padding: 0 20px 12px;
+    font-size: 12px;
+    color: #94a3b8;
+    border-bottom: 1px solid #334155;
+  }
+
+  .color-users { background: linear-gradient(135deg, #1e40af, #1e3a5f); }
+  .color-taxonomy { background: linear-gradient(135deg, #065f46, #134e4a); }
+  .color-geo { background: linear-gradient(135deg, #92400e, #78350f); }
+  .color-specimen { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+  .color-images { background: linear-gradient(135deg, #be185d, #9f1239); }
+  .color-loans { background: linear-gradient(135deg, #b45309, #a16207); }
+
+  .columns { padding: 8px 0; }
+  .col-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 20px;
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .col-row:hover { background: #273548; }
+  .col-name { flex: 1; font-weight: 500; color: #f1f5f9; }
+  .col-type { width: 90px; color: #38bdf8; font-size: 12px; font-family: 'Consolas', monospace; }
+  .col-info { color: #64748b; font-size: 11px; max-width: 140px; text-align: right; }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .badge-pk { background: #fbbf24; color: #1e293b; }
+  .badge-fk { background: #38bdf8; color: #1e293b; }
+  .badge-uk { background: #a78bfa; color: #1e293b; }
+  .badge-opt { background: #334155; color: #94a3b8; }
+
+  .relations {
+    max-width: 1400px;
+    margin: 50px auto 0;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 24px 30px;
+  }
+  .relations h2 { font-size: 20px; color: #38bdf8; margin-bottom: 16px; }
+  .rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rel-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #0f172a;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .rel-arrow { color: #38bdf8; font-weight: 700; font-size: 16px; }
+  .rel-type {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .rel-cascade { background: #dc2626; color: #fff; }
+  .rel-restrict { background: #f59e0b; color: #1e293b; }
+  .rel-setnull { background: #8b5cf6; color: #fff; }
+
+  .legend {
+    max-width: 1400px;
+    margin: 30px auto 0;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>ZootifyDb - Datenbankschema</h1>
+<p class="subtitle">Zoologische Sammlung - Entity Framework Core / SQL Server</p>
+
+<div class="diagram">
+
+  <!-- Users -->
+  <div class="table-card">
+    <div class="table-header color-users"><span class="icon">&#128100;</span> Users</div>
+    <div class="table-desc">Benutzer mit Rollen- und Rechtesystem</div>
+    <div class="columns">
+      <div class="col-row"><span class="col-name"><span class="badge badge-pk">PK</span> Id</span><span class="col-type">int</span><span class="col-info">auto-increment</span></div>
+      <div class="col-row"><span class="col-name">FirstName</span><span class="col-type">nvarchar(100)</span><span class="col-info"></span></div>
+      <div class="col-row"><span class="col-name">LastName</span><span class="col-type">nvarchar(100)</span><span class="col-info"></span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-uk">UK</span> Email</span><span class="col-type">nvarchar(256)</span><span class="col-info">einzigartig</span></div>
+      <div class="col-row"><span class="col-name">PasswordHash</span><span class="col-type">nvarchar(512)</span><span class="col-info">gehashed</span></div>
+      <div class="col-row"><span class="col-name">Role</span><span class="col-type">nvarchar(20)</span><span class="col-info">User / Mod / Admin</span></div>
+      <div class="col-row"><span class="col-name">Status</span><span class="col-type">nvarchar(20)</span><span class="col-info">Pending / Active / Blocked</span></div>
+      <div class="col-row"><span class="col-name">CreatedAt</span><span class="col-type">datetime2</span><span class="col-info"></span></div>
+    </div>
+  </div>
+
+  <!-- TaxonomyNodes -->
+  <div class="table-card">
+    <div class="table-header color-taxonomy"><span class="icon">&#127793;</span> TaxonomyNodes</div>
+    <div class="table-desc">SCOFGA-Hierarchie (Stamm bis Art) als Baumstruktur</div>
+    <div class="columns">
+      <div class="col-row"><span class="col-name"><span class="badge badge-pk">PK</span> Id</span><span class="col-type">int</span><span class="col-info">auto-increment</span></div>
+      <div class="col-row"><span class="col-name">Name</span><span class="col-type">nvarchar(256)</span><span class="col-info">z.B. "Insekten"</span></div>
+      <div class="col-row"><span class="col-name">Rank</span><span class="col-type">nvarchar(20)</span><span class="col-info">Phylum...Species</span></div>
+      <div class="col-row"><span class="col-name">ApprovalStatus</span><span class="col-type">nvarchar(20)</span><span class="col-info">Freigabe-Status</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> ParentId</span><span class="col-type">int?</span><span class="col-info">Self-Referenz</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> ProposedByUserId</span><span class="col-type">int?</span><span class="col-info">&#8594; Users</span></div>
+    </div>
+  </div>
+
+  <!-- GeographicLocations -->
+  <div class="table-card">
+    <div class="table-header color-geo"><span class="icon">&#127758;</span> GeographicLocations</div>
+    <div class="table-desc">Geographische Hierarchie (Kontinent bis Stadt)</div>
+    <div class="columns">
+      <div class="col-row"><span class="col-name"><span class="badge badge-pk">PK</span> Id</span><span class="col-type">int</span><span class="col-info">auto-increment</span></div>
+      <div class="col-row"><span class="col-name">Name</span><span class="col-type">nvarchar(256)</span><span class="col-info">z.B. "Deutschland"</span></div>
+      <div class="col-row"><span class="col-name">Level</span><span class="col-type">nvarchar(20)</span><span class="col-info">Continent...City</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> ParentId</span><span class="col-type">int?</span><span class="col-info">Self-Referenz</span></div>
+    </div>
+  </div>
+
+  <!-- Specimens -->
+  <div class="table-card">
+    <div class="table-header color-specimen"><span class="icon">&#128030;</span> Specimens</div>
+    <div class="table-desc">Kernobjekt: gesammelte Funde / Individuen</div>
+    <div class="columns">
+      <div class="col-row"><span class="col-name"><span class="badge badge-pk">PK</span> Id</span><span class="col-type">int</span><span class="col-info">auto-increment</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> SpeciesId</span><span class="col-type">int</span><span class="col-info">&#8594; TaxonomyNodes</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span><span class="badge badge-opt">?</span> GeoLocationId</span><span class="col-type">int?</span><span class="col-info">&#8594; GeographicLoc.</span></div>
+      <div class="col-row"><span class="col-name">Latitude</span><span class="col-type">float?</span><span class="col-info">Breitengrad</span></div>
+      <div class="col-row"><span class="col-name">Longitude</span><span class="col-type">float?</span><span class="col-info">Laengengrad</span></div>
+      <div class="col-row"><span class="col-name">FindDate</span><span class="col-type">datetime2?</span><span class="col-info">Funddatum</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> OwnerId</span><span class="col-type">int</span><span class="col-info">&#8594; Users</span></div>
+      <div class="col-row"><span class="col-name">StorageBuilding</span><span class="col-type">nvarchar(200)</span><span class="col-info">Gebaeude</span></div>
+      <div class="col-row"><span class="col-name">StorageCabinet</span><span class="col-type">nvarchar(200)</span><span class="col-info">Schrank</span></div>
+      <div class="col-row"><span class="col-name">StorageShelf</span><span class="col-type">nvarchar(200)</span><span class="col-info">Regal</span></div>
+      <div class="col-row"><span class="col-name">StorageCompartment</span><span class="col-type">nvarchar(200)</span><span class="col-info">Fach</span></div>
+      <div class="col-row"><span class="col-name">Comment</span><span class="col-type">nvarchar(2000)</span><span class="col-info">Freitext</span></div>
+      <div class="col-row"><span class="col-name">IsPublic</span><span class="col-type">bit</span><span class="col-info">Sichtbarkeit</span></div>
+      <div class="col-row"><span class="col-name">CreatedAt</span><span class="col-type">datetime2</span><span class="col-info"></span></div>
+      <div class="col-row"><span class="col-name">UpdatedAt</span><span class="col-type">datetime2</span><span class="col-info"></span></div>
+    </div>
+  </div>
+
+  <!-- SpecimenImages -->
+  <div class="table-card">
+    <div class="table-header color-images"><span class="icon">&#128247;</span> SpecimenImages</div>
+    <div class="table-desc">Bilder / Fotos zu Funden</div>
+    <div class="columns">
+      <div class="col-row"><span class="col-name"><span class="badge badge-pk">PK</span> Id</span><span class="col-type">int</span><span class="col-info">auto-increment</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> SpecimenId</span><span class="col-type">int</span><span class="col-info">&#8594; Specimens</span></div>
+      <div class="col-row"><span class="col-name">ImageUrl</span><span class="col-type">nvarchar(1000)</span><span class="col-info">Pfad / URL</span></div>
+      <div class="col-row"><span class="col-name">UploadedAt</span><span class="col-type">datetime2</span><span class="col-info"></span></div>
+    </div>
+  </div>
+
+  <!-- Loans -->
+  <div class="table-card">
+    <div class="table-header color-loans"><span class="icon">&#128228;</span> Loans</div>
+    <div class="table-desc">Ausleih-Management mit Fristen</div>
+    <div class="columns">
+      <div class="col-row"><span class="col-name"><span class="badge badge-pk">PK</span> Id</span><span class="col-type">int</span><span class="col-info">auto-increment</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> SpecimenId</span><span class="col-type">int</span><span class="col-info">&#8594; Specimens</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span> LenderId</span><span class="col-type">int</span><span class="col-info">&#8594; Users (Verleiher)</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-fk">FK</span><span class="badge badge-opt">?</span> BorrowerId</span><span class="col-type">int?</span><span class="col-info">&#8594; Users (Ausleiher)</span></div>
+      <div class="col-row"><span class="col-name">BorrowerExtName</span><span class="col-type">nvarchar(256)</span><span class="col-info">externe Person</span></div>
+      <div class="col-row"><span class="col-name">LoanDate</span><span class="col-type">datetime2</span><span class="col-info">Ausleihdatum</span></div>
+      <div class="col-row"><span class="col-name">DueDate</span><span class="col-type">datetime2</span><span class="col-info">Frist</span></div>
+      <div class="col-row"><span class="col-name"><span class="badge badge-opt">?</span> ReturnDate</span><span class="col-type">datetime2?</span><span class="col-info">null = noch ausgeliehen</span></div>
+      <div class="col-row"><span class="col-name">Notes</span><span class="col-type">nvarchar(2000)</span><span class="col-info">Anmerkungen</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Beziehungen & Löschverhalten -->
+<div class="relations">
+  <h2>Beziehungen &amp; Löschverhalten</h2>
+  <div class="rel-grid">
+    <div class="rel-item">
+      <span>Users</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>Specimens</span>
+      <span class="rel-type rel-cascade">CASCADE</span>
+      <span style="color:#64748b;font-size:11px">User geloescht = Funde weg</span>
+    </div>
+    <div class="rel-item">
+      <span>Users</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>TaxonomyNodes</span>
+      <span class="rel-type rel-setnull">SET NULL</span>
+      <span style="color:#64748b;font-size:11px">User geloescht = Vorschlag bleibt</span>
+    </div>
+    <div class="rel-item">
+      <span>TaxonomyNodes</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>Specimens</span>
+      <span class="rel-type rel-restrict">RESTRICT</span>
+      <span style="color:#64748b;font-size:11px">Art mit Funden nicht loeschbar</span>
+    </div>
+    <div class="rel-item">
+      <span>TaxonomyNodes</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>TaxonomyNodes</span>
+      <span class="rel-type rel-restrict">RESTRICT</span>
+      <span style="color:#64748b;font-size:11px">Parent-Child Hierarchie</span>
+    </div>
+    <div class="rel-item">
+      <span>GeographicLoc.</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>Specimens</span>
+      <span class="rel-type rel-setnull">SET NULL</span>
+      <span style="color:#64748b;font-size:11px">Ort geloescht = Fund bleibt</span>
+    </div>
+    <div class="rel-item">
+      <span>GeographicLoc.</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>GeographicLoc.</span>
+      <span class="rel-type rel-restrict">RESTRICT</span>
+      <span style="color:#64748b;font-size:11px">Parent-Child Hierarchie</span>
+    </div>
+    <div class="rel-item">
+      <span>Specimens</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>SpecimenImages</span>
+      <span class="rel-type rel-cascade">CASCADE</span>
+      <span style="color:#64748b;font-size:11px">Fund geloescht = Bilder weg</span>
+    </div>
+    <div class="rel-item">
+      <span>Specimens</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>Loans</span>
+      <span class="rel-type rel-cascade">CASCADE</span>
+      <span style="color:#64748b;font-size:11px">Fund geloescht = Ausleihen weg</span>
+    </div>
+    <div class="rel-item">
+      <span>Users</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>Loans (Lender)</span>
+      <span class="rel-type rel-restrict">RESTRICT</span>
+      <span style="color:#64748b;font-size:11px">User mit Ausleihen nicht loeschbar</span>
+    </div>
+    <div class="rel-item">
+      <span>Users</span>
+      <span class="rel-arrow">1 &#8594; *</span>
+      <span>Loans (Borrower)</span>
+      <span class="rel-type rel-restrict">RESTRICT</span>
+      <span style="color:#64748b;font-size:11px">User mit Ausleihen nicht loeschbar</span>
+    </div>
+  </div>
+</div>
+
+<!-- Legende -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> PK = Primary Key</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div> FK = Foreign Key</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> UK = Unique</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#334155"></div> ? = Optional (nullable)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div> CASCADE = wird mitgeloescht</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> RESTRICT = Loeschen blockiert</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> SET NULL = Referenz wird null</div>
+</div>
+
+</body>
+</html>
