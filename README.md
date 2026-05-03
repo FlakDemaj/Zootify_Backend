@@ -65,61 +65,165 @@ Zootify_Backend/
 
 ### Tabellen-Uebersicht
 
-| Tabelle | Beschreibung |
-|---------|-------------|
-| **Users** | Benutzer mit E-Mail (unique), Passwort-Hash, Rolle und Status |
-| **TaxonomyNodes** | SCOFGA-Hierarchie als Parent-Child-Baum |
-| **GeographicLocations** | Geographische Hierarchie als Parent-Child-Baum |
-| **Specimens** | Funde mit Taxonomie, Koordinaten, Aufbewahrungsort, Sichtbarkeit |
-| **SpecimenImages** | Bilder zu Funden |
-| **Loans** | Ausleihen mit Fristen |
+Die Datenbank besteht aus 6 Tabellen:
 
-### Beziehungen
+---
+
+#### Users (Benutzer)
+
+Speichert alle registrierten Benutzer der Plattform.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| Id | int | Primaerschluessel, wird automatisch vergeben |
+| FirstName | string (max 100) | Vorname |
+| LastName | string (max 100) | Nachname |
+| Email | string (max 256) | E-Mail-Adresse, muss einzigartig sein (fuer Login) |
+| PasswordHash | string (max 512) | Gehashtes Passwort (nie im Klartext gespeichert) |
+| Role | string | Rolle: `User`, `Moderator` oder `Admin` |
+| Status | string | Kontostatus: `Pending` (wartet auf Aktivierung), `Active` (aktiv) oder `Blocked` (gesperrt) |
+| CreatedAt | datetime | Zeitpunkt der Registrierung |
+
+**Beziehungen:** Ein User kann mehrere Specimens besitzen, Taxonomien vorschlagen und an Ausleihen beteiligt sein.
+
+---
+
+#### TaxonomyNodes (SCOFGA-Hierarchie)
+
+Bildet die biologische Klassifikation als Baumstruktur ab. Alle 6 Stufen (Stamm, Klasse, Ordnung, Familie, Gattung, Art) sind in einer Tabelle mit Parent-Child-Beziehung.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| Id | int | Primaerschluessel |
+| Name | string (max 256) | Name des Taxons (z.B. "Insekten", "Schmetterlinge") |
+| Rank | string | Hierarchie-Stufe: `Phylum` (Stamm), `Class` (Klasse), `Order` (Ordnung), `Family` (Familie), `Genus` (Gattung), `Species` (Art) |
+| ApprovalStatus | string | Freigabe-Status: `Pending` (von Nutzer vorgeschlagen, wartet auf Moderator), `Approved` (freigegeben), `Rejected` (abgelehnt) |
+| ParentId | int? | Verweis auf den uebergeordneten Eintrag (z.B. Klasse verweist auf ihren Stamm). Null bei Wurzel-Eintraegen (Staemme) |
+| ProposedByUserId | int? | Welcher Nutzer diesen Eintrag vorgeschlagen hat (null bei System-Eintraegen) |
+
+**Beispiel-Baum:**
+```
+Gliederf. (Phylum, ParentId=null)
+  -> Insekten (Class, ParentId=1)
+    -> Schmetterlinge (Order, ParentId=2)
+      -> Tagfalter (Family, ParentId=3)
+        -> Vanessa (Genus, ParentId=4)
+          -> Vanessa cardui (Species, ParentId=5)
+```
+
+**Unique-Index:** Pro Eltern-Knoten darf es keine doppelten Namen auf gleicher Stufe geben.
+
+---
+
+#### GeographicLocations (Geographische Hierarchie)
+
+Bildet politische/geographische Strukturen als Baumstruktur ab, fuer die strukturierte Suche nach Fundorten.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| Id | int | Primaerschluessel |
+| Name | string (max 256) | Name des Ortes (z.B. "Deutschland", "NRW", "Siegen") |
+| Level | string | Hierarchie-Ebene: `Continent`, `Country`, `State`, `District`, `City` |
+| ParentId | int? | Verweis auf den uebergeordneten Eintrag. Null bei Kontinenten |
+
+**Beispiel-Baum:**
+```
+Europa (Continent)
+  -> Deutschland (Country)
+    -> NRW (State)
+      -> Siegen-Wittgenstein (District)
+        -> Siegen (City)
+```
+
+---
+
+#### Specimens (Funde / Individuen)
+
+Das **Kernobjekt** der Sammlung. Jeder Eintrag repraesentiert ein gesammeltes Tier (z.B. ein Insekt).
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| Id | int | Primaerschluessel |
+| SpeciesId | int | Welche Art (Verweis auf TaxonomyNodes, muss eine Species sein) |
+| GeographicLocationId | int? | Grobe Fundort-Zuordnung (Verweis auf GeographicLocations, z.B. "Siegen") |
+| Latitude | double? | Exakter Breitengrad des Fundortes (z.B. 50.8748) - fuer die Kartenansicht |
+| Longitude | double? | Exakter Laengengrad des Fundortes (z.B. 8.0243) - fuer die Kartenansicht |
+| FindDate | datetime? | Wann wurde das Tier gefunden |
+| OwnerId | int | Wem gehoert dieser Fund (Verweis auf Users) |
+| StorageBuilding | string? (max 200) | Aufbewahrungsort: Gebaeude |
+| StorageCabinet | string? (max 200) | Aufbewahrungsort: Schrank |
+| StorageShelf | string? (max 200) | Aufbewahrungsort: Regal |
+| StorageCompartment | string? (max 200) | Aufbewahrungsort: Fach |
+| Comment | string? (max 2000) | Freitext-Kommentar |
+| IsPublic | bool | Sichtbarkeit: true = oeffentlich sichtbar, false = nur fuer den Besitzer |
+| CreatedAt | datetime | Wann der Eintrag erstellt wurde |
+| UpdatedAt | datetime | Wann der Eintrag zuletzt geaendert wurde |
+
+**Beziehungen:** Jeder Fund gehoert zu genau einem User (Owner), einer Art (Species) und optional einem Ort (GeographicLocation). Ein Fund kann mehrere Bilder und Ausleihen haben.
+
+---
+
+#### SpecimenImages (Bilder)
+
+Speichert Bilder/Fotos zu einzelnen Funden (Wunschkriterium).
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| Id | int | Primaerschluessel |
+| SpecimenId | int | Zu welchem Fund gehoert das Bild (Verweis auf Specimens) |
+| ImageUrl | string (max 1000) | Dateipfad oder URL zum Bild |
+| UploadedAt | datetime | Wann das Bild hochgeladen wurde |
+
+---
+
+#### Loans (Ausleihen)
+
+Dokumentiert das Verleihen und Aufbewahren von Sammlungsobjekten.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| Id | int | Primaerschluessel |
+| SpecimenId | int | Welches Objekt wird verliehen (Verweis auf Specimens) |
+| LenderId | int | Wer verleiht (Verweis auf Users) |
+| BorrowerId | int? | Wer leiht aus, falls registrierter Nutzer (Verweis auf Users) |
+| BorrowerExternalName | string? (max 256) | Name des Ausleihers, falls externe Person (nicht registriert) |
+| LoanDate | datetime | Wann wurde verliehen |
+| DueDate | datetime | Bis wann muss zurueckgegeben werden (fuer Erinnerungen/Notifications) |
+| ReturnDate | datetime? | Wann tatsaechlich zurueckgegeben (null = noch ausgeliehen) |
+| Notes | string? (max 2000) | Anmerkungen zur Ausleihe |
+
+---
+
+### Beziehungen (ER-Diagramm)
 
 ```
 User 1──* Specimen *──1 TaxonomyNode
-  │                       │ (self-ref)
-  │                       └── Parent/Children
-  │
-  ├── 1──* Loan (als Lender)
-  ├── 1──* Loan (als Borrower)
-  └── 1──* TaxonomyNode (als Vorschlag)
+  |                       | (self-ref)
+  |                       +-- Parent/Children
+  |
+  +-- 1──* Loan (als Lender)
+  +-- 1──* Loan (als Borrower)
+  +-- 1──* TaxonomyNode (als Vorschlag)
 
 Specimen *──1 GeographicLocation
-  │              │ (self-ref)
-  │              └── Parent/Children
-  ├── 1──* SpecimenImage
-  └── 1──* Loan
+  |              | (self-ref)
+  |              +-- Parent/Children
+  +-- 1──* SpecimenImage
+  +-- 1──* Loan
 ```
 
-### Taxonomie (SCOFGA)
+### Löschverhalten
 
-Alle 6 Stufen in einer Tabelle mit Parent-Child-Beziehung:
-
-```
-Gliederf. (Phylum) -> Insekten (Class) -> Schmetterlinge (Order)
-  -> Tagfalter (Family) -> Vanessa (Genus) -> Vanessa cardui (Species)
-```
-
-Neue Arten von Nutzern haben `ApprovalStatus = Pending` bis ein Moderator sie freigibt.
-
-### Geographische Hierarchie
-
-```
-Europa (Continent) -> Deutschland (Country) -> NRW (State)
-  -> Siegen-Wittgenstein (District) -> Siegen (City)
-```
-
-### Specimen (Kernobjekt)
-
-Jeder Fund speichert:
-- **Art** (Referenz auf TaxonomyNode)
-- **Fundort** (Referenz auf GeographicLocation + exakte Koordinaten)
-- **Funddatum**
-- **Besitzer** (Referenz auf User)
-- **Aufbewahrungsort** (Gebaeude, Schrank, Regal, Fach)
-- **Sichtbarkeit** (oeffentlich/privat)
-- **Kommentar**
+| Beziehung | Verhalten | Grund |
+|-----------|-----------|-------|
+| TaxonomyNode -> Parent | **Restrict** | Kein Stamm loeschen wenn Klassen drunter haengen |
+| GeographicLocation -> Parent | **Restrict** | Kein Land loeschen wenn Bundeslaender existieren |
+| Specimen -> Species | **Restrict** | Keine Art loeschen die bei Funden verwendet wird |
+| Specimen -> Owner (User) | **Cascade** | User geloescht = seine Funde werden mitgeloescht |
+| Specimen -> GeographicLocation | **SetNull** | Ort geloescht = Fund bleibt, Ort-Referenz wird null |
+| SpecimenImage -> Specimen | **Cascade** | Fund geloescht = Bilder werden mitgeloescht |
+| Loan -> Specimen | **Cascade** | Fund geloescht = Ausleihen werden mitgeloescht |
+| Loan -> Lender/Borrower | **Restrict** | Kein User loeschen der aktive Ausleihen hat |
 
 ## Neue Migration erstellen
 
