@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "V4u6yu1kEBA=",
+  "dgSpecHash": "iCZjdJBH2Ng=",
   "success": true,
   "projectFilePath": "/Users/justinkrause/Documents/Uni/Zootify_Backend/Zootify_Backend.csproj",
   "expectedPackageFiles": [
     "/Users/justinkrause/.nuget/packages/azure.core/1.47.1/azure.core.1.47.1.nupkg.sha512",
     "/Users/justinkrause/.nuget/packages/azure.identity/1.14.2/azure.identity.1.14.2.nupkg.sha512",
+    "/Users/justinkrause/.nuget/packages/bcrypt.net-next/4.1.0/bcrypt.net-next.4.1.0.nupkg.sha512",
     "/Users/justinkrause/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/justinkrause/.nuget/packages/microsoft.aspnetcore.openapi/10.0.6/microsoft.aspnetcore.openapi.10.0.6.nupkg.sha512",
     "/Users/justinkrause/.nuget/packages/microsoft.bcl.asyncinterfaces/8.0.0/microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",

@@ -12,6 +12,9 @@ builder.Services.AddSwaggerGen(); // Swagger UI für das Testen der API
 builder.Services.AddDbContext<ZootifyDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// User-Service registrieren
+builder.Services.AddScoped<IUserService, UserService>();
+
 // Geocoding-Service registrieren — UserAgent ist Pflicht laut Nominatim-Nutzungsbedingungen
 builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
 {
