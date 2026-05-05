@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Data;
 using Zootify_Backend.DTOs;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Models;
 using Zootify_Backend.Services;
 
 namespace Zootify_Backend.Controllers;

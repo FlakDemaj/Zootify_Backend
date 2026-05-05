@@ -1,4 +1,5 @@
 using Zootify_Backend.Models;
+using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Services;
 
@@ -6,5 +7,5 @@ namespace Zootify_Backend.Services;
 public interface IGeocodingService
 {
     // Nimmt Koordinaten entgegen und gibt den passenden Ort zurück
-    Task<GeographicLocation?> ResolveAsync(double latitude, double longitude);
+    Task<GeographicLocationEntity?> ResolveAsync(double latitude, double longitude);
 }

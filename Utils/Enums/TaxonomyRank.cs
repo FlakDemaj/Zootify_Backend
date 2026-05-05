@@ -7,5 +7,5 @@ public enum TaxonomyRank
     Order,     // Ordnung
     Family,    // Familie
     Genus,     // Gattung
-    Species    // Art
+    Species   // Art
 }

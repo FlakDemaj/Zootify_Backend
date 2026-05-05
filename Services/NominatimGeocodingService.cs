@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Data;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Models;
+using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Services;
 
@@ -12,7 +13,7 @@ public class NominatimGeocodingService(HttpClient httpClient, ZootifyDbContext d
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     // Hauptmethode: nimmt Koordinaten, gibt den spezifischsten Ort zurück (Stadt > Kreis > Bundesland > Land)
-    public async Task<GeographicLocation?> ResolveAsync(double latitude, double longitude)
+    public async Task<GeographicLocationEntity?> ResolveAsync(double latitude, double longitude)
     {
         var url = $"https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json&addressdetails=1";
 
@@ -40,14 +41,14 @@ public class NominatimGeocodingService(HttpClient httpClient, ZootifyDbContext d
         var city     = await FindOrCreateAsync(
             address.City ?? address.Town ?? address.Village,    // Nominatim nutzt je nach Ort unterschiedliche Felder
             GeographicLevel.City,
-            district?.Id ?? state?.Id ?? country.Id);
+            district?.Guid ?? state?.Guid ?? country.Guid);
 
         // Den spezifischsten gefundenen Ort zurückgeben
         return city ?? district ?? state ?? country;
     }
 
     // Sucht einen Ort in der DB — legt ihn neu an falls er noch nicht existiert
-    private async Task<GeographicLocation?> FindOrCreateAsync(string? name, GeographicLevel level, int? parentId)
+    private async Task<GeographicLocationEntity?> FindOrCreateAsync(string? name, GeographicLevel level, Guid? parentId)
     {
         if (string.IsNullOrWhiteSpace(name))
             return null;
@@ -60,11 +61,11 @@ public class NominatimGeocodingService(HttpClient httpClient, ZootifyDbContext d
             return existing;
 
         // Neuen Ort anlegen und speichern
-        var location = new GeographicLocation
+        var location = new GeographicLocationEntity
         {
             Name     = name,
             Level    = level,
-            ParentId = parentId
+            ParentGuid = parentId
         };
 
         db.GeographicLocations.Add(location);
