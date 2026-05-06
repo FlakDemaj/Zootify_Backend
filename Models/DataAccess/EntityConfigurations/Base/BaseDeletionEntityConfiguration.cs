@@ -13,17 +13,16 @@ where T : BaseDeletionEntity
 
         builder
             .Property(p => p.DeletionDate)
-            .HasColumnName("deletion_at")
-            .IsRequired();
+            .HasColumnName("deletion_date");
 
         builder
-            .Property(p => p.DeletedBy)
+            .Property(p => p.DeletedByUserGuid)
             .HasColumnName("deleted_by_user_guid");
 
         builder
             .HasOne(p => p.DeletedByUser)
             .WithMany()
-            .HasForeignKey(p => p.DeletedBy)
+            .HasForeignKey(p => p.DeletedByUserGuid)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

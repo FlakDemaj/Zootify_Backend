@@ -12,7 +12,7 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
     public SpecimenEntityConfiguration()
     {
         Table = "specimens";
-        Schema = "public";
+        Schema = "zootify";
     }
 
     public override void Configure(EntityTypeBuilder<SpecimenEntity> builder)

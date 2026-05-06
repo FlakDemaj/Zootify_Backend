@@ -1,6 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using Zootify_Backend.Utils.Configuration;
+using Zootify_Backend.Configuration;
 
 namespace Zootify_Backend.Models.DataAccess.DBContext;
 

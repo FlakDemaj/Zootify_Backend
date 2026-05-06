@@ -1,9 +1,9 @@
 namespace Zootify_Backend.Models.DataAccess.Entitys.Base;
 
-public class BaseCreationEntity : BaseGuidEntity
+public abstract class BaseCreationEntity : BaseGuidEntity
 {
-    public Guid? CreatedBy { get; set; }
-    public UserEntity? CreatedByUser { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Guid? CreatedByUserGuid { get; private set; }
+    public UserEntity? CreatedByUser { get; private set; }
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     
 }

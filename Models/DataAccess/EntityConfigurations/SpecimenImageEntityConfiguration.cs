@@ -12,7 +12,7 @@ public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<Spec
     public SpecimenImageEntityConfiguration()
     {
         Table = "specimen_images";
-        Schema = "public";
+        Schema = "zootify";
     }
 
     public override void Configure(EntityTypeBuilder<SpecimenImageEntity> builder)

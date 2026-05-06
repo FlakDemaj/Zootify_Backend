@@ -1,9 +1,36 @@
-using Zootify_Backend.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Zootify_Backend.Utils.Configuration;
+namespace Zootify_Backend.Configuration;
 
 public class ZootifyConfiguration : BaseConfiguration
 {
+    static ZootifyConfiguration()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("config.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .AddUserSecrets<ZootifyConfiguration>(optional: true)
+            .Build();
+
+        Initialize(configuration, NullLoggerFactory.Instance.CreateLogger<BaseConfiguration>());
+    }
+
+    #region General
+
+    public static string SpecialCharacters =>
+        SafeGet("General:SpecialCharacters", string.Empty);
+    
+    public static int MinimumPasswordLength =>
+        SafeGetParsed("General:MinimumPasswordLength", 0);
+    
+    public static int RegistrationTokenExpiryInHours =>
+        SafeGetParsed("General:RegistrationTokenExpiryInHours", 24);
+    
+    public static string FrontendBaseUrl =>
+        SafeGet("General:FrontendBaseUrl", string.Empty);
+
+    #endregion
+
     #region ConnectionStrings
 
     public static string DatabaseDefaultConnectionString =>
@@ -24,6 +51,19 @@ public class ZootifyConfiguration : BaseConfiguration
 
     public static string AccessTokenKey =>
         SafeGet("AccessToken:Key", string.Empty);
+
+    #endregion
+
+    #region Brevo
+
+    public static string ZootifyEmail =>
+        SafeGet("Brevo:Email", string.Empty);
+
+    public static string ZootifyName =>
+        SafeGet("Brevo:SenderName", string.Empty);
+
+    public static string BrevoApiKey =>
+        SafeGet("Brevo:ApiKey", string.Empty);
 
     #endregion
 }

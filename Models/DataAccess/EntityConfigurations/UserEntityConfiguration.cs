@@ -12,7 +12,7 @@ public class UserEntityConfiguration : BaseDeletionEntityConfiguration<UserEntit
     public UserEntityConfiguration()
     {
         Table = "users";
-        Schema = "public";
+        Schema = "zootify";
     }
 
     public override void Configure(EntityTypeBuilder<UserEntity> builder)
@@ -57,6 +57,10 @@ public class UserEntityConfiguration : BaseDeletionEntityConfiguration<UserEntit
             .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
+
+        builder.Ignore(u => u.CreatedByUser);
+        builder.Ignore(u => u.CreatedByUserGuid);
+
 
         builder
             .HasIndex(u => u.Email)

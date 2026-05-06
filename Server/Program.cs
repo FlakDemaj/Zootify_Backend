@@ -1,5 +1,5 @@
-using Zootify_Backend.Configuration;
-using Zootify_Backend.Utils.Configuration;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Zootify_Backend.Utils.Extensions;
 
 namespace Zootify_Backend.Server;
@@ -26,21 +26,24 @@ public class Program
         // Initializing here gives ZootifyConfiguration access to all of them.
         var builder = WebApplication.CreateBuilder(args);
         
-        Startup.ConfigureServices(builder);
-        
-        var app = builder.Build();
+        builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
+            .ConfigureContainer<ContainerBuilder>(containerBuilder =>
+            {
+                var startup = new Startup();
+                startup.ConfigureContainer(containerBuilder);
+            });
 
-        BaseConfiguration.Initialize(
-            app.Configuration,
-            app.Services.GetRequiredService<ILogger<BaseConfiguration>>()
-        );
+        var startup = new Startup();
+        startup.ConfigureServices(builder);
+
+        var app = builder.Build();
         
         if (!app.Environment.IsEnvironment("Testing"))
         {
             app.Migrate();
         }
 
-        Startup.ConfigureMiddleware(app);
+        startup.ConfigureMiddleware(app);
 
         await app.RunAsync();
     }

@@ -12,7 +12,7 @@ public class GeographicLocationEntityConfiguration : BaseGuidEntityConfiguration
     public GeographicLocationEntityConfiguration()
     {
         Table = "geo_locations";
-        Schema = "public";
+        Schema = "zootify";
     }
 
     public override void Configure(EntityTypeBuilder<GeographicLocationEntity> builder)

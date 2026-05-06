@@ -12,7 +12,8 @@ public abstract class BaseConfiguration
     /// </summary>
     /// <param name="configuration">The ASP.NET Core configuration instance.</param>
     /// <param name="logger">Logger used for missing key warnings and parse errors.</param>
-    public static void Initialize(IConfiguration configuration, ILogger<BaseConfiguration> logger)
+    protected static void Initialize(
+        IConfiguration configuration, ILogger<BaseConfiguration> logger)
     {
         _configuration = configuration;
         _logger = logger;

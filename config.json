@@ -14,5 +14,18 @@
     "Issuer": "",
     "Audience": "",
     "Key": ""
+  },
+  "Brevo":
+  {
+    "Email": "zootify@gmx.de",
+    "SenderName": "Zootify",
+    "ApiKey": ""
+  },
+  "General":
+  {
+    "MinimumPasswordLength": 8,
+    "FrontendBaseUrl": "http://localhost:4200",
+    "SpecialCharacters": "!@#$%^&*()_+-=[]{}|;:',.<>?",
+    "RegistrationTokenExpiryInHours": 24
   }
 }

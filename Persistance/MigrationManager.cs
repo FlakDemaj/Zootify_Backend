@@ -1,6 +1,6 @@
 using EvolveDb;
 using Microsoft.Data.SqlClient;
-using Zootify_Backend.Utils.Configuration;
+using Zootify_Backend.Configuration;
 
 namespace Zootify_Backend.Persistance;
 

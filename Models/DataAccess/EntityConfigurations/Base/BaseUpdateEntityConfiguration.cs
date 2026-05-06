@@ -12,18 +12,17 @@ where T : BaseUpdateEntity
         base.Configure(builder);
 
         builder
-            .Property(p => p.UpdatedAt)
-            .HasColumnName("updated_at")
-            .IsRequired();
+            .Property(p => p.UpdatedDate)
+            .HasColumnName("updated_date");
 
         builder
-            .Property(p => p.UpdatedBy)
+            .Property(p => p.UpdatedByUserGuid)
             .HasColumnName("updated_by_user_guid");
 
         builder
             .HasOne(p => p.UpdatedByUser)
             .WithMany()
-            .HasForeignKey(p => p.UpdatedBy)
+            .HasForeignKey(p => p.UpdatedByUserGuid)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

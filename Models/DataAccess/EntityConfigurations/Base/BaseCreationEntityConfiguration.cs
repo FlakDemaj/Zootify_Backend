@@ -17,13 +17,13 @@ public class BaseCreationEntityConfiguration<T> : BaseGuidEntityConfiguration<T>
             .IsRequired();
 
         builder
-            .Property(p => p.CreatedBy)
+            .Property(p => p.CreatedByUserGuid)
             .HasColumnName("created_by_user_guid");
 
         builder
             .HasOne(p => p.CreatedByUser)
             .WithMany()
-            .HasForeignKey(p => p.CreatedBy)
+            .HasForeignKey(p => p.CreatedByUserGuid)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

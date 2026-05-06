@@ -12,7 +12,7 @@ public class LoanEntityConfiguration : BaseGuidEntityConfiguration<LoanEntity>
     public LoanEntityConfiguration()
     {
         Table = "loans";
-        Schema = "public";
+        Schema = "zootify";
     }
 
     public override void Configure(EntityTypeBuilder<LoanEntity> builder)

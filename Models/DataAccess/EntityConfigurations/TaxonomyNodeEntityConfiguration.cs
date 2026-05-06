@@ -12,7 +12,7 @@ public class TaxonomyNodeEntityConfiguration : BaseGuidEntityConfiguration<Taxon
     public TaxonomyNodeEntityConfiguration()
     {
         Table = "taxonomy_nodes";
-        Schema = "public";
+        Schema = "zootify";
     }
 
     public override void Configure(EntityTypeBuilder<TaxonomyNodeEntity> builder)

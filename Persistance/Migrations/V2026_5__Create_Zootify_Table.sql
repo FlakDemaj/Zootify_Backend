@@ -25,25 +25,16 @@ CREATE TABLE [zootify].[users] (
     status                  NVARCHAR(20)        NOT NULL DEFAULT 'Pending',
 
     created_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
-    created_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    updated_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    updated_date            DATETIME2           ,
     updated_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    deletion_at             DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    deletion_date             DATETIME2         ,
     deleted_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
     CONSTRAINT pk_users         PRIMARY KEY (guid),
     CONSTRAINT uq_users_email   UNIQUE (email)
     )
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'fk_users_created_by')
-BEGIN
-ALTER TABLE [zootify].[users]
-    ADD CONSTRAINT fk_users_created_by
-    FOREIGN KEY (created_by_user_guid) REFERENCES [zootify].[users] (guid) ON DELETE NO ACTION
 END
 GO
 
@@ -62,6 +53,21 @@ ALTER TABLE [zootify].[users]
     FOREIGN KEY (deleted_by_user_guid) REFERENCES [zootify].[users] (guid) ON DELETE NO ACTION
 END
 GO
+
+-- ────────────────────────────────────────────────────────────
+--  Registration Tokens
+-- ────────────────────────────────────────────────────────────
+
+CREATE TABLE [zootify].[registration_tokens] (
+                                                 guid                    UNIQUEIDENTIFIER    NOT NULL,
+
+                                                 token               NVARCHAR(128)       NOT NULL,
+    user_guid           UNIQUEIDENTIFIER    NOT NULL,
+    expires_at          DATETIME2           NOT NULL,
+    CONSTRAINT pk_registration_tokens PRIMARY KEY (token),
+    CONSTRAINT fk_registration_tokens_user FOREIGN KEY (user_guid)
+    REFERENCES [zootify].[users] (guid) ON DELETE CASCADE
+    )
 
 -- ────────────────────────────────────────────────────────────
 --  GEO_LOCATIONS
@@ -150,10 +156,10 @@ CREATE TABLE [zootify].[specimens] (
     created_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
     created_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    updated_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    updated_date              DATETIME2         ,
     updated_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    deletion_at             DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    deletion_date             DATETIME2,
     deleted_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
     CONSTRAINT pk_specimens              PRIMARY KEY (guid),

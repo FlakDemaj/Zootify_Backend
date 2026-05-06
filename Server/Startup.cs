@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Autofac;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging.Console;
@@ -7,16 +8,38 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Zootify_Backend.Models.DataAccess.DBContext;
 using Zootify_Backend.Persistance;
+using Zootify_Backend.Server.Middlewares;
 
 namespace Zootify_Backend.Server;
 
-public static class Startup
+public class Startup
 {
+    
+    // List of modules to be registered with AutoMapper
+    private static readonly Type[] Modules =
+    [
+        typeof(ZootifyModule)
+    ];
+    
+    // Configures Autofac container and registers necessary modules
+    public void ConfigureContainer(ContainerBuilder builder)
+    {
+        // Registers the main application module
+        builder.RegisterModule<ZootifyModule>();
+        
+        // Registers the AutoMapper module with specified types
+        builder.RegisterModule(
+            new AutoMapperModule
+            {
+                Types = Modules
+            });
+    }
+    
     /// <summary>
     /// Configures all application services (Dependency Injection container).
     /// </summary>
     /// <param name="builder">The WebApplicationBuilder instance</param>
-    public static void ConfigureServices(WebApplicationBuilder builder)
+    public void ConfigureServices(WebApplicationBuilder builder)
     {
         EnableCors(builder.Services);
 
@@ -24,7 +47,7 @@ public static class Startup
         builder.Services.AddControllers();
 
         AddSwagger(builder.Services);
-        AddAuthentication(builder.Services, builder.Configuration);
+       //AddAuthentication(builder.Services, builder.Configuration);
         
         AddDatabase(builder.Services);
     }
@@ -33,7 +56,7 @@ public static class Startup
     /// Configures the HTTP request pipeline (middleware order).
     /// </summary>
     /// <param name="app">The WebApplication instance</param>
-    public static void ConfigureMiddleware(WebApplication app)
+    public void ConfigureMiddleware(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {
@@ -50,7 +73,7 @@ public static class Startup
         app.MapControllers();
     }
 
-    private static void AddDatabase(IServiceCollection services)
+    private void AddDatabase(IServiceCollection services)
     {
         services.AddScoped<MigrationManager>();
         services.AddDbContext<ZootifyDbContext>();
@@ -61,7 +84,7 @@ public static class Startup
     /// Adds Swagger configuration including JWT authentication support.
     /// </summary>
     /// <param name="services">The service collection</param>
-    private static void AddSwagger(IServiceCollection services)
+    private void AddSwagger(IServiceCollection services)
     {
         services.AddSwaggerGen(options =>
         {
@@ -93,7 +116,7 @@ public static class Startup
     /// </summary>
     /// <param name="services">The service collection</param>
     /// <param name="configuration">Application configuration</param>
-    private static void AddAuthentication(
+   /* private void AddAuthentication(
         IServiceCollection services,
         ConfigurationManager configuration)
     {
@@ -110,13 +133,13 @@ public static class Startup
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(configuration["AccessToken:Key"]!))
             });
-    }
+    }*/
 
     /// <summary>
     /// Configures logging providers and log formatting.
     /// </summary>
     /// <param name="builder">The WebApplicationBuilder instance</param>
-    private static void ConfigureLogger(WebApplicationBuilder builder)
+    private void ConfigureLogger(WebApplicationBuilder builder)
     {
         builder.Logging.ClearProviders();
         builder.Logging.AddSimpleConsole(options =>
@@ -137,7 +160,7 @@ public static class Startup
     /// Adds CORS policy configuration.
     /// </summary>
     /// <param name="service">The service collection</param>
-    private static void EnableCors(IServiceCollection service)
+    private void EnableCors(IServiceCollection service)
     {
         service.AddCors(option => option.AddPolicy("AllowOrigin",
             policy => policy.AllowAnyOrigin()
@@ -149,9 +172,8 @@ public static class Startup
     /// Registers custom middleware components.
     /// </summary>
     /// <param name="builder">The application builder</param>
-    private static void EnableMiddlewares(IApplicationBuilder builder)
+    private void EnableMiddlewares(IApplicationBuilder builder)
     {
-        // builder.UseMiddleware<ExceptionMiddleware>();
-        builder.UseMiddleware<AuthenticationMiddleware>();
+        builder.UseMiddleware<ExceptionMiddleware>();
     }
 }
