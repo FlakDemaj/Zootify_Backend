@@ -43,6 +43,7 @@ public class UserService : IUserService
         var user = Mapper.Map<UserEntity>(registerUserRequestDto);
 
         user.CheckEmail();
+        user.FormatEmail();
         CheckPassword(registerUserRequestDto.Password);
         user.HashPassword(registerUserRequestDto.Password);
 
@@ -83,10 +84,11 @@ public class UserService : IUserService
         };
     }
 
+    [Transaction(ReadOnly = false)]
     public async Task<SendNewRegistrationEmailResponseDto> SendNewRegistrationEmailAsync(
         SendNewRegistrationEmailRequestDto request)
     {
-        var user = await _userRepository.GetUserByEmail(request.Email);
+        var user = await _userRepository.GetUserByEmailWithRegistrationToken(request.Email.ToLower());
 
         if (user == null)
         {

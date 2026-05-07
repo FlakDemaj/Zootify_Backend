@@ -23,11 +23,21 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
                 .FirstOrDefaultAsync();
     }
     
+    public async Task<UserEntity?> GetUserByEmailWithRegistrationToken(string email)
+    {
+        return await 
+            Context
+                .GetTrackingSet<UserEntity>()
+                .Include(u => u.RegistrationToken)
+                .Where(x => x.Email == email)
+                .FirstOrDefaultAsync();
+    }
+    
     public async Task<UserEntity?> GetUserByRegistrationTokenAsync(string token)
     {
         return await
             Context
-                .Set<UserEntity>()
+                .GetTrackingSet<UserEntity>()
                 .Include(u => u.RegistrationToken)
                 .Where(u => u.RegistrationToken != null
                             && u.RegistrationToken.Token == token)

@@ -37,6 +37,11 @@ public class UserEntity : BaseDeletionEntity
             throw new ZootifyException(ErrorCode.EmailError);
         }
     }
+    
+    public void FormatEmail()
+    {
+        Email = Email.ToLower();
+    }
 
     public void ConfirmUser()
     {

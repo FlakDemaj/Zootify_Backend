@@ -71,4 +71,10 @@ public static class ZootifyDbContextExtensions
 	{
 		return context.Set<T>().AsNoTracking();
 	}
+	
+	public static IQueryable<T> GetTrackingSet<T>(this ZootifyDbContext context)
+		where T : class
+	{
+		return context.Set<T>().AsTracking();
+	}
 }

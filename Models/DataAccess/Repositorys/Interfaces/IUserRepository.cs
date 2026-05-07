@@ -7,4 +7,6 @@ public interface IUserRepository : IBaseRepository<UserEntity>
     public Task<UserEntity?> GetUserByEmail(string email);
     
     public Task<UserEntity?> GetUserByRegistrationTokenAsync(string email);
+
+    public Task<UserEntity?> GetUserByEmailWithRegistrationToken(string email);
 }

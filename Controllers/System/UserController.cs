@@ -36,7 +36,7 @@ public class UserController : BaseRestController
     }
     
     [AllowAnonymous]
-    [HttpPost("new/confirm-registration")]
+    [HttpPost("new/registration-email")]
     public async Task<IActionResult> SendNewConfirmationRegistrationEmailAsync(
         [FromBody] SendNewRegistrationEmailRequestDto request)
     {
