@@ -9,4 +9,7 @@ public interface IUserService
         RegisterAsync(RegisterUserRequestDto registerUserRequestDto);
 
     public Task<LoginUserResponseDto> ConfirmRegistrationAsync(string token);
+    
+    public Task<SendNewRegistrationEmailResponseDto> SendNewRegistrationEmailAsync(
+        SendNewRegistrationEmailRequestDto request);
 }

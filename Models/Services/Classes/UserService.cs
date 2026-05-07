@@ -83,6 +83,42 @@ public class UserService : IUserService
         };
     }
 
+    public async Task<SendNewRegistrationEmailResponseDto> SendNewRegistrationEmailAsync(
+        SendNewRegistrationEmailRequestDto request)
+    {
+        var user = await _userRepository.GetUserByEmail(request.Email);
+
+        if (user == null)
+        {
+            throw new ZootifyException(ErrorCode.NoUserWithTHisEmail);
+        }
+
+        if (user.Status == UserStatus.Active)
+        {
+            throw new ZootifyException(ErrorCode.DatabaseError);
+        }
+
+        var registrationToken = user.CreateRegistrationToken(ZootifyConfiguration.RegistrationTokenExpiryInHours);
+        
+        await _userRepository.UpdateAsync(user);
+        
+        var emailSent = await _brevoProvider.SendRegistrationEmail(
+            registrationToken.Token,
+            user.Email,
+            user.FirstName,
+            user.LastName);
+
+        if (!emailSent)
+        {
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+        }
+
+        return new SendNewRegistrationEmailResponseDto
+        {
+            IsCreated = true
+        };
+    }
+
     private async Task<RegisterUserResponseDto> CreateUserAsync(UserEntity user)
     {
         var registrationToken = user

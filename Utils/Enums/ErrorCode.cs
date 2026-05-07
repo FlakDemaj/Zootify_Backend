@@ -37,6 +37,12 @@ public enum ErrorCode
     [Description("Dieser User exisitert nicht.")]
     NoUserWithThisId = -1002001,
     
+    [Description("Ein User mit dieser Email existiert nicht.")]
+    NoUserWithTHisEmail = -11002002,
+    
+    [Description("Der User ist schon aktiv.")]
+    UserAlreadyActive = -1002003,
+    
     [Description("Der Bestätigungslink ist ungültig.")]
     InvalidRegistrationToken = -1003000,
     

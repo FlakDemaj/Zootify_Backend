@@ -34,4 +34,12 @@ public class UserController : BaseRestController
     {
         return Ok(await UserService.ConfirmRegistrationAsync(token));
     }
+    
+    [AllowAnonymous]
+    [HttpPost("new/confirm-registration")]
+    public async Task<IActionResult> SendNewConfirmationRegistrationEmailAsync(
+        [FromBody] SendNewRegistrationEmailRequestDto request)
+    {
+        return Ok(await UserService.SendNewRegistrationEmailAsync(request));
+    }
 }
