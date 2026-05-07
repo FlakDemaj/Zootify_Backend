@@ -66,7 +66,7 @@ public class BrevoProvider : IBrevoProvider
         }
 
         var trimmedBaseUrl = frontendBaseUrl.TrimEnd('/');
-        return $"{trimmedBaseUrl}/confirm-registration?userGuid={token}";
+        return $"{trimmedBaseUrl}/confirm-registration?token={token}";
     }
 
     private (Sender Sender, List<Recipient> Recipients) CreateSenderAndRecipient(
@@ -78,7 +78,7 @@ public class BrevoProvider : IBrevoProvider
 
         if (string.IsNullOrWhiteSpace(senderName) || string.IsNullOrWhiteSpace(senderAddress))
         {
-            throw new InvalidOperationException(
+            throw new ZootifyException(ErrorCode.DefaultErrorCode,
                 "Configuration values 'Email:SenderName' and 'Email:SenderAddress' must be set.");
         }
 
