@@ -65,16 +65,12 @@ public static class ZootifyDbContextExtensions
 			context.Entry(updateData).State = EntityState.Detached;
 		}
 	}
-
-	public static IQueryable<T> GetNoTrackingSet<T>(this ZootifyDbContext context)
-		where T : class
-	{
-		return context.Set<T>().AsNoTracking();
-	}
 	
-	public static IQueryable<T> GetTrackingSet<T>(this ZootifyDbContext context)
+	public static IQueryable<T> GetTrackingSet<T>(
+		this ZootifyDbContext context,
+		bool tracking = false)
 		where T : class
 	{
-		return context.Set<T>().AsTracking();
+		return tracking ? context.Set<T>().AsTracking() : context.Set<T>().AsNoTracking();
 	}
 }

@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Models\EmailTemplates\*.html" />
+    <EmbeddedResource Include="Model\EmailTemplates\*.html" />
   </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@ public enum ErrorCode
 {
     None = 0,
 
-    [Description("Leider gibt es momentan Server Probleme. Bitte melden Sie sich bei ihrem Dozenten.")]
+    [Description("Leider gibt es momentan Server Probleme. Bitte melden Sie sich bei dem Support.")]
     DefaultErrorCode = -1000000,
     
     [Description(
@@ -31,6 +31,12 @@ public enum ErrorCode
     [Description("Das Passwort muss mindestens ein Sonderzeichen enthalten.")]
     PasswordMissingSpecialCharacter = -1001005,
     
+    [Description("Die Passwörter sind nicht identisch.")]
+    PasswordNotTheSame = -1001006,
+    
+    [Description("Ihr Password ist falsch.")]
+    IncorrectPassword = -1001007,
+    
     [Description("Ein User mit dieser Email existiert bereits.")]
     UserWithThisEmailAlreadyExists = -1002000,
     
@@ -38,14 +44,29 @@ public enum ErrorCode
     NoUserWithThisId = -1002001,
     
     [Description("Ein User mit dieser Email existiert nicht.")]
-    NoUserWithTHisEmail = -11002002,
+    NoUserWithThisEmail = -1002002,
     
     [Description("Der User ist schon aktiv.")]
     UserAlreadyActive = -1002003,
     
+    [Description("Der User ist blockiert.")]
+    UserIsBlocked = -1002004,
+    
+    [Description("Der User ist gelöscht.")]
+    UserIsDeleted= -1002005,
+    
+    [Description("Der User ist nicht aktiv.")]
+    UserPending = -1002006,
+
     [Description("Der Bestätigungslink ist ungültig.")]
     InvalidRegistrationToken = -1003000,
     
     [Description("Der Bestätigungslink ist abgelaufen. Bitte fordern Sie einen neuen an.")]
     RegistrationTokenExpired = -1003001,
+    
+    [Description("Ihr Link zum Password zurücksetzen ist ungültig.")]
+    InvalidResetPasswordToken = -1004000,
+    
+    [Description("Ihr Link zum Password zurücksetzen ist abelaufen.")]
+    ResetPasswordTokenExpired = -1004001,
 }

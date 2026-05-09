@@ -11,9 +11,10 @@
     "OverrideConnectionString": ""
   },
   "AccessToken": {
-    "Issuer": "",
-    "Audience": "",
-    "Key": ""
+    "Issuer": "Zootify-Server",
+    "Audience": "Zootify-Client",
+    "Key": "",
+    "ExpiresInMinutes": 30
   },
   "Brevo":
   {
@@ -26,6 +27,7 @@
     "MinimumPasswordLength": 8,
     "FrontendBaseUrl": "http://localhost:4200",
     "SpecialCharacters": "!@#$%^&*()_+-=[]{}|;:',.<>?",
-    "RegistrationTokenExpiryInHours": 24
+    "RegistrationTokenExpiryInHours": 24,
+    "ResetPasswordTokenExpiryInHours": 24
   }
 }

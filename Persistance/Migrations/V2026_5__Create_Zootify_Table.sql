@@ -21,15 +21,16 @@ CREATE TABLE [zootify].[users] (
     last_name               NVARCHAR(100)       NOT NULL,
     email                   NVARCHAR(256)       NOT NULL,
     password_hash           NVARCHAR(512)       NOT NULL,
+    login_attempts          INT                 NOT NULL,
     role                    NVARCHAR(20)        NOT NULL DEFAULT 'User',
     status                  NVARCHAR(20)        NOT NULL DEFAULT 'Pending',
 
     created_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
 
-    updated_date            DATETIME2           ,
+    updated_date            DATETIME2           NULL,
     updated_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    deletion_date             DATETIME2         ,
+    deletion_date           DATETIME2           NULL,
     deleted_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
     CONSTRAINT pk_users         PRIMARY KEY (guid),
@@ -55,19 +56,44 @@ END
 GO
 
 -- ────────────────────────────────────────────────────────────
---  Registration Tokens
+--  REGISTRATION_TOKENS
 -- ────────────────────────────────────────────────────────────
-
+IF NOT EXISTS (SELECT 1 FROM sys.tables t
+               JOIN sys.schemas s ON t.schema_id = s.schema_id
+               WHERE s.name = 'zootify' AND t.name = 'registration_tokens')
+BEGIN
 CREATE TABLE [zootify].[registration_tokens] (
-                                                 guid                    UNIQUEIDENTIFIER    NOT NULL,
-
+                                                 guid                UNIQUEIDENTIFIER    NOT NULL,
                                                  token               NVARCHAR(128)       NOT NULL,
     user_guid           UNIQUEIDENTIFIER    NOT NULL,
     expires_at          DATETIME2           NOT NULL,
-    CONSTRAINT pk_registration_tokens PRIMARY KEY (token),
-    CONSTRAINT fk_registration_tokens_user FOREIGN KEY (user_guid)
+
+    CONSTRAINT pk_registration_tokens       PRIMARY KEY (token),
+    CONSTRAINT fk_registration_tokens_user  FOREIGN KEY (user_guid)
     REFERENCES [zootify].[users] (guid) ON DELETE CASCADE
     )
+END
+GO
+
+-- ────────────────────────────────────────────────────────────
+--  RESET_PASSWORD_TOKENS
+-- ────────────────────────────────────────────────────────────
+IF NOT EXISTS (SELECT 1 FROM sys.tables t
+               JOIN sys.schemas s ON t.schema_id = s.schema_id
+               WHERE s.name = 'zootify' AND t.name = 'reset_password_tokens')
+BEGIN
+CREATE TABLE [zootify].[reset_password_tokens] (
+                                                   guid                UNIQUEIDENTIFIER    NOT NULL,
+                                                   token               NVARCHAR(128)       NOT NULL,
+    user_guid           UNIQUEIDENTIFIER    NOT NULL,
+    expires_at          DATETIME2           NOT NULL,
+
+    CONSTRAINT pk_reset_password_tokens       PRIMARY KEY (token),
+    CONSTRAINT fk_reset_password_tokens_user  FOREIGN KEY (user_guid)
+    REFERENCES [zootify].[users] (guid) ON DELETE CASCADE
+    )
+END
+GO
 
 -- ────────────────────────────────────────────────────────────
 --  GEO_LOCATIONS
@@ -156,10 +182,10 @@ CREATE TABLE [zootify].[specimens] (
     created_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
     created_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    updated_date              DATETIME2         ,
+    updated_date            DATETIME2           NULL,
     updated_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
-    deletion_date             DATETIME2,
+    deletion_date           DATETIME2           NULL,
     deleted_by_user_guid    UNIQUEIDENTIFIER    NULL,
 
     CONSTRAINT pk_specimens              PRIMARY KEY (guid),

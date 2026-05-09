@@ -26,6 +26,9 @@ public class ZootifyConfiguration : BaseConfiguration
     public static int RegistrationTokenExpiryInHours =>
         SafeGetParsed("General:RegistrationTokenExpiryInHours", 24);
     
+    public static int ResetPasswordTokenExpiryInHours =>
+        SafeGetParsed("General:RegistrationTokenExpiryInHours", 24);
+    
     public static string FrontendBaseUrl =>
         SafeGet("General:FrontendBaseUrl", string.Empty);
 
@@ -43,6 +46,9 @@ public class ZootifyConfiguration : BaseConfiguration
 
     #region AccessToken
 
+    public static int AccessTokenExpiresInMinutes =>
+        SafeGetParsed("AccessToken:ExpiresInMinutes", 0);
+    
     public static string AccessTokenIssuer =>
         SafeGet("AccessToken:Issuer", string.Empty);
 

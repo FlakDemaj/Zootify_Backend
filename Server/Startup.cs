@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Models.DataAccess.DBContext;
 using Zootify_Backend.Persistance;
 using Zootify_Backend.Server.Middlewares;
@@ -47,7 +48,8 @@ public class Startup
         builder.Services.AddControllers();
 
         AddSwagger(builder.Services);
-       //AddAuthentication(builder.Services, builder.Configuration);
+        AddAuthentication(builder.Services, builder.Configuration);
+        AddInternalServices(builder.Services);
         
         AddDatabase(builder.Services);
     }
@@ -116,7 +118,7 @@ public class Startup
     /// </summary>
     /// <param name="services">The service collection</param>
     /// <param name="configuration">Application configuration</param>
-   /* private void AddAuthentication(
+   private void AddAuthentication(
         IServiceCollection services,
         ConfigurationManager configuration)
     {
@@ -133,7 +135,7 @@ public class Startup
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(configuration["AccessToken:Key"]!))
             });
-    }*/
+    }
 
     /// <summary>
     /// Configures logging providers and log formatting.
@@ -175,5 +177,10 @@ public class Startup
     private void EnableMiddlewares(IApplicationBuilder builder)
     {
         builder.UseMiddleware<ExceptionMiddleware>();
+    }
+    
+    private static void AddInternalServices(IServiceCollection services)
+    {
+        services.AddScoped<ITokenManager, TokenManager>();
     }
 }
