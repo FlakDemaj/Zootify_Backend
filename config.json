@@ -1,0 +1,33 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "",
+    "OverrideConnectionString": ""
+  },
+  "AccessToken": {
+    "Issuer": "Zootify-Server",
+    "Audience": "Zootify-Client",
+    "Key": "",
+    "ExpiresInMinutes": 30
+  },
+  "Brevo":
+  {
+    "Email": "zootify@gmx.de",
+    "SenderName": "Zootify",
+    "ApiKey": ""
+  },
+  "General":
+  {
+    "MinimumPasswordLength": 8,
+    "FrontendBaseUrl": "http://localhost:4200",
+    "SpecialCharacters": "!@#$%^&*()_+-=[]{}|;:',.<>?",
+    "RegistrationTokenExpiryInHours": 24,
+    "ResetPasswordTokenExpiryInHours": 24
+  }
+}

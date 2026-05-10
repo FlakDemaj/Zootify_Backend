@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/flakrondemaj/RiderProjects/Zootify_Backend/Zootify_Backend.csproj": {}
+    "/Users/flakrondemaj/RiderProjects/Zootify_Backend2/Zootify_Backend.csproj": {}
   },
   "projects": {
-    "/Users/flakrondemaj/RiderProjects/Zootify_Backend/Zootify_Backend.csproj": {
+    "/Users/flakrondemaj/RiderProjects/Zootify_Backend2/Zootify_Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/flakrondemaj/RiderProjects/Zootify_Backend/Zootify_Backend.csproj",
+        "projectUniqueName": "/Users/flakrondemaj/RiderProjects/Zootify_Backend2/Zootify_Backend.csproj",
         "projectName": "Zootify_Backend",
-        "projectPath": "/Users/flakrondemaj/RiderProjects/Zootify_Backend/Zootify_Backend.csproj",
+        "projectPath": "/Users/flakrondemaj/RiderProjects/Zootify_Backend2/Zootify_Backend.csproj",
         "packagesPath": "/Users/flakrondemaj/.nuget/packages/",
-        "outputPath": "/Users/flakrondemaj/RiderProjects/Zootify_Backend/obj/",
+        "outputPath": "/Users/flakrondemaj/RiderProjects/Zootify_Backend2/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/flakrondemaj/.nuget/NuGet/NuGet.Config"
@@ -44,9 +44,77 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[16.1.1, )"
+            },
+            "Autofac": {
+              "target": "Package",
+              "version": "[9.1.0, )"
+            },
+            "Autofac.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[11.0.0, )"
+            },
+            "Autofac.Extras.DynamicProxy": {
+              "target": "Package",
+              "version": "[7.1.0, )"
+            },
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            },
+            "Castle.Core": {
+              "target": "Package",
+              "version": "[5.2.1, )"
+            },
+            "Evolve": {
+              "target": "Package",
+              "version": "[3.2.0, )"
+            },
+            "JsonConverter.Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[0.11.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[10.0.7, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[10.0.6, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[10.0.7, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[10.0.7, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[10.0.7, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[10.0.7, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[10.0.1, )"
+            },
+            "SendWithBrevo": {
+              "target": "Package",
+              "version": "[1.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[10.1.7, )"
             }
           },
           "imports": [
