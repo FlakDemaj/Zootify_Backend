@@ -1,9 +1,15 @@
 namespace Zootify.Tests.Unit.Domain;
 
+/// <summary>
+/// Unit tests for the domain methods on <see cref="UserEntity"/>.
+/// </summary>
 public class UserEntityTests
 {
     #region FormatEmail
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.FormatEmail"/> converts an uppercase email to lowercase.
+    /// </summary>
     [Fact]
     public void FormatEmail_ConvertsEmailToLowercase()
     {
@@ -14,6 +20,9 @@ public class UserEntityTests
         user.Email.Should().Be("test@example.com");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.FormatEmail"/> leaves an already lowercase email unchanged.
+    /// </summary>
     [Fact]
     public void FormatEmail_AlreadyLowercase_NoChange()
     {
@@ -28,6 +37,9 @@ public class UserEntityTests
 
     #region ActivateUser
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.ActivateUser"/> sets the status to Active.
+    /// </summary>
     [Fact]
     public void ActivateUser_SetsStatusToActive()
     {
@@ -42,6 +54,9 @@ public class UserEntityTests
 
     #region SetPassword
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.SetPassword"/> stores a hashed value, not the plain text.
+    /// </summary>
     [Fact]
     public void SetPassword_StoresHashedPassword()
     {
@@ -53,6 +68,9 @@ public class UserEntityTests
         user.PasswordHash.Should().NotBe("MyPassword123!");
     }
 
+    /// <summary>
+    /// Verifies that two different passwords produce different hashes (BCrypt uses a random salt).
+    /// </summary>
     [Fact]
     public void SetPassword_DifferentPasswordsProduceDifferentHashes()
     {
@@ -69,6 +87,9 @@ public class UserEntityTests
 
     #region CheckPassword
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.CheckPassword"/> returns <c>true</c> for the correct password.
+    /// </summary>
     [Fact]
     public void CheckPassword_CorrectPassword_ReturnsTrue()
     {
@@ -78,6 +99,9 @@ public class UserEntityTests
         user.CheckPassword("CorrectPass123!").Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.CheckPassword"/> returns <c>false</c> for a wrong password.
+    /// </summary>
     [Fact]
     public void CheckPassword_WrongPassword_ReturnsFalse()
     {
@@ -91,6 +115,10 @@ public class UserEntityTests
 
     #region CreateRegistrationToken
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.CreateRegistrationToken"/> attaches the returned token
+    /// to the entity's navigation property.
+    /// </summary>
     [Fact]
     public void CreateRegistrationToken_SetsRegistrationTokenOnEntity()
     {
@@ -102,6 +130,9 @@ public class UserEntityTests
         user.RegistrationToken.Should().BeSameAs(token);
     }
 
+    /// <summary>
+    /// Verifies that the generated registration token string is not null or empty.
+    /// </summary>
     [Fact]
     public void CreateRegistrationToken_TokenIsNotEmpty()
     {
@@ -112,6 +143,9 @@ public class UserEntityTests
         token.Token.Should().NotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// Verifies that the registration token expiry is set in the future.
+    /// </summary>
     [Fact]
     public void CreateRegistrationToken_ExpiresInFuture()
     {
@@ -122,6 +156,9 @@ public class UserEntityTests
         token.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
     }
 
+    /// <summary>
+    /// Verifies that two successive calls produce different token strings (cryptographic randomness).
+    /// </summary>
     [Fact]
     public void CreateRegistrationToken_TwoCallsProduceDifferentTokens()
     {
@@ -137,6 +174,9 @@ public class UserEntityTests
 
     #region RemoveRegistrationToken
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.RemoveRegistrationToken"/> sets the navigation property to <c>null</c>.
+    /// </summary>
     [Fact]
     public void RemoveRegistrationToken_SetsRegistrationTokenToNull()
     {
@@ -152,6 +192,10 @@ public class UserEntityTests
 
     #region CreateResetPasswordToken
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.CreateResetPasswordTokenEntityToken"/> attaches the returned token
+    /// to the entity's navigation property.
+    /// </summary>
     [Fact]
     public void CreateResetPasswordTokenEntityToken_SetsResetPasswordTokenOnEntity()
     {
@@ -163,6 +207,9 @@ public class UserEntityTests
         user.ResetPasswordToken.Should().BeSameAs(token);
     }
 
+    /// <summary>
+    /// Verifies that the generated reset-password token string is not null or empty.
+    /// </summary>
     [Fact]
     public void CreateResetPasswordTokenEntityToken_TokenIsNotEmpty()
     {
@@ -177,6 +224,9 @@ public class UserEntityTests
 
     #region RemoveResetPasswordToken
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.RemoveResetPasswordToken"/> sets the navigation property to <c>null</c>.
+    /// </summary>
     [Fact]
     public void RemoveResetPasswordToken_SetsResetPasswordTokenToNull()
     {
@@ -192,6 +242,9 @@ public class UserEntityTests
 
     #region IncrementLoginAttempts
 
+    /// <summary>
+    /// Verifies that a single <see cref="UserEntity.IncrementLoginAttempts"/> call increments the counter to 1.
+    /// </summary>
     [Fact]
     public void IncrementLoginAttempts_IncrementsCounter()
     {
@@ -203,6 +256,9 @@ public class UserEntityTests
         user.LoginAttempts.Should().Be(1);
     }
 
+    /// <summary>
+    /// Verifies that multiple calls to <see cref="UserEntity.IncrementLoginAttempts"/> accumulate correctly.
+    /// </summary>
     [Fact]
     public void IncrementLoginAttempts_CalledMultipleTimes_CounterAccumulates()
     {
@@ -216,6 +272,9 @@ public class UserEntityTests
         user.LoginAttempts.Should().Be(3);
     }
 
+    /// <summary>
+    /// Verifies that the user is set to Blocked after exactly 5 failed attempts.
+    /// </summary>
     [Fact]
     public void IncrementLoginAttempts_AtFifthAttempt_BlocksUser()
     {
@@ -228,6 +287,9 @@ public class UserEntityTests
         user.Status.Should().Be(UserStatus.Blocked);
     }
 
+    /// <summary>
+    /// Verifies that 4 failed attempts do not yet block the user.
+    /// </summary>
     [Fact]
     public void IncrementLoginAttempts_BelowFive_DoesNotBlockUser()
     {
@@ -244,6 +306,9 @@ public class UserEntityTests
 
     #region ResetLoginAttempts
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.ResetLoginAttempts"/> sets the counter back to zero.
+    /// </summary>
     [Fact]
     public void ResetLoginAttempts_SetsCounterToZero()
     {
@@ -257,6 +322,10 @@ public class UserEntityTests
         user.LoginAttempts.Should().Be(0);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="UserEntity.ResetLoginAttempts"/> also restores the status to Active,
+    /// even when the user was previously blocked.
+    /// </summary>
     [Fact]
     public void ResetLoginAttempts_SetsStatusToActive()
     {
@@ -273,6 +342,9 @@ public class UserEntityTests
 
     #region SetUpdatedBy
 
+    /// <summary>
+    /// Verifies that passing <c>null</c> clears the UpdatedByUserGuid and still sets the UpdatedDate.
+    /// </summary>
     [Fact]
     public void SetUpdatedBy_NullGuid_SetsUpdatedByUserGuidToNull()
     {
@@ -284,6 +356,9 @@ public class UserEntityTests
         user.UpdatedDate.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Verifies that passing a GUID stores it in UpdatedByUserGuid.
+    /// </summary>
     [Fact]
     public void SetUpdatedBy_WithGuid_SetsUpdatedByUserGuid()
     {

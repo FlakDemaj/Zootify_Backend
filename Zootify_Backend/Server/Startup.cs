@@ -3,6 +3,7 @@ using System.Text;
 using Autofac;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -13,33 +14,33 @@ using Zootify_Backend.Server.Middlewares;
 
 namespace Zootify_Backend.Server;
 
+/// <summary>
+/// Configures the application's DI container, services, and HTTP middleware pipeline.
+/// </summary>
 public class Startup
 {
-    
-    // List of modules to be registered with AutoMapper
     private static readonly Type[] Modules =
     [
         typeof(ZootifyModule)
     ];
-    
-    // Configures Autofac container and registers necessary modules
+
+    /// <summary>
+    /// Registers Autofac modules including the main application module and the AutoMapper module.
+    /// </summary>
     public void ConfigureContainer(ContainerBuilder builder)
     {
-        // Registers the main application module
         builder.RegisterModule<ZootifyModule>();
-        
-        // Registers the AutoMapper module with specified types
+
         builder.RegisterModule(
             new AutoMapperModule
             {
                 Types = Modules
             });
     }
-    
+
     /// <summary>
     /// Configures all application services (Dependency Injection container).
     /// </summary>
-    /// <param name="builder">The WebApplicationBuilder instance</param>
     public void ConfigureServices(WebApplicationBuilder builder)
     {
         EnableCors(builder.Services);
@@ -50,14 +51,14 @@ public class Startup
         AddSwagger(builder.Services);
         AddAuthentication(builder.Services, builder.Configuration);
         AddInternalServices(builder.Services);
-        
         AddDatabase(builder.Services);
+
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
     }
-    
+
     /// <summary>
     /// Configures the HTTP request pipeline (middleware order).
     /// </summary>
-    /// <param name="app">The WebApplication instance</param>
     public void ConfigureMiddleware(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
@@ -68,6 +69,21 @@ public class Startup
 
         app.UseHttpsRedirection();
         app.UseCors("AllowOrigin");
+
+        app.UseRequestLocalization(options =>
+        {
+            var supported = new[] { "de", "en" };
+            options.SetDefaultCulture("de")
+                   .AddSupportedCultures(supported)
+                   .AddSupportedUICultures(supported);
+
+            // Use only the Accept-Language header; remove other providers.
+            options.RequestCultureProviders =
+            [
+                new AcceptLanguageHeaderRequestCultureProvider()
+            ];
+        });
+
         app.UseAuthentication();
         app.UseAuthorization();
 
@@ -75,17 +91,18 @@ public class Startup
         app.MapControllers();
     }
 
+    /// <summary>
+    /// Registers the <see cref="ZootifyDbContext"/> and the <see cref="MigrationManager"/> with the DI container.
+    /// </summary>
     private void AddDatabase(IServiceCollection services)
     {
         services.AddScoped<MigrationManager>();
         services.AddDbContext<ZootifyDbContext>();
     }
 
-
     /// <summary>
     /// Adds Swagger configuration including JWT authentication support.
     /// </summary>
-    /// <param name="services">The service collection</param>
     private void AddSwagger(IServiceCollection services)
     {
         services.AddSwaggerGen(options =>
@@ -103,11 +120,8 @@ public class Startup
             options.AddSecurityRequirement(document =>
             {
                 var securityRequirement = new OpenApiSecurityRequirement();
-
                 var schemeReference = new OpenApiSecuritySchemeReference("Bearer", document);
-
                 securityRequirement.Add(schemeReference, []);
-
                 return securityRequirement;
             });
         });
@@ -116,9 +130,7 @@ public class Startup
     /// <summary>
     /// Configures JWT authentication (issuer, audience, signing key).
     /// </summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configuration">Application configuration</param>
-   private void AddAuthentication(
+    private void AddAuthentication(
         IServiceCollection services,
         ConfigurationManager configuration)
     {
@@ -140,7 +152,6 @@ public class Startup
     /// <summary>
     /// Configures logging providers and log formatting.
     /// </summary>
-    /// <param name="builder">The WebApplicationBuilder instance</param>
     private void ConfigureLogger(WebApplicationBuilder builder)
     {
         builder.Logging.ClearProviders();
@@ -157,11 +168,10 @@ public class Startup
 
         builder.Logging.SetMinimumLevel(LogLevel.Trace);
     }
-    
+
     /// <summary>
     /// Adds CORS policy configuration.
     /// </summary>
-    /// <param name="service">The service collection</param>
     private void EnableCors(IServiceCollection service)
     {
         service.AddCors(option => option.AddPolicy("AllowOrigin",
@@ -173,12 +183,14 @@ public class Startup
     /// <summary>
     /// Registers custom middleware components.
     /// </summary>
-    /// <param name="builder">The application builder</param>
     private void EnableMiddlewares(IApplicationBuilder builder)
     {
         builder.UseMiddleware<ExceptionMiddleware>();
     }
-    
+
+    /// <summary>
+    /// Registers internal singleton services such as <see cref="ITokenManager"/>.
+    /// </summary>
     private static void AddInternalServices(IServiceCollection services)
     {
         services.AddScoped<ITokenManager, TokenManager>();

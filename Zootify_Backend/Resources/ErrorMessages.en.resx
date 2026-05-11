@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="None" xml:space="preserve">
+    <value>An unknown error occurred.</value>
+  </data>
+  <data name="DefaultErrorCode" xml:space="preserve">
+    <value>The server is currently experiencing issues. Please contact support.</value>
+  </data>
+  <data name="DatabaseError" xml:space="preserve">
+    <value>There is a database error. Please contact support.</value>
+  </data>
+
+  <data name="EmailError" xml:space="preserve">
+    <value>You have provided an invalid email address. Please enter a valid email address.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>The password must be at least 8 characters long.</value>
+  </data>
+  <data name="PasswordMissingUppercase" xml:space="preserve">
+    <value>The password must contain at least one uppercase letter.</value>
+  </data>
+  <data name="PasswordMissingLowercase" xml:space="preserve">
+    <value>The password must contain at least one lowercase letter.</value>
+  </data>
+  <data name="PasswordMissingDigit" xml:space="preserve">
+    <value>The password must contain at least one digit.</value>
+  </data>
+  <data name="PasswordMissingSpecialCharacter" xml:space="preserve">
+    <value>The password must contain at least one special character.</value>
+  </data>
+  <data name="PasswordNotTheSame" xml:space="preserve">
+    <value>The passwords do not match.</value>
+  </data>
+  <data name="IncorrectPassword" xml:space="preserve">
+    <value>Your password is incorrect.</value>
+  </data>
+
+  <data name="UserWithThisEmailAlreadyExists" xml:space="preserve">
+    <value>A user with this email address already exists.</value>
+  </data>
+  <data name="NoUserWithThisId" xml:space="preserve">
+    <value>This user does not exist.</value>
+  </data>
+  <data name="NoUserWithThisEmail" xml:space="preserve">
+    <value>A user with this email address does not exist.</value>
+  </data>
+  <data name="UserAlreadyActive" xml:space="preserve">
+    <value>The user is already active.</value>
+  </data>
+  <data name="UserIsBlocked" xml:space="preserve">
+    <value>The user is blocked.</value>
+  </data>
+  <data name="UserIsDeleted" xml:space="preserve">
+    <value>The user has been deleted.</value>
+  </data>
+  <data name="UserPending" xml:space="preserve">
+    <value>The user is not yet active. Please confirm your email address first.</value>
+  </data>
+
+  <data name="InvalidRegistrationToken" xml:space="preserve">
+    <value>The confirmation link is invalid.</value>
+  </data>
+  <data name="RegistrationTokenExpired" xml:space="preserve">
+    <value>The confirmation link has expired. Please request a new one.</value>
+  </data>
+
+  <data name="InvalidResetPasswordToken" xml:space="preserve">
+    <value>Your password reset link is invalid.</value>
+  </data>
+  <data name="ResetPasswordTokenExpired" xml:space="preserve">
+    <value>Your password reset link has expired. Please request a new one.</value>
+  </data>
+</root>

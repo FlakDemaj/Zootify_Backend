@@ -11,6 +11,9 @@ public class Authentication : IAuthentication
 
     public AuthenticationType AuthenticationType { get; set; }
 
+    /// <summary>
+    /// Initializes a new <see cref="Authentication"/> with the user's GUID and authentication type.
+    /// </summary>
     public Authentication(Guid userGuid, AuthenticationType authenticationType)
     {
         UserGuid = userGuid;

@@ -7,27 +7,42 @@ using Zootify_Backend.Models.DataAccess.Repositorys.Classes;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Classes;
 
+/// <summary>
+/// Repository for querying and persisting <see cref="UserEntity"/> records.
+/// </summary>
 public class UserRepository : BaseRepository<UserEntity>, IUserRepository
 {
+    /// <summary>
+    /// Initializes a new <see cref="UserRepository"/> with the given database context.
+    /// </summary>
     public UserRepository(ZootifyDbContext context)
         : base(context)
     {
     }
 
+    /// <summary>
+    /// Returns the user with the given email address, or <c>null</c> if not found.
+    /// </summary>
+    /// <param name="email">The email address to search for.</param>
+    /// <param name="tracking">Whether to enable EF change tracking on the result.</param>
     public async Task<UserEntity?> GetUserByEmail(
         string email, bool tracking = false)
     {
-        return await 
+        return await
             Context
                 .GetTrackingSet<UserEntity>(tracking)
                 .Where(x => x.Email == email)
                 .FirstOrDefaultAsync();
     }
-    
+
+    /// <summary>
+    /// Returns the user with the given email, eagerly loading their reset-password token.
+    /// Always uses change tracking so the token can be modified.
+    /// </summary>
     public async Task<UserEntity?> GetUserByEmailWithResetPassword(
         string email)
     {
-        return await 
+        return await
             Context
                 .GetTrackingSet<UserEntity>(true)
                 .Include(u => u.ResetPasswordToken)
@@ -35,6 +50,10 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
                 .FirstOrDefaultAsync();
     }
 
+    /// <summary>
+    /// Returns the user whose reset-password token matches the given token string,
+    /// eagerly loading the token. Always uses change tracking.
+    /// </summary>
     public async Task<UserEntity?> GetUserByResetPasswordTokenWithResetPassword(
         string token)
     {
@@ -47,16 +66,24 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
                 .FirstOrDefaultAsync();
     }
 
+    /// <summary>
+    /// Returns the user with the given email, eagerly loading their registration token.
+    /// Always uses change tracking so the token can be replaced.
+    /// </summary>
     public async Task<UserEntity?> GetUserByEmailWithRegistrationToken(string email)
     {
-        return await 
+        return await
             Context
                 .GetTrackingSet<UserEntity>(true)
                 .Include(u => u.RegistrationToken)
                 .Where(x => x.Email == email)
                 .FirstOrDefaultAsync();
     }
-    
+
+    /// <summary>
+    /// Returns the user whose registration token matches the given token string,
+    /// eagerly loading the token. Always uses change tracking.
+    /// </summary>
     public async Task<UserEntity?> GetUserByRegistrationTokenAsync(string token)
     {
         return await

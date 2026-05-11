@@ -12,14 +12,20 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Classes;
 
+/// <summary>
+/// Handles all user-related business logic including registration, login, and password management.
+/// </summary>
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
     private readonly ITokenManager _tokenManager;
-    
+
     private IMapper Mapper { get; }
 
+    /// <summary>
+    /// Initializes a new <see cref="UserService"/> with its required dependencies.
+    /// </summary>
     public UserService(
         IUserRepository userRepository,
         IMapper mapper,
@@ -31,14 +37,18 @@ public class UserService : IUserService
         _brevoProvider = brevoProvider;
         _tokenManager = tokenManager;
     }
-    
+
     #region Registration
 
+    /// <summary>
+    /// Validates the request, maps it to a <see cref="UserEntity"/>, hashes the password,
+    /// persists the user, and sends a registration confirmation email.
+    /// </summary>
     [Transaction(ReadOnly = false)]
     public async Task RegisterAsync(
         RegisterUserRequestDto request)
     {
-        var existingUser = await 
+        var existingUser = await
             _userRepository
                 .GetUserByEmail(request.Email.ToLower());
 
@@ -48,21 +58,25 @@ public class UserService : IUserService
         }
 
         CheckEmail(request.Email.ToLower());
-        
+
         var user = Mapper.Map<UserEntity>(request);
-        
+
         user.FormatEmail();
         CheckPassword(request.Password);
         user.SetPassword(request.Password);
-        
+
         await CreateUserAsync(user);
     }
 
+    /// <summary>
+    /// Looks up the user by the registration token, validates the token, activates the account,
+    /// and removes the consumed token from the database.
+    /// </summary>
     [Transaction(ReadOnly = false)]
     public async Task ConfirmRegistrationAsync(string token)
     {
         var user = await _userRepository.GetUserByRegistrationTokenAsync(token);
-        
+
         if (user == null)
         {
             throw new ZootifyException(ErrorCode.NoUserWithThisId);
@@ -97,6 +111,10 @@ public class UserService : IUserService
         await _userRepository.UpdateAsync(user);
     }
 
+    /// <summary>
+    /// Replaces the existing registration token with a new one and resends the confirmation email
+    /// to the pending user.
+    /// </summary>
     [Transaction(ReadOnly = false)]
     public async Task SendNewRegistrationEmailAsync(
         SendNewRegistrationEmailRequestDto request)
@@ -116,21 +134,30 @@ public class UserService : IUserService
 
         var registrationToken = user
             .CreateRegistrationToken(ZootifyConfiguration.RegistrationTokenExpiryInHours);
-        
+
         await _userRepository.UpdateAsync(user);
-        
-        await _brevoProvider.SendRegistrationEmail(
+
+        var wasSent = await _brevoProvider.SendRegistrationEmail(
             registrationToken.Token,
             user.Email,
             user.FirstName,
             user.LastName);
+
+        if (!wasSent)
+        {
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+        }
     }
 
     #endregion
 
     #region Login
 
-    // No Transaction because of the login
+    // No Transaction because login intentionally updates LoginAttempts outside a wrapping transaction.
+    /// <summary>
+    /// Validates the user's credentials, tracks failed attempts (blocking after 5),
+    /// resets the counter on success, and returns a signed JWT token.
+    /// </summary>
     public async Task<LoginUserResponseDto> LoginAsync(
         LoginUserRequestDto request)
     {
@@ -159,7 +186,7 @@ public class UserService : IUserService
             await _userRepository.UpdateAsync(user);
             throw new ZootifyException(ErrorCode.IncorrectPassword);
         }
-        
+
         user.ResetLoginAttempts();
         await _userRepository.UpdateAsync(user);
 
@@ -167,7 +194,12 @@ public class UserService : IUserService
             user.Guid,
             user.Role);
     }
-    
+
+    /// <summary>
+    /// Validates the reset token, checks that the two passwords match,
+    /// applies password-strength rules, sets the new password, resets login attempts,
+    /// removes the token, and sends a confirmation email.
+    /// </summary>
     [Transaction(ReadOnly = false)]
     public async Task ResetPasswordAsync(
         ResetPasswordRequestDto request,
@@ -180,7 +212,7 @@ public class UserService : IUserService
         {
             throw new ZootifyException(ErrorCode.InvalidResetPasswordToken);
         }
-        
+
         var resetPasswordTokenEntity = user.ResetPasswordToken;
 
         if (resetPasswordTokenEntity == null)
@@ -197,22 +229,30 @@ public class UserService : IUserService
         {
             throw new ZootifyException(ErrorCode.PasswordNotTheSame);
         }
-        
+
         CheckPassword(request.Password);
-        
+
         user.SetPassword(request.RepeatedPassword);
         user.SetUpdatedBy(null);
         user.ResetLoginAttempts();
         user.RemoveResetPasswordToken();
-        
+
         await _userRepository.UpdateAsync(user);
-        
-        await _brevoProvider.SendConfirmationResetPasswordEmail(
+
+        var wasSent = await _brevoProvider.SendConfirmationResetPasswordEmail(
             user.FirstName,
             user.LastName,
             user.Email);
+        
+        if (!wasSent)
+        {
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+        }
     }
-    
+
+    /// <summary>
+    /// Creates a reset-password token, persists the updated user, and sends the reset email.
+    /// </summary>
     [Transaction(ReadOnly = false)]
     public async Task SendNewResetPasswordEmailAsync(SendNewResetPasswordEmailRequestDto request)
     {
@@ -234,34 +274,53 @@ public class UserService : IUserService
 
         var resetPasswordToken = user
             .CreateResetPasswordTokenEntityToken(ZootifyConfiguration.ResetPasswordTokenExpiryInHours);
-        
+
         await _userRepository.UpdateAsync(user);
-        
-        await _brevoProvider.SendResetPasswordEmail(
+
+        var wasSent = await _brevoProvider.SendResetPasswordEmail(
             resetPasswordToken.Token,
             user.Email,
             user.FirstName,
             user.LastName);
+        
+        if (!wasSent)
+        {
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+        }
     }
 
     #endregion
 
     #region PrivateMethods
 
+    /// <summary>
+    /// Creates the registration token on the user, persists the user to the database,
+    /// and sends the registration confirmation email via Brevo.
+    /// </summary>
     private async Task CreateUserAsync(UserEntity user)
     {
         var registrationToken = user
             .CreateRegistrationToken(ZootifyConfiguration.RegistrationTokenExpiryInHours);
-        
+
         var createdUser = await _userRepository.CreateAsync(user);
-        
-        await _brevoProvider.SendRegistrationEmail(
+
+        var wasSent = await _brevoProvider.SendRegistrationEmail(
             registrationToken.Token,
             createdUser.Email,
             createdUser.FirstName,
             createdUser.LastName);
+
+        if (!wasSent)
+        {
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+        }
+        
     }
 
+    /// <summary>
+    /// Validates password strength: minimum length, uppercase, lowercase, digit, and special character.
+    /// Throws a <see cref="ZootifyException"/> with the specific failing rule.
+    /// </summary>
     private static void CheckPassword(string password)
     {
         if (password.Length < ZootifyConfiguration.MinimumPasswordLength)
@@ -318,6 +377,10 @@ public class UserService : IUserService
         }
     }
 
+    /// <summary>
+    /// Validates that the email contains "@" and ".", and meets the minimum length requirement.
+    /// Throws a <see cref="ZootifyException"/> with <see cref="ErrorCode.EmailError"/> on failure.
+    /// </summary>
     private void CheckEmail(string email)
     {
         if (!email.Contains("@")

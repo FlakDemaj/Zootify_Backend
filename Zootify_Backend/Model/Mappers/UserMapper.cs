@@ -4,8 +4,14 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
 
+/// <summary>
+/// AutoMapper profile that defines mappings for user-related types.
+/// </summary>
 public class UserMapper : Profile
 {
+    /// <summary>
+    /// Configures the mapping from <see cref="RegisterUserRequestDto"/> to <see cref="UserEntity"/>.
+    /// </summary>
     public UserMapper()
     {
         CreateMap<RegisterUserRequestDto, UserEntity>(MemberList.None)

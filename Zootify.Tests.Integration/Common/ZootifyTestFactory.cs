@@ -19,12 +19,19 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
     private readonly string _connectionString;
     private readonly Mock<IBrevoProvider> _brevoMock;
 
+    /// <summary>
+    /// Initializes the factory with the test container connection string and a Brevo mock.
+    /// </summary>
     public ZootifyTestFactory(string connectionString, Mock<IBrevoProvider> brevoMock)
     {
         _connectionString = connectionString;
         _brevoMock = brevoMock;
     }
 
+    /// <summary>
+    /// Overrides the application configuration and replaces the database context
+    /// with one pointed at the test container.
+    /// </summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTest");

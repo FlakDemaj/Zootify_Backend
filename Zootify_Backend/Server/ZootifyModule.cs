@@ -7,27 +7,33 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Server;
 
+/// <summary>
+/// Autofac module that wires up all application-level services, repositories, and providers.
+/// </summary>
 public class ZootifyModule : Module
 {
+    /// <summary>
+    /// Registers the transaction interceptor, all services and repositories, and the email provider.
+    /// </summary>
     protected override void Load(ContainerBuilder builder)
     {
-        // Registers TransactionInterceptor with a per-lifetime scope
         builder.RegisterType<TransactionInterceptor>()
             .InstancePerLifetimeScope();
-        
+
         builder.LoadServicesAndRepositories(ThisAssembly);
-        
+
         LoadEmailProvider(builder);
     }
-    
-    // Configures email provider service registration
+
+    /// <summary>
+    /// Registers the <see cref="BrevoClient"/> singleton and the <see cref="BrevoProvider"/>
+    /// scoped to a per-lifetime-scope instance.
+    /// </summary>
     private void LoadEmailProvider(ContainerBuilder builder)
     {
-        // Registers an instance of BrevoClient as a singleton using a configured API key
         builder.RegisterInstance(new BrevoClient(ZootifyConfiguration.BrevoApiKey))
             .SingleInstance();
 
-        // Registers BrevoProvider as its interface IBrevoProvider with a per-lifetime scope
         builder.RegisterType<BrevoProvider>()
             .As<IBrevoProvider>()
             .InstancePerLifetimeScope();

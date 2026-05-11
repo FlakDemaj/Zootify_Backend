@@ -8,6 +8,11 @@ using Testcontainers.MsSql;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Shared fixture for the integration test collection.
+/// Starts a SQL Server Testcontainer, creates the schema, and provides
+/// a resettable database and a Brevo mock for each test.
+/// </summary>
 public class IntegrationTestFixture : IAsyncLifetime
 {
     private readonly MsSqlContainer _mssql = new MsSqlBuilder()
@@ -19,11 +24,14 @@ public class IntegrationTestFixture : IAsyncLifetime
     private IServiceScope _dbScope = null!;
 
     public HttpClient Client { get; private set; } = null!;
-    public string ConnectionString { get; private set; } = null!;
+    private string ConnectionString { get; set; } = null!;
     public Mock<IBrevoProvider> BrevoMock { get; } = new();
-    public IServiceProvider Services => _factory.Services;
     public ZootifyDbContext DbContext { get; private set; } = null!;
 
+    /// <summary>
+    /// Starts the SQL Server container, creates the HTTP client and database context,
+    /// and configures Respawn for fast table truncation between tests.
+    /// </summary>
     public async Task InitializeAsync()
     {
         await _mssql.StartAsync();
@@ -42,6 +50,10 @@ public class IntegrationTestFixture : IAsyncLifetime
         await InitializeRespawnerAsync();
     }
 
+    /// <summary>
+    /// Opens a fresh SQL connection and configures a <see cref="Respawner"/> scoped to the
+    /// application's schema so only application tables are truncated on reset.
+    /// </summary>
     private async Task InitializeRespawnerAsync()
     {
         await using var conn = new SqlConnection(ConnectionString);
@@ -61,6 +73,9 @@ public class IntegrationTestFixture : IAsyncLifetime
         BrevoMock.Reset();
     }
 
+    /// <summary>
+    /// Disposes the HTTP client, DI scope, test factory, and SQL Server container.
+    /// </summary>
     public async Task DisposeAsync()
     {
         Client.Dispose();

@@ -1,9 +1,15 @@
 namespace Zootify.Tests.Unit.Domain;
 
+/// <summary>
+/// Unit tests for <see cref="ResetPasswordTokenEntity"/> factory method and expiry logic.
+/// </summary>
 public class ResetPasswordTokenEntityTests
 {
     #region Create
 
+    /// <summary>
+    /// Verifies that <see cref="ResetPasswordTokenEntity.Create"/> returns a token with a non-empty token string.
+    /// </summary>
     [Fact]
     public void Create_ReturnsTokenWithNonEmptyTokenString()
     {
@@ -12,6 +18,10 @@ public class ResetPasswordTokenEntityTests
         token.Token.Should().NotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// Verifies that the token string is a 128-character uppercase hex string
+    /// (64 random bytes encoded as hex).
+    /// </summary>
     [Fact]
     public void Create_TokenIsHexString()
     {
@@ -21,6 +31,9 @@ public class ResetPasswordTokenEntityTests
         token.Token.Should().MatchRegex("^[0-9A-F]{128}$");
     }
 
+    /// <summary>
+    /// Verifies that the token's <c>UserGuid</c> matches the GUID passed to <see cref="ResetPasswordTokenEntity.Create"/>.
+    /// </summary>
     [Fact]
     public void Create_SetsCorrectUserGuid()
     {
@@ -31,6 +44,9 @@ public class ResetPasswordTokenEntityTests
         token.UserGuid.Should().Be(userGuid);
     }
 
+    /// <summary>
+    /// Verifies that the token's expiry is set in the future.
+    /// </summary>
     [Fact]
     public void Create_ExpiresAtIsInFuture()
     {
@@ -39,6 +55,9 @@ public class ResetPasswordTokenEntityTests
         token.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
     }
 
+    /// <summary>
+    /// Verifies that the token's expiry approximately matches the requested validity duration.
+    /// </summary>
     [Fact]
     public void Create_ExpiresAtApproximatelyMatchesValidity()
     {
@@ -50,6 +69,9 @@ public class ResetPasswordTokenEntityTests
             .BeCloseTo(DateTime.UtcNow.Add(validity), precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Verifies that two calls with the same user GUID produce different token strings.
+    /// </summary>
     [Fact]
     public void Create_TwoCallsProduceDifferentTokenStrings()
     {
@@ -61,6 +83,9 @@ public class ResetPasswordTokenEntityTests
         token1.Token.Should().NotBe(token2.Token);
     }
 
+    /// <summary>
+    /// Verifies that each created token is assigned a non-empty GUID as its own identifier.
+    /// </summary>
     [Fact]
     public void Create_AssignsNewGuid()
     {
@@ -73,6 +98,9 @@ public class ResetPasswordTokenEntityTests
 
     #region IsExpired
 
+    /// <summary>
+    /// Verifies that <see cref="ResetPasswordTokenEntity.IsExpired"/> returns <c>false</c> for a token that expires in the future.
+    /// </summary>
     [Fact]
     public void IsExpired_FutureExpiry_ReturnsFalse()
     {
@@ -81,6 +109,9 @@ public class ResetPasswordTokenEntityTests
         token.IsExpired().Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies that <see cref="ResetPasswordTokenEntity.IsExpired"/> returns <c>true</c> for a token created with a past expiry.
+    /// </summary>
     [Fact]
     public void IsExpired_PastExpiry_ReturnsTrue()
     {
@@ -89,6 +120,9 @@ public class ResetPasswordTokenEntityTests
         token.IsExpired().Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that a token created with a negative validity is immediately considered expired.
+    /// </summary>
     [Fact]
     public void IsExpired_NegativeValidity_ReturnsTrue()
     {

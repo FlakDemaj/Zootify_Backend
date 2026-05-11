@@ -1,40 +1,46 @@
 using System.Text.Json.Serialization;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Extensions;
 
 namespace Zootify_Backend;
 
+/// <summary>
+/// Application-specific exception that carries an <see cref="ErrorCode"/> identifying the failure.
+/// The human-readable message is resolved at the HTTP boundary by <c>ExceptionMiddleware</c>
+/// using the caller's <c>Accept-Language</c> header.
+/// </summary>
 public class ZootifyException : Exception
 {
-    // The error code that identifies the specific error
+    /// <summary>The error code that identifies the specific error.</summary>
     public ErrorCode ErrorCode { get; }
 
-    // An optional error message containing additional details about the error
-    public string? ErrorMessage { get; }
-
-    // Constructor that accepts an error code and sets the default error description
+    /// <summary>
+    /// Initializes a <see cref="ZootifyException"/> using only an error code.
+    /// The exception message is the enum member name, used for server-side logging.
+    /// </summary>
     public ZootifyException(ErrorCode errorCode)
-        : base(errorCode.GetDescription())
+        : base(errorCode.ToString())
     {
         ErrorCode = errorCode;
-        ErrorMessage = errorCode.GetDescription();
     }
 
-    // Constructor that accepts an error code and an exception, passing the exception to the base class
+    /// <summary>
+    /// Initializes a <see cref="ZootifyException"/> wrapping an inner exception.
+    /// Used when a lower-level exception is the root cause.
+    /// </summary>
     public ZootifyException(ErrorCode errorCode, Exception? exception)
-        : base(errorCode.GetDescription(), exception)
+        : base(errorCode.ToString(), exception)
     {
         ErrorCode = errorCode;
-        ErrorMessage = exception?.ToString();
     }
-    
-    // Constructor marked with JsonConstructor for deserialization from JSON
+
+    /// <summary>
+    /// Initializes a <see cref="ZootifyException"/> from a JSON-deserialized error string.
+    /// Required for deserializing error responses back into this type.
+    /// </summary>
     [JsonConstructor]
     public ZootifyException(ErrorCode errorCode, string exception)
-    : base(errorCode.GetDescription())
+        : base(errorCode.ToString())
     {
         ErrorCode = errorCode;
-        ErrorMessage = exception;
     }
-    
 }

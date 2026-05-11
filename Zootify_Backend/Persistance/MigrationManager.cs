@@ -4,21 +4,31 @@ using Zootify_Backend.Configuration;
 
 namespace Zootify_Backend.Persistance;
 
+/// <summary>
+/// Runs Evolve SQL migrations against the configured database on application startup.
+/// </summary>
 public class MigrationManager
 {
     private const int CommandTimeoutInSeconds = 3600;
 
     private const string Schema = "evolve";
-    
+
     private const string Location = "Persistance/Migrations/";
 
     private readonly ILogger<MigrationManager> _logger;
 
+    /// <summary>
+    /// Initializes a new <see cref="MigrationManager"/> with a logger for migration status reporting.
+    /// </summary>
     public MigrationManager(ILogger<MigrationManager> logger)
     {
         _logger = logger;
     }
 
+    /// <summary>
+    /// Resolves the connection string, opens a SQL connection, and applies all pending Evolve migrations.
+    /// Throws if the migration fails.
+    /// </summary>
     public void Migrate()
     {
         var connectionString = ZootifyConfiguration.DatabaseDefaultConnectionString;
@@ -27,7 +37,7 @@ public class MigrationManager
         {
             connectionString = ZootifyConfiguration.DatabaseOverrideConnectionString;
         }
-        
+
         var builder = new SqlConnectionStringBuilder(connectionString)
         {
             CommandTimeout = CommandTimeoutInSeconds
@@ -55,5 +65,4 @@ public class MigrationManager
             throw new Exception();
         }
     }
-
 }
