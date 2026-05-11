@@ -6,6 +6,10 @@ namespace Zootify_Backend.Models.DataAccess.DBContext;
 
 public class ZootifyDbContext : DbContext
 {
+    public ZootifyDbContext() { }
+
+    public ZootifyDbContext(DbContextOptions<ZootifyDbContext> options) : base(options) { }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (optionsBuilder.IsConfigured)

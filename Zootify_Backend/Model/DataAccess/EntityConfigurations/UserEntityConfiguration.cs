@@ -68,7 +68,6 @@ public class UserEntityConfiguration : BaseDeletionEntityConfiguration<UserEntit
         builder.Ignore(u => u.CreatedByUser);
         builder.Ignore(u => u.CreatedByUserGuid);
 
-
         builder
             .HasIndex(u => u.Email)
             .IsUnique();

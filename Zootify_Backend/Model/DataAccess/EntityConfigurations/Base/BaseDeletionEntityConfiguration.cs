@@ -24,6 +24,6 @@ where T : BaseDeletionEntity
             .HasOne(p => p.DeletedByUser)
             .WithMany()
             .HasForeignKey(p => p.DeletedByUserGuid)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
