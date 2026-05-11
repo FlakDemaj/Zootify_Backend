@@ -53,7 +53,6 @@ public class Startup
         AddInternalServices(builder.Services);
         AddDatabase(builder.Services);
 
-        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
     }
 
     /// <summary>

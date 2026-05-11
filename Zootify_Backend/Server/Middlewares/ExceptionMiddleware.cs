@@ -1,5 +1,6 @@
+using System.Globalization;
 using System.Net;
-using Microsoft.Extensions.Localization;
+using System.Resources;
 using Newtonsoft.Json;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Resources;
@@ -8,12 +9,16 @@ namespace Zootify_Backend.Server.Middlewares;
 
 /// <summary>
 /// Global exception middleware that catches <see cref="ZootifyException"/> instances,
-/// resolves the error message in the caller's language via <see cref="IStringLocalizer{T}"/>,
+/// resolves the error message in the caller's language via <see cref="ResourceManager"/>,
 /// and returns the appropriate HTTP status code with a JSON error body.
 /// </summary>
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
+
+    private static readonly ResourceManager ResourceManager =
+        new("Zootify_Backend.Resources.ErrorMessages",
+            typeof(ErrorMessages).Assembly);
 
     /// <summary>
     /// Initializes a new <see cref="ExceptionMiddleware"/> with the next middleware delegate.
@@ -25,10 +30,9 @@ public class ExceptionMiddleware
 
     /// <summary>
     /// Invokes the next middleware and intercepts any <see cref="ZootifyException"/> thrown downstream.
-    /// The <paramref name="localizer"/> is resolved per-request so it picks up the culture
-    /// already set by <c>UseRequestLocalization</c>.
+    /// The culture is already set by <c>UseRequestLocalization</c> before this runs.
     /// </summary>
-    public async Task InvokeAsync(HttpContext context, IStringLocalizer<ErrorMessages> localizer)
+    public async Task InvokeAsync(HttpContext context)
     {
         try
         {
@@ -36,7 +40,7 @@ public class ExceptionMiddleware
         }
         catch (ZootifyException e)
         {
-            await HandleException(context, e, localizer);
+            await HandleException(context, e);
         }
     }
 
@@ -45,10 +49,7 @@ public class ExceptionMiddleware
     /// and sets the HTTP status code.
     /// Infrastructure errors (DatabaseError, None, DefaultErrorCode) return 500; all others return 400.
     /// </summary>
-    private static Task HandleException(
-        HttpContext context,
-        ZootifyException e,
-        IStringLocalizer<ErrorMessages> localizer)
+    private static Task HandleException(HttpContext context, ZootifyException e)
     {
         context.Response.ContentType = "application/json";
 
@@ -64,10 +65,14 @@ public class ExceptionMiddleware
                 break;
         }
 
+        var message = ResourceManager.GetString(
+                          e.ErrorCode.ToString(), CultureInfo.CurrentUICulture)
+                      ?? e.ErrorCode.ToString();
+
         var response = new
         {
             ErrorCode = e.ErrorCode,
-            ErrorMessage = localizer[e.ErrorCode.ToString()].Value,
+            ErrorMessage = message,
         };
 
         return context.Response.WriteAsync(JsonConvert.SerializeObject(response));
