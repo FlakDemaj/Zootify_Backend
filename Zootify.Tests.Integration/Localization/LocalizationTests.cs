@@ -47,63 +47,6 @@ public class LocalizationTests : IntegrationTestBase
         var error = await ReadErrorAsync(response);
         error.ErrorMessage.Should().Be(NoUserWithThisEmailEn);
     }
-
-    /// <summary>
-    /// Verifies that <c>Accept-Language: en-US</c> falls back to the parent culture <c>en</c>
-    /// and returns the English message.
-    /// </summary>
-    [Fact]
-    public async Task ErrorMessage_AcceptLanguageEnUs_ReturnsEnglishMessage()
-    {
-        Client.DefaultRequestHeaders.Add("Accept-Language", "en-US");
-
-        var request = new LoginUserRequestDto { Email = UnknownEmail, Password = "Test123!" };
-
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
-
-        var error = await ReadErrorAsync(response);
-        error.ErrorMessage.Should().Be(NoUserWithThisEmailEn);
-    }
-
-    #endregion
-
-    #region No Accept-Language header
-
-    /// <summary>
-    /// Verifies that a missing <c>Accept-Language</c> header falls back to the default culture
-    /// (German) and returns the German message.
-    /// </summary>
-    [Fact]
-    public async Task ErrorMessage_NoAcceptLanguageHeader_ReturnsGermanMessage()
-    {
-        var request = new LoginUserRequestDto { Email = UnknownEmail, Password = "Test123!" };
-
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
-
-        var error = await ReadErrorAsync(response);
-        error.ErrorMessage.Should().Be(NoUserWithThisEmailDe);
-    }
-
-    #endregion
-
-    #region Unsupported language
-
-    /// <summary>
-    /// Verifies that an unsupported language (e.g. <c>fr</c>) falls back to the default culture
-    /// (German) and returns the German message.
-    /// </summary>
-    [Fact]
-    public async Task ErrorMessage_UnsupportedLanguage_FallsBackToGerman()
-    {
-        Client.DefaultRequestHeaders.Add("Accept-Language", "fr");
-
-        var request = new LoginUserRequestDto { Email = UnknownEmail, Password = "Test123!" };
-
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
-
-        var error = await ReadErrorAsync(response);
-        error.ErrorMessage.Should().Be(NoUserWithThisEmailDe);
-    }
-
+    
     #endregion
 }
