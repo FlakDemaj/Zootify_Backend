@@ -23,6 +23,7 @@ public class Startup
     [
         typeof(ZootifyModule)
     ];
+    private static readonly string[] OptionsAction = ["de", "en"];
 
     /// <summary>
     /// Registers Autofac modules including the main application module and the AutoMapper module.
@@ -71,7 +72,7 @@ public class Startup
 
         app.UseRequestLocalization(options =>
         {
-            var supported = new[] { "de", "en" };
+            var supported = OptionsAction;
             options.SetDefaultCulture("de")
                    .AddSupportedCultures(supported)
                    .AddSupportedUICultures(supported);
