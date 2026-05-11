@@ -38,7 +38,7 @@ public class Program
 
         var app = builder.Build();
         
-        if (!app.Environment.IsEnvironment("Testing"))
+        if (!app.Environment.IsEnvironment("Testing") && !app.Environment.IsEnvironment("IntegrationTest"))
         {
             app.Migrate();
         }

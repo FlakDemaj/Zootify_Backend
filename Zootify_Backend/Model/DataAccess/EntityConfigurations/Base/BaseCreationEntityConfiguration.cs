@@ -24,6 +24,6 @@ public class BaseCreationEntityConfiguration<T> : BaseGuidEntityConfiguration<T>
             .HasOne(p => p.CreatedByUser)
             .WithMany()
             .HasForeignKey(p => p.CreatedByUserGuid)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

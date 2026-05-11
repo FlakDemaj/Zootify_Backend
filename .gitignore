@@ -9,6 +9,7 @@ obj/
 .vs/
 .idea/
 *.sln.DotSettings.user
+.slnx
 
 # Claude Code
 .claude/

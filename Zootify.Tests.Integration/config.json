@@ -1,0 +1,32 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnectionString": "",
+    "OverrideConnectionString": ""
+  },
+  "AccessToken": {
+    "Issuer": "Zootify-Server",
+    "Audience": "Zootify-Client",
+    "Key": "ZootifyTestSecretKeyThatIsAtLeast32BytesLong!",
+    "ExpiresInMinutes": 30
+  },
+  "Brevo": {
+    "Email": "test@zootify.de",
+    "SenderName": "ZootifyTest",
+    "ApiKey": "fake-api-key-for-integration-tests"
+  },
+  "General": {
+    "MinimumPasswordLength": 8,
+    "FrontendBaseUrl": "http://localhost:4200",
+    "SpecialCharacters": "!@#$%^&*()_+-=[]{}|;:',.<>?",
+    "RegistrationTokenExpiryInHours": 24,
+    "ResetPasswordTokenExpiryInHours": 24
+  }
+}

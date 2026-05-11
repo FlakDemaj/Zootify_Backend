@@ -11,6 +11,7 @@ namespace Zootify_Backend.Controllers.System;
 /// Controller for managing the own user in the system area
 /// Provides endpoint for put
 /// </summary>
+[AllowAnonymous]
 public class AuthController : BaseRestController
 {
     private IUserService UserService { get; }
@@ -22,7 +23,6 @@ public class AuthController : BaseRestController
 
     #region Registration
 
-    [AllowAnonymous]
     [HttpPost("Register")]
     public async Task<IActionResult> RegisterAsync(
         [FromBody] RegisterUserRequestDto registerUserRequestDto)
@@ -31,7 +31,6 @@ public class AuthController : BaseRestController
         return Created();
     }
     
-    [AllowAnonymous]
     [HttpGet("confirm-registration")]
     public async Task<IActionResult> ConfirmRegistrationAsync(
         [FromQuery] string token)
@@ -40,7 +39,6 @@ public class AuthController : BaseRestController
         return Ok();
     }
     
-    [AllowAnonymous]
     [HttpPost("new/registration-email")]
     public async Task<IActionResult> SendNewConfirmationRegistrationEmailAsync(
         [FromBody] SendNewRegistrationEmailRequestDto request)
@@ -53,7 +51,6 @@ public class AuthController : BaseRestController
 
     #region Login
 
-    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginUserResponseDto>> LoginAsync(
         [FromBody] LoginUserRequestDto user)
@@ -61,7 +58,6 @@ public class AuthController : BaseRestController
         return Ok(await UserService.LoginAsync(user));
     }
 
-    [AllowAnonymous]
     [HttpPost("new/reset-password")]
     public async Task<IActionResult> SendNewResetPasswordEmailAsync(
         [FromBody] SendNewResetPasswordEmailRequestDto request)
@@ -70,7 +66,6 @@ public class AuthController : BaseRestController
         return NoContent();
     }
     
-    [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPasswordAsync(
         [FromBody] ResetPasswordRequestDto request,
@@ -79,5 +74,6 @@ public class AuthController : BaseRestController
         await UserService.ResetPasswordAsync(request, resetPasswordToken);
         return Ok();
     }
+    
     #endregion
 }

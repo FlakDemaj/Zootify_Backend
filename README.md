@@ -1,65 +1,233 @@
 # Zootify Backend
 
 Backend-API fuer die Plattform zur Dokumentation von Zoologischen Sammlungen.  
-Entwickelt mit **ASP.NET Core** und **Entity Framework Core** (SQL Server).
+Entwickelt mit **ASP.NET Core**, **Entity Framework Core** (SQL Server), **Autofac** und **Evolve** fuer Migrationen.
+
+---
 
 ## Voraussetzungen
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [SQL Server](https://www.microsoft.com/de-de/sql-server/) (Express reicht aus)
-- EF Core Tools: `dotnet tool install --global dotnet-ef`
+| Tool | Zweck |
+|------|-------|
+| [.NET 10 SDK](https://dotnet.microsoft.com/download) | Runtime und Build |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | SQL Server lokal starten **und** Integration-Tests (Testcontainers) |
+| [SQL Server](https://www.microsoft.com/de-de/sql-server/) | Alternativ zu Docker (z.B. lokale Express-Installation) |
 
-## Projekt starten
+---
 
-### 1. Connection-String anpassen
+## Schnellstart mit Docker (empfohlen)
 
-In `appsettings.json` den Server-Namen anpassen, falls noetig:
-
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=localhost;Database=ZootifyDb;Trusted_Connection=True;TrustServerCertificate=True"
-}
-```
-
-Beispiele:
-- SQL Server Express: `Server=.\SQLEXPRESS;...`
-- Lokaler Server mit Instanzname: `Server=localhost\MEINSERVER;...`
-
-### 2. Datenbank erstellen
+### 1. SQL Server starten
 
 ```bash
-dotnet ef database update
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
+  -p 1433:1433 --name zootify-sql \
+  -d mcr.microsoft.com/mssql/server:2022-latest
+```
+
+Oder als `docker-compose.yml` im Projektroot:
+
+```yaml
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - zootify-data:/var/opt/mssql
+
+volumes:
+  zootify-data:
+```
+
+```bash
+docker compose up -d
+```
+
+### 2. User Secrets setzen
+
+```bash
+cd Zootify_Backend
+
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Server=localhost,1433;Database=ZootifyDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True"
+
+dotnet user-secrets set "AccessToken:Key" "DeinGeheimesJwtSchluesselMindestens32Zeichen!"
+
+dotnet user-secrets set "Brevo:ApiKey" "xkeysib-dein-brevo-api-key"
 ```
 
 ### 3. App starten
 
 ```bash
+cd Zootify_Backend
 dotnet run
 ```
+
+Die API ist erreichbar unter:
+- HTTP:  `http://localhost:5138`
+- HTTPS: `https://localhost:7227`
+- Swagger: `http://localhost:5138/swagger`
+
+---
+
+## User Secrets (Pflichtfelder)
+
+Die App liest Konfiguration in dieser Reihenfolge (spaetere Quellen ueberschreiben fruehere):
+
+1. `config.json` (im Projektordner, eingecheckt — keine Secrets dort!)
+2. User Secrets (nur im `Development`-Environment)
+3. Umgebungsvariablen
+
+**UserSecretsId:** `cfebb19e-0299-4285-babe-8bb6ee0ed4cd`  
+Gespeichert unter: `~/.microsoft/usersecrets/cfebb19e-.../secrets.json`
+
+### Komplette `secrets.json` (Beispiel)
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=ZootifyDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True"
+  },
+  "AccessToken": {
+    "Key": "DeinGeheimesJwtSchluesselMindestens32Zeichen!"
+  },
+  "Brevo": {
+    "ApiKey": "xkeysib-dein-brevo-api-key"
+  }
+}
+```
+
+### Alle Schluessel im Ueberblick
+
+| Schluessel | Pflicht | Beschreibung |
+|------------|---------|--------------|
+| `ConnectionStrings:DefaultConnection` | Ja | SQL Server Connection String |
+| `ConnectionStrings:OverrideConnectionString` | Nein | Fallback wenn `DefaultConnection` leer |
+| `AccessToken:Key` | Ja | JWT Signing Key (mind. 32 Zeichen!) |
+| `AccessToken:Issuer` | Nein | Standard: `Zootify-Server` (in config.json) |
+| `AccessToken:Audience` | Nein | Standard: `Zootify-Client` (in config.json) |
+| `AccessToken:ExpiresInMinutes` | Nein | Standard: `30` (in config.json) |
+| `Brevo:ApiKey` | Ja | API-Key von [brevo.com](https://app.brevo.com) fuer E-Mail-Versand |
+| `Brevo:Email` | Nein | Standard: `zootify@gmx.de` (in config.json) |
+| `Brevo:SenderName` | Nein | Standard: `Zootify` (in config.json) |
+
+### Connection String Formate
+
+```
+# Docker / SQL Server mit SA-Login:
+Server=localhost,1433;Database=ZootifyDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+
+# Windows Auth (lokale Instanz):
+Server=localhost;Database=ZootifyDb;Trusted_Connection=True;TrustServerCertificate=True
+
+# SQL Server Express:
+Server=.\SQLEXPRESS;Database=ZootifyDb;Trusted_Connection=True;TrustServerCertificate=True
+```
+
+---
+
+## Migrationen
+
+Migrationen laufen **automatisch beim App-Start** ueber [Evolve](https://evolve-db.netlify.app/).  
+SQL-Skripte liegen unter `Persistance/Migrations/` und folgen dem Namensschema `V{Jahr}_{Nr}__{Beschreibung}.sql`.
+
+Neue Migration hinzufuegen:
+
+```bash
+# Datei erstellen (Beispiel):
+touch Zootify_Backend/Persistance/Migrations/V2026_2__Add_NewTable.sql
+# SQL-Inhalt einfuegen, beim naechsten dotnet run wird sie automatisch ausgefuehrt
+```
+
+> **Hinweis:** Im `Testing`- und `IntegrationTest`-Environment werden Migrationen **nicht** automatisch ausgefuehrt (Testcontainers uebernimmt das selbst).
+
+---
+
+## Tests
+
+### Unit-Tests
+
+Kein Docker erforderlich.
+
+```bash
+cd Zootify_Backend2
+dotnet test Zootify.Tests.Unit
+```
+
+### Integration-Tests
+
+**Docker muss laufen!** Die Tests starten automatisch einen SQL Server via [Testcontainers](https://dotnet.testcontainers.org/).  
+Brevo wird durch einen Mock ersetzt — kein echter API-Key noetig.
+
+```bash
+dotnet test Zootify.Tests.Integration
+```
+
+Alle Tests auf einmal:
+
+```bash
+dotnet test
+```
+
+---
 
 ## Projektstruktur
 
 ```
-Zootify_Backend/
-├── Enums/                    # Aufzaehlungstypen (Rollen, Status, etc.)
-│   ├── ApprovalStatus.cs     # Pending, Approved, Rejected
-│   ├── GeographicLevel.cs    # Continent, Country, State, District, City
-│   ├── TaxonomyRank.cs       # Phylum, Class, Order, Family, Genus, Species
-│   ├── UserRole.cs           # User, Moderator, Admin
-│   └── UserStatus.cs         # Pending, Active, Blocked
-├── Models/                   # Datenbank-Tabellen als C#-Klassen
-│   ├── User.cs               # Benutzer mit Rolle und Status
-│   ├── TaxonomyNode.cs       # SCOFGA-Hierarchie (Stamm bis Art)
-│   ├── GeographicLocation.cs # Geographische Hierarchie (Kontinent bis Stadt)
-│   ├── Specimen.cs           # Kernobjekt: Fund/Individuum
-│   ├── SpecimenImage.cs      # Bilder pro Individuum
-│   └── Loan.cs               # Ausleih-Management
-├── Data/
-│   └── ZootifyDbContext.cs   # EF Core Konfiguration (Beziehungen, Indizes)
-├── Migrations/               # Auto-generiert von EF Core
-├── Program.cs                # App-Startpunkt
-└── appsettings.json          # Konfiguration (Connection-String)
+Zootify_Backend2/
+├── Zootify_Backend/                  # Haupt-API-Projekt
+│   ├── config.json                   # Basis-Konfiguration (keine Secrets!)
+│   ├── Controllers/
+│   │   ├── Auth/                     # Login, Registrierung, Passwort-Reset
+│   │   ├── Base/                     # Basis-Controller-Klassen
+│   │   └── System/                   # Health-/System-Endpunkte
+│   ├── DTOs/                         # Request/Response-Objekte
+│   ├── Model/
+│   │   ├── Auth/                     # TokenManager (JWT-Erstellung)
+│   │   ├── DataAccess/
+│   │   │   ├── DBContext/            # ZootifyDbContext (EF Core)
+│   │   │   ├── Entities/             # Datenbank-Entitaeten
+│   │   │   └── EntityConfigurations/ # Fluent API Konfigurationen
+│   │   ├── EmailTemplates/           # HTML-E-Mail-Vorlagen (embedded)
+│   │   ├── Mappers/                  # AutoMapper Profile
+│   │   ├── Providers/                # BrevoProvider (E-Mail-Versand)
+│   │   └── Services/                 # Business-Logik
+│   ├── Persistance/
+│   │   ├── MigrationManager.cs       # Evolve-Integration
+│   │   └── Migrations/               # SQL-Migrationsskripte (V{Jahr}_{Nr}__{Name}.sql)
+│   ├── Properties/
+│   │   └── launchSettings.json       # Ports: HTTP 5138, HTTPS 7227
+│   ├── Server/
+│   │   ├── Middlewares/              # ExceptionMiddleware
+│   │   ├── Program.cs                # Einstiegspunkt
+│   │   ├── Startup.cs                # Services, Middleware-Pipeline
+│   │   └── ZootifyModule.cs          # Autofac DI-Registrierungen
+│   └── Utils/
+│       ├── Configuration/            # ZootifyConfiguration (statischer Config-Accessor)
+│       ├── Enums/                    # Anwendungsweite Enumerationen
+│       ├── Extensions/               # Extension Methods
+│       ├── Transaction/              # Transaction-Helper
+│       └── ZootifyException.cs       # Eigene Exception-Klasse
+│
+├── Zootify.Tests.Unit/               # Unit-Tests (kein Docker)
+│   └── Domain/                       # Domain-Logik-Tests
+│
+├── Zootify.Tests.Integration/        # Integration-Tests (Docker erforderlich)
+│   ├── config.json                   # Test-Konfiguration (kein echter API-Key)
+│   ├── Auth/                         # Auth-Controller-Tests
+│   └── Common/
+│       ├── ZootifyTestFactory.cs     # WebApplicationFactory mit Testcontainers-DB
+│       ├── IntegrationTestFixture.cs # Container-Lifecycle und Respawn
+│       └── Helpers/                  # Test-Helper und Factories
+│
+└── Zootify.Tests.Shared/             # Gemeinsame Test-Utilities
 ```
+
+---
 
 ## Datenmodell
 
@@ -71,173 +239,121 @@ Die Datenbank besteht aus 6 Tabellen:
 
 #### Users (Benutzer)
 
-Speichert alle registrierten Benutzer der Plattform.
-
 | Spalte | Typ | Beschreibung |
 |--------|-----|-------------|
 | Id | int | Primaerschluessel, wird automatisch vergeben |
 | FirstName | string (max 100) | Vorname |
 | LastName | string (max 100) | Nachname |
 | Email | string (max 256) | E-Mail-Adresse, muss einzigartig sein (fuer Login) |
-| PasswordHash | string (max 512) | Gehashtes Passwort (nie im Klartext gespeichert) |
+| PasswordHash | string (max 512) | Gehashtes Passwort (BCrypt) |
 | Role | string | Rolle: `User`, `Moderator` oder `Admin` |
-| Status | string | Kontostatus: `Pending` (wartet auf Aktivierung), `Active` (aktiv) oder `Blocked` (gesperrt) |
+| Status | string | Kontostatus: `Pending`, `Active` oder `Blocked` |
 | CreatedAt | datetime | Zeitpunkt der Registrierung |
-
-**Beziehungen:** Ein User kann mehrere Specimens besitzen, Taxonomien vorschlagen und an Ausleihen beteiligt sein.
 
 ---
 
 #### TaxonomyNodes (SCOFGA-Hierarchie)
 
-Bildet die biologische Klassifikation als Baumstruktur ab. Alle 6 Stufen (Stamm, Klasse, Ordnung, Familie, Gattung, Art) sind in einer Tabelle mit Parent-Child-Beziehung.
+Bildet die biologische Klassifikation als Baumstruktur ab (Stamm bis Art, Self-Reference).
 
 | Spalte | Typ | Beschreibung |
 |--------|-----|-------------|
 | Id | int | Primaerschluessel |
-| Name | string (max 256) | Name des Taxons (z.B. "Insekten", "Schmetterlinge") |
-| Rank | string | Hierarchie-Stufe: `Phylum` (Stamm), `Class` (Klasse), `Order` (Ordnung), `Family` (Familie), `Genus` (Gattung), `Species` (Art) |
-| ApprovalStatus | string | Freigabe-Status: `Pending` (von Nutzer vorgeschlagen, wartet auf Moderator), `Approved` (freigegeben), `Rejected` (abgelehnt) |
-| ParentId | int? | Verweis auf den uebergeordneten Eintrag (z.B. Klasse verweist auf ihren Stamm). Null bei Wurzel-Eintraegen (Staemme) |
-| ProposedByUserId | int? | Welcher Nutzer diesen Eintrag vorgeschlagen hat (null bei System-Eintraegen) |
-
-**Beispiel-Baum:**
-```
-Gliederf. (Phylum, ParentId=null)
-  -> Insekten (Class, ParentId=1)
-    -> Schmetterlinge (Order, ParentId=2)
-      -> Tagfalter (Family, ParentId=3)
-        -> Vanessa (Genus, ParentId=4)
-          -> Vanessa cardui (Species, ParentId=5)
-```
-
-**Unique-Index:** Pro Eltern-Knoten darf es keine doppelten Namen auf gleicher Stufe geben.
+| Name | string (max 256) | Name des Taxons |
+| Rank | string | `Phylum`, `Class`, `Order`, `Family`, `Genus`, `Species` |
+| ApprovalStatus | string | `Pending`, `Approved`, `Rejected` |
+| ParentId | int? | Uebergeordneter Knoten (null = Wurzel) |
+| ProposedByUserId | int? | Vorschlagender Benutzer |
 
 ---
 
 #### GeographicLocations (Geographische Hierarchie)
 
-Bildet politische/geographische Strukturen als Baumstruktur ab, fuer die strukturierte Suche nach Fundorten.
-
 | Spalte | Typ | Beschreibung |
 |--------|-----|-------------|
 | Id | int | Primaerschluessel |
-| Name | string (max 256) | Name des Ortes (z.B. "Deutschland", "NRW", "Siegen") |
-| Level | string | Hierarchie-Ebene: `Continent`, `Country`, `State`, `District`, `City` |
-| ParentId | int? | Verweis auf den uebergeordneten Eintrag. Null bei Kontinenten |
-
-**Beispiel-Baum:**
-```
-Europa (Continent)
-  -> Deutschland (Country)
-    -> NRW (State)
-      -> Siegen-Wittgenstein (District)
-        -> Siegen (City)
-```
+| Name | string (max 256) | Name des Ortes |
+| Level | string | `Continent`, `Country`, `State`, `District`, `City` |
+| ParentId | int? | Uebergeordneter Eintrag (null = Kontinent) |
 
 ---
 
 #### Specimens (Funde / Individuen)
 
-Das **Kernobjekt** der Sammlung. Jeder Eintrag repraesentiert ein gesammeltes Tier (z.B. ein Insekt).
+Das **Kernobjekt** der Sammlung.
 
 | Spalte | Typ | Beschreibung |
 |--------|-----|-------------|
 | Id | int | Primaerschluessel |
-| SpeciesId | int | Welche Art (Verweis auf TaxonomyNodes, muss eine Species sein) |
-| GeographicLocationId | int? | Grobe Fundort-Zuordnung (Verweis auf GeographicLocations, z.B. "Siegen") |
-| Latitude | double? | Exakter Breitengrad des Fundortes (z.B. 50.8748) - fuer die Kartenansicht |
-| Longitude | double? | Exakter Laengengrad des Fundortes (z.B. 8.0243) - fuer die Kartenansicht |
-| FindDate | datetime? | Wann wurde das Tier gefunden |
-| OwnerId | int | Wem gehoert dieser Fund (Verweis auf Users) |
-| StorageBuilding | string? (max 200) | Aufbewahrungsort: Gebaeude |
-| StorageCabinet | string? (max 200) | Aufbewahrungsort: Schrank |
-| StorageShelf | string? (max 200) | Aufbewahrungsort: Regal |
-| StorageCompartment | string? (max 200) | Aufbewahrungsort: Fach |
-| Comment | string? (max 2000) | Freitext-Kommentar |
-| IsPublic | bool | Sichtbarkeit: true = oeffentlich sichtbar, false = nur fuer den Besitzer |
-| CreatedAt | datetime | Wann der Eintrag erstellt wurde |
-| UpdatedAt | datetime | Wann der Eintrag zuletzt geaendert wurde |
-
-**Beziehungen:** Jeder Fund gehoert zu genau einem User (Owner), einer Art (Species) und optional einem Ort (GeographicLocation). Ein Fund kann mehrere Bilder und Ausleihen haben.
+| SpeciesId | int | Art (TaxonomyNode mit Rank=Species) |
+| GeographicLocationId | int? | Fundort-Zuordnung |
+| Latitude | double? | Breitengrad |
+| Longitude | double? | Laengengrad |
+| FindDate | datetime? | Funddatum |
+| OwnerId | int | Besitzer (User) |
+| StorageBuilding / Cabinet / Shelf / Compartment | string? | Aufbewahrungsort |
+| Comment | string? (max 2000) | Freitext |
+| IsPublic | bool | Oeffentlich sichtbar |
+| CreatedAt / UpdatedAt | datetime | Timestamps |
 
 ---
 
 #### SpecimenImages (Bilder)
 
-Speichert Bilder/Fotos zu einzelnen Funden (Wunschkriterium).
-
 | Spalte | Typ | Beschreibung |
 |--------|-----|-------------|
 | Id | int | Primaerschluessel |
-| SpecimenId | int | Zu welchem Fund gehoert das Bild (Verweis auf Specimens) |
-| ImageUrl | string (max 1000) | Dateipfad oder URL zum Bild |
-| UploadedAt | datetime | Wann das Bild hochgeladen wurde |
+| SpecimenId | int | Zugehoeriger Fund |
+| ImageUrl | string (max 1000) | Pfad oder URL |
+| UploadedAt | datetime | Upload-Zeitpunkt |
 
 ---
 
 #### Loans (Ausleihen)
 
-Dokumentiert das Verleihen und Aufbewahren von Sammlungsobjekten.
-
 | Spalte | Typ | Beschreibung |
 |--------|-----|-------------|
 | Id | int | Primaerschluessel |
-| SpecimenId | int | Welches Objekt wird verliehen (Verweis auf Specimens) |
-| LenderId | int | Wer verleiht (Verweis auf Users) |
-| BorrowerId | int? | Wer leiht aus, falls registrierter Nutzer (Verweis auf Users) |
-| BorrowerExternalName | string? (max 256) | Name des Ausleihers, falls externe Person (nicht registriert) |
-| LoanDate | datetime | Wann wurde verliehen |
-| DueDate | datetime | Bis wann muss zurueckgegeben werden (fuer Erinnerungen/Notifications) |
-| ReturnDate | datetime? | Wann tatsaechlich zurueckgegeben (null = noch ausgeliehen) |
-| Notes | string? (max 2000) | Anmerkungen zur Ausleihe |
+| SpecimenId | int | Ausgeliehenes Objekt |
+| LenderId | int | Verleiher (User) |
+| BorrowerId | int? | Ausleihender Nutzer (optional) |
+| BorrowerExternalName | string? (max 256) | Externer Ausleiher (kein Account) |
+| LoanDate | datetime | Verleih-Datum |
+| DueDate | datetime | Rueckgabe-Deadline |
+| ReturnDate | datetime? | Tatsaechliche Rueckgabe (null = noch ausgeliehen) |
+| Notes | string? (max 2000) | Anmerkungen |
 
 ---
 
-### Beziehungen (ER-Diagramm)
-
-```
-User 1──* Specimen *──1 TaxonomyNode
-  |                       | (self-ref)
-  |                       +-- Parent/Children
-  |
-  +-- 1──* Loan (als Lender)
-  +-- 1──* Loan (als Borrower)
-  +-- 1──* TaxonomyNode (als Vorschlag)
-
-Specimen *──1 GeographicLocation
-  |              | (self-ref)
-  |              +-- Parent/Children
-  +-- 1──* SpecimenImage
-  +-- 1──* Loan
-```
-
-### Löschverhalten
+### Loeschverhalten
 
 | Beziehung | Verhalten | Grund |
 |-----------|-----------|-------|
-| TaxonomyNode -> Parent | **Restrict** | Kein Stamm loeschen wenn Klassen drunter haengen |
-| GeographicLocation -> Parent | **Restrict** | Kein Land loeschen wenn Bundeslaender existieren |
-| Specimen -> Species | **Restrict** | Keine Art loeschen die bei Funden verwendet wird |
-| Specimen -> Owner (User) | **Cascade** | User geloescht = seine Funde werden mitgeloescht |
-| Specimen -> GeographicLocation | **SetNull** | Ort geloescht = Fund bleibt, Ort-Referenz wird null |
+| TaxonomyNode -> Parent | **Restrict** | Kein Loeschen wenn Kinder vorhanden |
+| GeographicLocation -> Parent | **Restrict** | Kein Loeschen wenn Unterorte vorhanden |
+| Specimen -> Species | **Restrict** | Art nicht loeschbar wenn in Gebrauch |
+| Specimen -> Owner (User) | **Cascade** | User geloescht = Funde werden mitgeloescht |
+| Specimen -> GeographicLocation | **SetNull** | Ort geloescht = Referenz wird null |
 | SpecimenImage -> Specimen | **Cascade** | Fund geloescht = Bilder werden mitgeloescht |
 | Loan -> Specimen | **Cascade** | Fund geloescht = Ausleihen werden mitgeloescht |
-| Loan -> Lender/Borrower | **Restrict** | Kein User loeschen der aktive Ausleihen hat |
+| Loan -> Lender/Borrower | **Restrict** | Kein User loeschen mit aktiven Ausleihen |
 
-## Neue Migration erstellen
-
-Wenn sich das Datenmodell aendert:
-
-```bash
-dotnet ef migrations add BeschreibungDerAenderung
-dotnet ef database update
-```
+---
 
 ## Technologie-Stack
 
-- **Runtime:** .NET 10
-- **Framework:** ASP.NET Core (REST-API)
-- **ORM:** Entity Framework Core
-- **Datenbank:** Microsoft SQL Server
-- **API-Docs:** OpenAPI
+| Bereich | Technologie |
+|---------|-------------|
+| Runtime | .NET 10 |
+| Framework | ASP.NET Core (REST-API) |
+| ORM | Entity Framework Core 10 |
+| Datenbank | Microsoft SQL Server |
+| Migrationen | Evolve (SQL-Skript-basiert) |
+| DI-Container | Autofac |
+| Mapping | AutoMapper |
+| Auth | JWT Bearer (Microsoft.AspNetCore.Authentication.JwtBearer) |
+| Passwort-Hashing | BCrypt.Net-Next |
+| E-Mail | Brevo (SendWithBrevo) |
+| API-Dokumentation | Swagger / OpenAPI |
+| Unit-Tests | xUnit + Moq + FluentAssertions |
+| Integration-Tests | xUnit + Testcontainers (SQL Server) + Respawn |
