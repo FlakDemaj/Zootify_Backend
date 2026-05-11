@@ -17,21 +17,8 @@ public class ErrorMessageLocalizer : IErrorMessageLocalizer
 
     public string Localize(ErrorCode errorCode)
     {
-        string key = errorCode.ToString();
-        LocalizedString result = _localizer[key];
-
-        if (result.ResourceNotFound == false)
-        {
-            return result.Value;
-        }
-
-        return GetDescriptionFallback(errorCode);
-    }
-
-    public string Localize(ErrorCode errorCode, params object[] arguments)
-    {
-        string key = errorCode.ToString();
-        LocalizedString result = _localizer[key, arguments];
+        var key = errorCode.ToString();
+        var result = _localizer[key];
 
         if (result.ResourceNotFound == false)
         {
@@ -43,14 +30,14 @@ public class ErrorMessageLocalizer : IErrorMessageLocalizer
 
     private static string GetDescriptionFallback(ErrorCode errorCode)
     {
-        FieldInfo? field = typeof(ErrorCode).GetField(errorCode.ToString());
+        var field = typeof(ErrorCode).GetField(errorCode.ToString());
 
         if (field == null)
         {
             return $"Error {(int)errorCode}";
         }
 
-        DescriptionAttribute? attribute = field.GetCustomAttribute<DescriptionAttribute>();
+        var attribute = field.GetCustomAttribute<DescriptionAttribute>();
 
         if (attribute == null)
         {

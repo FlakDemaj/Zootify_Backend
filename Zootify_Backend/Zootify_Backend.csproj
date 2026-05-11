@@ -43,6 +43,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Model\EmailTemplates\*.html" />
+    <EmbeddedResource Update="Resources\ErrorMessages.resx" />
+    <EmbeddedResource Update="Resources\ErrorMessages.en.resx">
+      <Culture>en</Culture>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

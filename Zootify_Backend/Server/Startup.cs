@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Text;
 using Autofac;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Logging.Console;
@@ -11,6 +10,7 @@ using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Models.DataAccess.DBContext;
 using Zootify_Backend.Persistance;
 using Zootify_Backend.Server.Middlewares;
+using AuthenticationMiddleware = Zootify_Backend.Server.Middlewares.AuthenticationMiddleware;
 
 namespace Zootify_Backend.Server;
 
@@ -186,6 +186,7 @@ public class Startup
     private void EnableMiddlewares(IApplicationBuilder builder)
     {
         builder.UseMiddleware<ExceptionMiddleware>();
+        builder.UseMiddleware<AuthenticationMiddleware>();
     }
 
     /// <summary>
