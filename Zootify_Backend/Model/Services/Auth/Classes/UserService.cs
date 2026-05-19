@@ -1,16 +1,16 @@
 using AutoMapper;
 using Zootify_Backend.Configuration;
-using Zootify_Backend.DTOs.Request;
-using Zootify_Backend.DTOs.Response;
+using Zootify_Backend.DTOs.Auth.Request;
+using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Model.Services.Interfaces;
+using Zootify_Backend.Model.Services.Auth.Interfaces;
 using Zootify_Backend.Models.Providers;
 using Zootify_Backend.Transaction;
 
-namespace Zootify_Backend.Model.Services.Classes;
+namespace Zootify_Backend.Model.Services.Auth.Classes;
 
 /// <summary>
 /// Handles all user-related business logic including registration, login, and password management.

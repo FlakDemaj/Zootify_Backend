@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Request;
+namespace Zootify_Backend.DTOs.Auth.Request;
 
 public class SendNewResetPasswordEmailRequestDto
 {

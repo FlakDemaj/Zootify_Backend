@@ -1,29 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
-using Zootify_Backend.DTOs.Request;
-using Zootify_Backend.DTOs.Response;
+using Zootify_Backend.DTOs.Auth.Request;
+using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Model.Services.Interfaces;
+using Zootify_Backend.Model.Services.Auth.Interfaces;
 
 namespace Zootify_Backend.Controllers.System;
 
 /// <summary>
 /// Controller for managing authentication and user registration flows.
 /// </summary>
-public class AuthController : BaseRestController
+public class AuthController : BaseRestUserController
 {
-    private IUserService UserService { get; }
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="AuthController"/> with the required user service.
-    /// </summary>
-    public AuthController(IUserService userService)
-    {
-        UserService = userService;
-    }
 
     #region Registration
+
+    public AuthController(IUserService userService) : base(userService)
+    {
+    }
 
     /// <summary>
     /// Registers a new user. Returns 201 Created on success.

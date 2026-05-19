@@ -1,3 +1,6 @@
+using Zootify_Backend.DTOs.Auth.Request;
+using Zootify_Backend.DTOs.Auth.Response;
+
 namespace Zootify.Tests.Integration.Auth;
 
 public class AuthControllerTests : IntegrationTestBase

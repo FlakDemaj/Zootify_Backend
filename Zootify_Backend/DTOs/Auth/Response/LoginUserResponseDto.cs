@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Response;
+namespace Zootify_Backend.DTOs.Auth.Response;
 
 public class LoginUserResponseDto
 {

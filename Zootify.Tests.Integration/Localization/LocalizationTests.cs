@@ -1,3 +1,5 @@
+using Zootify_Backend.DTOs.Auth.Request;
+
 namespace Zootify.Tests.Integration.Localization;
 
 public class LocalizationTests : IntegrationTestBase

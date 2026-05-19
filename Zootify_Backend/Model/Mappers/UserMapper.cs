@@ -1,5 +1,5 @@
 using AutoMapper;
-using Zootify_Backend.DTOs.Request;
+using Zootify_Backend.DTOs.Auth.Request;
 using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
