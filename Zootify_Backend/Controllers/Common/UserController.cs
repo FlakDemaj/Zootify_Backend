@@ -5,9 +5,9 @@ using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.System.Interfaces;
 
-namespace Zootify_Backend.Controllers.Moderator;
+namespace Zootify_Backend.Controllers.Common;
 
-[Authorize(Roles = Roles.Moderator)]
+[Authorize(Roles = $"{Roles.Moderator}, {Roles.Admin}")]
 public class UserController : BaseRestUserController
 {
     public UserController(IUserService userService) 
