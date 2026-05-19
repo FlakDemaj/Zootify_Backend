@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Model.Services.Auth.Interfaces;
+using Zootify_Backend.Model.Services.System.Interfaces;
 
 namespace Zootify_Backend.Controllers.Moderator;
 

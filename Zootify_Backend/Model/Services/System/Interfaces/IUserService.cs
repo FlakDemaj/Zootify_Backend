@@ -1,7 +1,7 @@
 using Zootify_Backend.DTOs.Auth.Request;
 using Zootify_Backend.DTOs.Auth.Response;
 
-namespace Zootify_Backend.Model.Services.Auth.Interfaces;
+namespace Zootify_Backend.Model.Services.System.Interfaces;
 
 /// <summary>
 /// Defines all user-related business operations including registration, login, and password management.

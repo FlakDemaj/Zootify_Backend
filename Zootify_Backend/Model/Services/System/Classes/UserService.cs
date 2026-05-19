@@ -6,11 +6,11 @@ using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Model.Services.Auth.Interfaces;
+using Zootify_Backend.Model.Services.System.Interfaces;
 using Zootify_Backend.Models.Providers;
 using Zootify_Backend.Transaction;
 
-namespace Zootify_Backend.Model.Services.Auth.Classes;
+namespace Zootify_Backend.Model.Services.System.Classes;
 
 /// <summary>
 /// Handles all user-related business logic including registration, login, and password management.

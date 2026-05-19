@@ -1,6 +1,5 @@
 using Zootify_Backend.Controllers.System;
-using Zootify_Backend.Model.Services.Auth.Classes;
-using Zootify_Backend.Model.Services.Auth.Interfaces;
+using Zootify_Backend.Model.Services.System.Interfaces;
 
 namespace Zootify_Backend.Controllers.Base;
 

@@ -4,7 +4,7 @@ using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Auth.Request;
 using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Model.Services.Auth.Interfaces;
+using Zootify_Backend.Model.Services.System.Interfaces;
 
 namespace Zootify_Backend.Controllers.System;
 
@@ -89,10 +89,10 @@ public class AuthController : BaseRestUserController
     /// </summary>
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPasswordAsync(
-        [FromBody] ResetPasswordRequestDto request,
-        [FromQuery] string resetPasswordToken)
+        [FromQuery] string token,
+        [FromBody] ResetPasswordRequestDto request)
     {
-        await UserService.ResetPasswordAsync(request, resetPasswordToken);
+        await UserService.ResetPasswordAsync(request, token);
         return Ok();
     }
 
