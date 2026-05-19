@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Auth.Request;
 using Zootify_Backend.DTOs.Auth.Response;
-using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.System.Interfaces;
 
 namespace Zootify_Backend.Controllers.System;
@@ -11,6 +10,7 @@ namespace Zootify_Backend.Controllers.System;
 /// <summary>
 /// Controller for managing authentication and user registration flows.
 /// </summary>
+[AllowAnonymous]
 public class AuthController : BaseRestUserController
 {
 
