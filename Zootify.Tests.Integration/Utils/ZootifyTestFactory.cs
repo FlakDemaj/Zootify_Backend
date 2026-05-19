@@ -1,15 +1,14 @@
 using Autofac;
-
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
 using Zootify_Backend.Server;
+using Zootify.Tests.Integration.Utils.Helpers;
 
-namespace Zootify.Tests.Integration.Common;
+namespace Zootify.Tests.Integration.Utils;
 
 /// <summary>
 /// Replaces ZootifyDbContext with the test container DB and IBrevoProvider with a mock.
@@ -27,6 +26,7 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
         _connectionString = connectionString;
         _brevoMock = brevoMock;
     }
+    
 
     /// <summary>
     /// Overrides the application configuration and replaces the database context
@@ -40,10 +40,11 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["AccessToken:Key"] = "ZootifyTestSecretKeyThatIsAtLeast32BytesLong!",
-                ["AccessToken:Issuer"] = "Zootify-Server",
-                ["AccessToken:Audience"] = "Zootify-Client",
-                ["AccessToken:ExpiresInMinutes"] = "30"
+                ["AccessToken:Key"] = TestConfig.TestJwtSecret,
+                ["AccessToken:Issuer"] = TestConfig.TestIssuer,
+                ["AccessToken:Audience"] = TestConfig.TestAudience,
+                ["AccessToken:ExpiresInMinutes"] = TestConfig.TestTokenExpiresInMinutes.ToString(),
+                ["Brevo:ApiKey"] = TestConfig.TestBrevoApiKey
             });
         });
 

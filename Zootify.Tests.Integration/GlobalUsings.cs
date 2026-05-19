@@ -7,5 +7,3 @@ global using Zootify_Backend.Enums;
 global using Zootify_Backend.Model.DataAccess.Entitys;
 global using Zootify_Backend.Models.DataAccess.DBContext;
 global using Zootify_Backend.Models.Providers;
-global using Zootify.Tests.Integration.Common;
-global using Zootify.Tests.Integration.Common.Helpers;

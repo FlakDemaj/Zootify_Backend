@@ -1,7 +1,7 @@
+using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 using Zootify_Backend.Models.DataAccess.DBContext;
-using Zootify_Backend.Models.DataAccess.Repositorys.Interfaces;
 
-namespace Zootify_Backend.Models.DataAccess.Repositorys.Classes;
+namespace Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 
 /// <summary>
 /// Base repository class providing access to the database context.

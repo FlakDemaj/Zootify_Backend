@@ -31,7 +31,7 @@ public enum ErrorCode
 
     UserWithThisEmailAlreadyExists = -1002000,
 
-    NoUserWithThisId = -1002001,
+    NoUserWithThisToken = -1002001,
 
     NoUserWithThisEmail = -1002002,
 
@@ -42,6 +42,8 @@ public enum ErrorCode
     UserIsDeleted = -1002005,
 
     UserPending = -1002006,
+    
+    NoUserWithThisGuid = -1002007,
 
     InvalidRegistrationToken = -1003000,
 

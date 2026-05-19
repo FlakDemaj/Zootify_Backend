@@ -1,4 +1,5 @@
 using Zootify_Backend.DTOs.Auth.Request;
+using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Localization;
 

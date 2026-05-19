@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Zootify_Backend.Models.DataAccess.Entitys.Base;
+using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 

@@ -4,15 +4,11 @@ namespace Zootify_Backend.Configuration;
 
 public class ZootifyConfiguration : BaseConfiguration
 {
-    static ZootifyConfiguration()
+    public static void InitializeFromHost(
+        IConfiguration configuration,
+        ILogger<BaseConfiguration> logger)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile("config.json", optional: false, reloadOnChange: true)
-            .AddEnvironmentVariables()
-            .AddUserSecrets<ZootifyConfiguration>(optional: true)
-            .Build();
-
-        Initialize(configuration, NullLoggerFactory.Instance.CreateLogger<BaseConfiguration>());
+        Initialize(configuration, logger);
     }
 
     #region General

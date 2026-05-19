@@ -53,7 +53,7 @@ namespace Zootify_Backend.Transaction
             // Handle async methods appropriately
             if (IsAsyncMethod(method))
             {
-                invocation.ReturnValue = InterceptAsync((dynamic)invocation.ReturnValue, isReadonly);
+                invocation.ReturnValue = InterceptAsync((dynamic)invocation.ReturnValue!, isReadonly);
             }
             else
             {

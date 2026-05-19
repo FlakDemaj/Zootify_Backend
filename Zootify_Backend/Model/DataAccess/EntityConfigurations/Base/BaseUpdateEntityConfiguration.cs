@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
-using Zootify_Backend.Models.DataAccess.Entitys.Base;
 
-namespace Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
+namespace Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
 
 public class BaseUpdateEntityConfiguration<T> : BaseCreationEntityConfiguration<T>
 where T : BaseUpdateEntity

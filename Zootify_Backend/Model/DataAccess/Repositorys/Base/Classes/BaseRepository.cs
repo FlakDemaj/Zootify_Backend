@@ -1,9 +1,9 @@
 using Zootify_Backend.Extensions;
+using Zootify_Backend.Model.DataAccess.Entitys.Base;
+using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 using Zootify_Backend.Models.DataAccess.DBContext;
-using Zootify_Backend.Models.DataAccess.Entitys.Base;
-using Zootify_Backend.Models.DataAccess.Repositorys.Interfaces;
 
-namespace Zootify_Backend.Models.DataAccess.Repositorys.Classes;
+namespace Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 
 /// <summary>
 /// Base repository class for performing CRUD operations on entities that extend <see cref="BaseGuidEntity"/>.

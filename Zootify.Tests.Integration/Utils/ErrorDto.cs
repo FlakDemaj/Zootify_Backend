@@ -1,4 +1,4 @@
-namespace Zootify.Tests.Integration.Common;
+namespace Zootify.Tests.Integration.Utils;
 
 public class ErrorDto
 {

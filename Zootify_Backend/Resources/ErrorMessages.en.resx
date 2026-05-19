@@ -51,9 +51,6 @@
   <data name="UserWithThisEmailAlreadyExists" xml:space="preserve">
     <value>A user with this email address already exists.</value>
   </data>
-  <data name="NoUserWithThisId" xml:space="preserve">
-    <value>This user does not exist.</value>
-  </data>
   <data name="NoUserWithThisEmail" xml:space="preserve">
     <value>A user with this email address does not exist.</value>
   </data>
@@ -82,5 +79,11 @@
   </data>
   <data name="ResetPasswordTokenExpired" xml:space="preserve">
     <value>Your password reset link has expired. Please request a new one.</value>
+  </data>
+  <data name="NoUserWithThisToken" xml:space="preserve">
+    <value>This user does not exist.</value>
+  </data>
+  <data name="NoUserWithThisGuid" xml:space="preserve">
+    <value>A user with this token does not exists.</value>
   </data>
 </root>
