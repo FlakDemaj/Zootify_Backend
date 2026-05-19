@@ -15,24 +15,24 @@ namespace Zootify_Backend.Model.Services.System.Classes;
 /// <summary>
 /// Handles all user-related business logic including registration, login, and password management.
 /// </summary>
-public class UserService : IUserService
+public class AuthService : IAuthService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IAuthRepository _authRepository;
     private readonly IBrevoProvider _brevoProvider;
     private readonly ITokenManager _tokenManager;
 
     private IMapper Mapper { get; }
 
     /// <summary>
-    /// Initializes a new <see cref="UserService"/> with its required dependencies.
+    /// Initializes a new <see cref="AuthService"/> with its required dependencies.
     /// </summary>
-    public UserService(
-        IUserRepository userRepository,
+    public AuthService(
+        IAuthRepository authRepository,
         IMapper mapper,
         IBrevoProvider brevoProvider,
         ITokenManager tokenManager)
     {
-        _userRepository = userRepository;
+        _authRepository = authRepository;
         Mapper = mapper;
         _brevoProvider = brevoProvider;
         _tokenManager = tokenManager;
@@ -49,8 +49,8 @@ public class UserService : IUserService
         RegisterUserRequestDto request)
     {
         var existingUser = await
-            _userRepository
-                .GetUserByEmail(request.Email.ToLower());
+            _authRepository
+                .GetUserByEmailAsync(request.Email.ToLower());
 
         if (existingUser != null)
         {
@@ -75,11 +75,11 @@ public class UserService : IUserService
     [Transaction(ReadOnly = false)]
     public async Task ConfirmRegistrationAsync(string token)
     {
-        var user = await _userRepository.GetUserByRegistrationTokenAsync(token);
+        var user = await _authRepository.GetUserByRegistrationTokenAsync(token);
 
         if (user == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisId);
+            throw new ZootifyException(ErrorCode.NoUserWithThisToken);
         }
 
         switch (user.Status)
@@ -108,7 +108,7 @@ public class UserService : IUserService
         user.SetUpdatedBy(null);
         user.RemoveRegistrationToken();
 
-        await _userRepository.UpdateAsync(user);
+        await _authRepository.UpdateAsync(user);
     }
 
     /// <summary>
@@ -119,7 +119,7 @@ public class UserService : IUserService
     public async Task SendNewRegistrationEmailAsync(
         SendNewRegistrationEmailRequestDto request)
     {
-        var user = await _userRepository
+        var user = await _authRepository
             .GetUserByEmailWithRegistrationToken(request.Email.ToLower());
 
         if (user == null)
@@ -135,7 +135,7 @@ public class UserService : IUserService
         var registrationToken = user
             .CreateRegistrationToken(ZootifyConfiguration.RegistrationTokenExpiryInHours);
 
-        await _userRepository.UpdateAsync(user);
+        await _authRepository.UpdateAsync(user);
 
         var wasSent = await _brevoProvider.SendRegistrationEmail(
             registrationToken.Token,
@@ -161,7 +161,7 @@ public class UserService : IUserService
     public async Task<LoginUserResponseDto> LoginAsync(
         LoginUserRequestDto request)
     {
-        var user = await _userRepository.GetUserByEmail(
+        var user = await _authRepository.GetUserByEmailAsync(
             request.Email.ToLower(),
             true);
 
@@ -183,12 +183,12 @@ public class UserService : IUserService
         if (!user.CheckPassword(request.Password))
         {
             user.IncrementLoginAttempts(ZootifyConfiguration.MaximumLoginAttempts);
-            await _userRepository.UpdateAsync(user);
+            await _authRepository.UpdateAsync(user);
             throw new ZootifyException(ErrorCode.IncorrectPassword);
         }
 
         user.ResetLoginAttempts();
-        await _userRepository.UpdateAsync(user);
+        await _authRepository.UpdateAsync(user);
 
         return _tokenManager.GenerateAccessToken(
             user.Guid,
@@ -205,7 +205,7 @@ public class UserService : IUserService
         ResetPasswordRequestDto request,
         string resetPasswordToken)
     {
-        var user = await _userRepository.GetUserByResetPasswordTokenWithResetPassword(
+        var user = await _authRepository.GetUserByResetPasswordTokenWithResetPassword(
             resetPasswordToken);
 
         if (user == null)
@@ -238,7 +238,7 @@ public class UserService : IUserService
         user.ActivateUser();
         user.RemoveResetPasswordToken();
 
-        await _userRepository.UpdateAsync(user);
+        await _authRepository.UpdateAsync(user);
 
         var wasSent = await _brevoProvider.SendConfirmationResetPasswordEmail(
             user.FirstName,
@@ -257,7 +257,7 @@ public class UserService : IUserService
     [Transaction(ReadOnly = false)]
     public async Task SendNewResetPasswordEmailAsync(SendNewResetPasswordEmailRequestDto request)
     {
-        var user = await _userRepository.GetUserByEmailWithResetPassword(
+        var user = await _authRepository.GetUserByEmailWithResetPassword(
             request.Email.ToLower());
 
         if (user == null)
@@ -276,7 +276,7 @@ public class UserService : IUserService
         var resetPasswordToken = user
             .CreateResetPasswordTokenEntityToken(ZootifyConfiguration.ResetPasswordTokenExpiryInHours);
 
-        await _userRepository.UpdateAsync(user);
+        await _authRepository.UpdateAsync(user);
 
         var wasSent = await _brevoProvider.SendResetPasswordEmail(
             resetPasswordToken.Token,
@@ -303,7 +303,7 @@ public class UserService : IUserService
         var registrationToken = user
             .CreateRegistrationToken(ZootifyConfiguration.RegistrationTokenExpiryInHours);
 
-        var createdUser = await _userRepository.CreateAsync(user);
+        var createdUser = await _authRepository.CreateAsync(user);
 
         var wasSent = await _brevoProvider.SendRegistrationEmail(
             registrationToken.Token,

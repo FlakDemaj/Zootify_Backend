@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Enums;
+using Zootify_Backend.Model.DataAccess.Entitys.Base;
 using Zootify_Backend.Models.DataAccess.DBContext;
-using Zootify_Backend.Models.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Extensions;
 

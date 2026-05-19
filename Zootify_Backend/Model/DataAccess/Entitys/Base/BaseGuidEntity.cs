@@ -1,4 +1,4 @@
-namespace Zootify_Backend.Models.DataAccess.Entitys.Base;
+namespace Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 public abstract class BaseGuidEntity
 {

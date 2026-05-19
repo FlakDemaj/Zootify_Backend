@@ -1,5 +1,6 @@
 using Zootify_Backend.DTOs.Auth.Request;
 using Zootify_Backend.DTOs.Auth.Response;
+using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Auth;
 
@@ -274,16 +275,16 @@ public class AuthControllerTests : IntegrationTestBase
 
     /// <summary>
     /// Verifies that a non-existent token returns 400
-    /// with the <see cref="ErrorCode.NoUserWithThisId"/> error code.
+    /// with the <see cref="ErrorCode.NoUserWithThisToken"/> error code.
     /// </summary>
     [Fact]
-    public async Task ConfirmRegistration_InvalidToken_Returns400WithNoUserWithThisId()
+    public async Task ConfirmRegistration_InvalidToken_Returns400WithNoUserWithThisToken()
     {
         var response = await Client.GetAsync($"{Routings.AuthRouting}/confirm-registration?token=invalidtoken");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisId);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisToken);
     }
 
     /// <summary>
@@ -303,7 +304,7 @@ public class AuthControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisId);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisToken);
     }
 
     /// <summary>
@@ -312,7 +313,9 @@ public class AuthControllerTests : IntegrationTestBase
     [Fact]
     public async Task ConfirmRegistration_BlockedUser_BlockedViaLoginAttempts()
     {
-        await UserRepo.CreateUserAsync("blocked@test.com");
+        await UserRepo.CreateUserAsync(
+            "blocked@test.com",
+            wrongLoginAttempts: 4);
 
         var request = new LoginUserRequestDto
         {
@@ -320,11 +323,8 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "WrongPassword!"
         };
 
-        for (int i = 0; i < 5; i++)
-        {
-            await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
-        }
-
+        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        
         var user = await GetUserFromDbByEmailAsync("blocked@test.com");
         user!.Status.Should().Be(UserStatus.Blocked);
     }
@@ -552,7 +552,8 @@ public class AuthControllerTests : IntegrationTestBase
     public async Task Login_FiveWrongPasswords_BlocksUserAndReturnsUserIsBlocked()
     {
         var email = "block-me@test.com";
-        await UserRepo.CreateUserAsync(email);
+        await UserRepo.CreateUserAsync(email,
+            wrongLoginAttempts: 4);
 
         var wrongRequest = new LoginUserRequestDto
         {
@@ -560,10 +561,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "WrongPassword!"
         };
 
-        for (int i = 0; i < 5; i++)
-        {
-            await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", wrongRequest);
-        }
+        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", wrongRequest);
 
         var user = await GetUserFromDbByEmailAsync(email);
         user!.Status.Should().Be(UserStatus.Blocked);

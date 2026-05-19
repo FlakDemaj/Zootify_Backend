@@ -1,11 +1,9 @@
-using Zootify_Backend.Model.DataAccess.Entitys;
-
-namespace Zootify_Backend.Models.DataAccess.Entitys.Base;
+namespace Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 public abstract class BaseCreationEntity : BaseGuidEntity
 {
     public Guid? CreatedByUserGuid { get; private set; }
     public UserEntity? CreatedByUser { get; private set; }
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime CreationDate { get; private set; } = DateTime.UtcNow;
     
 }

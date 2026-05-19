@@ -1,5 +1,6 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Zootify_Backend.Configuration;
 using Zootify_Backend.Utils.Extensions;
 
 namespace Zootify_Backend.Server;
@@ -25,15 +26,23 @@ public class Program
         //   3. Environment variables
         // Initializing here gives ZootifyConfiguration access to all of them.
         var builder = WebApplication.CreateBuilder(args);
-        
-        builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
-            .ConfigureContainer<ContainerBuilder>(containerBuilder =>
-            {
-                var startup = new Startup();
-                startup.ConfigureContainer(containerBuilder);
-            });
 
         var startup = new Startup();
+        
+        builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
+            .ConfigureContainer<ContainerBuilder>(startup.ConfigureContainer);
+        
+        builder.Configuration.AddJsonFile(
+            "config.json",
+            optional: false,
+            reloadOnChange: true);
+        
+        ZootifyConfiguration.InitializeFromHost(
+            builder.Configuration,
+            builder.Logging.Services
+                .BuildServiceProvider()
+                .GetRequiredService<ILogger<BaseConfiguration>>());
+
         startup.ConfigureServices(builder);
 
         var app = builder.Build();

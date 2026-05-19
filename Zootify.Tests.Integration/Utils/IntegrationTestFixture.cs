@@ -1,12 +1,14 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
-
+using Microsoft.IdentityModel.Tokens;
 using Respawn;
-
 using Testcontainers.MsSql;
 
-namespace Zootify.Tests.Integration.Common;
+namespace Zootify.Tests.Integration.Utils;
 
 /// <summary>
 /// Shared fixture for the integration test collection.

@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Zootify_Backend.Models.DataAccess.Entitys.Base;
+using Zootify_Backend.Model.DataAccess.Entitys.Base;
+using Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
 
-namespace Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
+namespace Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
 
 public class BaseCreationEntityConfiguration<T> : BaseGuidEntityConfiguration<T>
     where T : BaseCreationEntity
@@ -12,7 +13,7 @@ public class BaseCreationEntityConfiguration<T> : BaseGuidEntityConfiguration<T>
         base.Configure(builder);
 
         builder
-            .Property(p => p.CreatedAt)
+            .Property(p => p.CreationDate)
             .HasColumnName("created_at")
             .IsRequired();
 

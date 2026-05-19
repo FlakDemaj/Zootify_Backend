@@ -1,21 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.Entitys;
+using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Models.DataAccess.DBContext;
-using Zootify_Backend.Models.DataAccess.Repositorys.Classes;
 
-namespace Zootify_Backend.Model.DataAccess.Repositorys.Classes;
+namespace Zootify_Backend.Model.DataAccess.Repositorys.System.Classes;
 
 /// <summary>
 /// Repository for querying and persisting <see cref="UserEntity"/> records.
 /// </summary>
-public class UserRepository : BaseRepository<UserEntity>, IUserRepository
+public class AuthRepository : BaseRepository<UserEntity>, IAuthRepository
 {
     /// <summary>
-    /// Initializes a new <see cref="UserRepository"/> with the given database context.
+    /// Initializes a new <see cref="AuthRepository"/> with the given database context.
     /// </summary>
-    public UserRepository(ZootifyDbContext context)
+    public AuthRepository(ZootifyDbContext context)
         : base(context)
     {
     }
@@ -25,7 +25,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     /// </summary>
     /// <param name="email">The email address to search for.</param>
     /// <param name="tracking">Whether to enable EF change tracking on the result.</param>
-    public async Task<UserEntity?> GetUserByEmail(
+    public async Task<UserEntity?> GetUserByEmailAsync(
         string email, bool tracking = false)
     {
         return await

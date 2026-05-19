@@ -7,7 +7,7 @@ namespace Zootify_Backend.Controllers.Base;
 /// <summary>
 /// Base rest controller, that provides the endpoints
 /// </summary>
-[Route("rest/[controller]")]
+[Route("rest/[controller]/")]
 public class BaseRestController : ControllerBase
 {
     /// <summary>

@@ -1,17 +1,17 @@
 using Zootify_Backend.Model.DataAccess.Entitys;
-using Zootify_Backend.Models.DataAccess.Repositorys.Interfaces;
+using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 /// <summary>
 /// Extends <see cref="IBaseRepository{T}"/> with user-specific query operations.
 /// </summary>
-public interface IUserRepository : IBaseRepository<UserEntity>
+public interface IAuthRepository : IBaseRepository<UserEntity>
 {
     /// <summary>
     /// Returns the user with the given email address, or <c>null</c> if not found.
     /// </summary>
-    public Task<UserEntity?> GetUserByEmail(string email, bool tracking = false);
+    public Task<UserEntity?> GetUserByEmailAsync(string email, bool tracking = false);
 
     /// <summary>
     /// Returns the user whose reset-password token matches the given token string,

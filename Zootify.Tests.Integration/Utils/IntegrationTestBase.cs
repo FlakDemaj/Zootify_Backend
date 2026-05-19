@@ -1,6 +1,12 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Zootify.Tests.Integration.Utils.Helpers;
 
-namespace Zootify.Tests.Integration.Common;
+namespace Zootify.Tests.Integration.Utils;
 
 /// <summary>
 /// Base class for all integration tests. Provides a pre-configured HTTP client,
@@ -64,5 +70,37 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         var error = await response.Content.ReadFromJsonAsync<ErrorDto>();
         error.Should().NotBeNull();
         return error!;
+    }
+    
+    protected void AuthenticateAs(UserEntity user)
+    {
+        var token = GenerateTestToken(user.Role, user.Guid);
+        Client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+    }
+    
+    private static string GenerateTestToken(UserRole role, Guid userGuid)
+    {
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, userGuid.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
+            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
+            new(ClaimTypes.Role, role.ToString()),
+        };
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(TestConfig.TestJwtSecret));
+
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: TestConfig.TestIssuer,
+            audience: TestConfig.TestAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(30),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
