@@ -114,11 +114,12 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Increments the failed-login counter. Blocks the user once the counter reaches 5.
     /// </summary>
-    public void IncrementLoginAttempts()
+    public void IncrementLoginAttempts(
+        int resetPasswordAttempts)
     {
         LoginAttempts++;
 
-        if (LoginAttempts == 5)
+        if (LoginAttempts == resetPasswordAttempts)
         {
             Status = UserStatus.Blocked;
         }
@@ -130,7 +131,6 @@ public class UserEntity : BaseDeletionEntity
     public void ResetLoginAttempts()
     {
         LoginAttempts = 0;
-        Status = UserStatus.Active;
     }
 
     /// <summary>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Request;
 using Zootify_Backend.DTOs.Response;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Interfaces;
 
 namespace Zootify_Backend.Controllers.System;
@@ -10,7 +11,6 @@ namespace Zootify_Backend.Controllers.System;
 /// <summary>
 /// Controller for managing authentication and user registration flows.
 /// </summary>
-[AllowAnonymous]
 public class AuthController : BaseRestController
 {
     private IUserService UserService { get; }
@@ -52,7 +52,7 @@ public class AuthController : BaseRestController
     /// Sends a new registration confirmation email to a pending user.
     /// Returns 204 No Content on success.
     /// </summary>
-    [HttpPost("new/registration-email")]
+    [HttpPost("new-registration-email")]
     public async Task<IActionResult> SendNewConfirmationRegistrationEmailAsync(
         [FromBody] SendNewRegistrationEmailRequestDto request)
     {
@@ -68,6 +68,7 @@ public class AuthController : BaseRestController
     /// Authenticates a user with email and password.
     /// Returns 200 OK with a JWT token on success.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginUserResponseDto>> LoginAsync(
         [FromBody] LoginUserRequestDto user)

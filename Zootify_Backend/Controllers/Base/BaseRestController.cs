@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Models.Auth;
+using Zootify_Backend.Model.Auth;
 
 namespace Zootify_Backend.Controllers.Base;
 

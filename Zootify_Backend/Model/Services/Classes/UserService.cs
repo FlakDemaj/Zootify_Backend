@@ -182,7 +182,7 @@ public class UserService : IUserService
 
         if (!user.CheckPassword(request.Password))
         {
-            user.IncrementLoginAttempts();
+            user.IncrementLoginAttempts(ZootifyConfiguration.MaximumLoginAttempts);
             await _userRepository.UpdateAsync(user);
             throw new ZootifyException(ErrorCode.IncorrectPassword);
         }
@@ -235,6 +235,7 @@ public class UserService : IUserService
         user.SetPassword(request.RepeatedPassword);
         user.SetUpdatedBy(null);
         user.ResetLoginAttempts();
+        user.ActivateUser();
         user.RemoveResetPasswordToken();
 
         await _userRepository.UpdateAsync(user);

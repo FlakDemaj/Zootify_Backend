@@ -25,6 +25,7 @@
   "General":
   {
     "MinimumPasswordLength": 8,
+    "MaximumLoginAttempts": 6,
     "FrontendBaseUrl": "http://localhost:4200",
     "SpecialCharacters": "!@#$%^&*()_+-=[]{}|;:',.<>?",
     "RegistrationTokenExpiryInHours": 24,

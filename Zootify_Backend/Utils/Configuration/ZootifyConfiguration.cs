@@ -23,6 +23,9 @@ public class ZootifyConfiguration : BaseConfiguration
     public static int MinimumPasswordLength =>
         SafeGetParsed("General:MinimumPasswordLength", 0);
     
+    public static int MaximumLoginAttempts =>
+        SafeGetParsed("General:MaximumLoginAttempts", 5);
+    
     public static int RegistrationTokenExpiryInHours =>
         SafeGetParsed("General:RegistrationTokenExpiryInHours", 24);
     

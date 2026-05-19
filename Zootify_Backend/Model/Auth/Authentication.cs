@@ -1,6 +1,6 @@
 using Zootify_Backend.Enums;
 
-namespace Zootify_Backend.Models.Auth;
+namespace Zootify_Backend.Model.Auth;
 
 /// <summary>
 /// The authentication object
@@ -9,14 +9,14 @@ public class Authentication : IAuthentication
 {
     public Guid UserGuid { get; }
 
-    public AuthenticationType AuthenticationType { get; set; }
+    public UserRole Role { get; set; }
 
     /// <summary>
     /// Initializes a new <see cref="Authentication"/> with the user's GUID and authentication type.
     /// </summary>
-    public Authentication(Guid userGuid, AuthenticationType authenticationType)
+    public Authentication(Guid userGuid, UserRole role)
     {
         UserGuid = userGuid;
-        AuthenticationType = authenticationType;
+        Role = role;
     }
 }

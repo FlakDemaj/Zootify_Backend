@@ -249,9 +249,8 @@ public class UserEntityTests
     public void IncrementLoginAttempts_IncrementsCounter()
     {
         var user = UserTestData.CreateUser();
-        user.ActivateUser();
 
-        user.IncrementLoginAttempts();
+        user.IncrementLoginAttempts(5);
 
         user.LoginAttempts.Should().Be(1);
     }
@@ -263,11 +262,10 @@ public class UserEntityTests
     public void IncrementLoginAttempts_CalledMultipleTimes_CounterAccumulates()
     {
         var user = UserTestData.CreateUser();
-        user.ActivateUser();
 
-        user.IncrementLoginAttempts();
-        user.IncrementLoginAttempts();
-        user.IncrementLoginAttempts();
+        user.IncrementLoginAttempts(5);
+        user.IncrementLoginAttempts(5);
+        user.IncrementLoginAttempts(5);
 
         user.LoginAttempts.Should().Be(3);
     }
@@ -279,10 +277,9 @@ public class UserEntityTests
     public void IncrementLoginAttempts_AtFifthAttempt_BlocksUser()
     {
         var user = UserTestData.CreateUser();
-        user.ActivateUser();
 
-        for (int i = 0; i < 5; i++)
-            user.IncrementLoginAttempts();
+        for (var i = 0; i < 5; i++)
+            user.IncrementLoginAttempts(5);
 
         user.Status.Should().Be(UserStatus.Blocked);
     }
@@ -296,8 +293,8 @@ public class UserEntityTests
         var user = UserTestData.CreateUser();
         user.ActivateUser();
 
-        for (int i = 0; i < 4; i++)
-            user.IncrementLoginAttempts();
+        for (var i = 0; i < 4; i++)
+            user.IncrementLoginAttempts(5);
 
         user.Status.Should().Be(UserStatus.Active);
     }
@@ -313,9 +310,8 @@ public class UserEntityTests
     public void ResetLoginAttempts_SetsCounterToZero()
     {
         var user = UserTestData.CreateUser();
-        user.ActivateUser();
-        user.IncrementLoginAttempts();
-        user.IncrementLoginAttempts();
+        user.IncrementLoginAttempts(5);
+        user.IncrementLoginAttempts(5);
 
         user.ResetLoginAttempts();
 
@@ -330,10 +326,10 @@ public class UserEntityTests
     public void ResetLoginAttempts_SetsStatusToActive()
     {
         var user = UserTestData.CreateUser();
-        for (int i = 0; i < 5; i++)
-            user.IncrementLoginAttempts();
+        for (var i = 0; i < 5; i++)
+            user.IncrementLoginAttempts(5);
 
-        user.ResetLoginAttempts();
+        user.ActivateUser();
 
         user.Status.Should().Be(UserStatus.Active);
     }

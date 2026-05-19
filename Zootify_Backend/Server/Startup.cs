@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Zootify_Backend.Configuration;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Models.DataAccess.DBContext;
 using Zootify_Backend.Persistance;
@@ -50,7 +51,7 @@ public class Startup
         builder.Services.AddControllers();
 
         AddSwagger(builder.Services);
-        AddAuthentication(builder.Services, builder.Configuration);
+        AddAuthentication(builder.Services);
         AddInternalServices(builder.Services);
         AddDatabase(builder.Services);
 
@@ -131,8 +132,7 @@ public class Startup
     /// Configures JWT authentication (issuer, audience, signing key).
     /// </summary>
     private void AddAuthentication(
-        IServiceCollection services,
-        ConfigurationManager configuration)
+        IServiceCollection services)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
@@ -142,10 +142,10 @@ public class Startup
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
                 RoleClaimType = ClaimTypes.Role,
-                ValidIssuer = configuration["AccessToken:Issuer"],
-                ValidAudience = configuration["AccessToken:Audience"],
+                ValidIssuer = ZootifyConfiguration.AccessTokenIssuer,
+                ValidAudience = ZootifyConfiguration.AccessTokenAudience,
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(configuration["AccessToken:Key"]!))
+                    Encoding.UTF8.GetBytes(ZootifyConfiguration.AccessTokenKey))
             });
     }
 

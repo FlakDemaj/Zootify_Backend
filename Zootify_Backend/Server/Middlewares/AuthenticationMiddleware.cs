@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Models.Auth;
+using Zootify_Backend.Model.Auth;
 
 namespace Zootify_Backend.Server.Middlewares;
 
@@ -54,7 +54,7 @@ public class AuthenticationMiddleware
         return userGuid;
     }
 
-    private static AuthenticationType CheckUserRole(HttpContext context)
+    private static UserRole CheckUserRole(HttpContext context)
     {
         var userRoleString =
             context
@@ -70,17 +70,7 @@ public class AuthenticationMiddleware
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
 
-        switch (userRole)
-        {
-            case UserRole.Moderator:
-                return AuthenticationType.ModeratorAuthentication;
-            case UserRole.Admin:
-                return AuthenticationType.AdminAuthentication;
-            case UserRole.User:
-                return AuthenticationType.UserAuthentication;
-            default:
-                throw new ZootifyException(ErrorCode.DefaultErrorCode);
-        }
+        return userRole;
     }
 
     private static bool CheckIfAllowAnonymousExists(HttpContext context)
