@@ -29,7 +29,7 @@ public class TokenManager : ITokenManager
     /// <param name="userGuid">The unique identifier of the user.</param>
     /// <param name="userRole">The role assigned to the user.</param>
     /// <returns>A DTO containing the token string and its expiry duration in minutes.</returns>
-    public LoginUserResponseDto GenerateAccessToken(
+    public TokenResult GenerateAccessToken(
         Guid userGuid,
         UserRole userRole)
     {
@@ -46,7 +46,7 @@ public class TokenManager : ITokenManager
 
         var accessToken = _tokenHandler.WriteToken(token);
 
-        return new LoginUserResponseDto
+        return new TokenResult
         {
             Token = accessToken,
             ExpiresInMinutes = ZootifyConfiguration.AccessTokenExpiresInMinutes

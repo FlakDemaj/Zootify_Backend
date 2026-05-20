@@ -190,9 +190,15 @@ public class AuthService : IAuthService
         user.ResetLoginAttempts();
         await _authRepository.UpdateAsync(user);
 
-        return _tokenManager.GenerateAccessToken(
+        var token = _tokenManager.GenerateAccessToken(
             user.Guid,
             user.Role);
+
+        return new LoginUserResponseDto
+        {
+            Token = token,
+            Name = user.FirstName + " " + user.LastName
+        };
     }
 
     /// <summary>

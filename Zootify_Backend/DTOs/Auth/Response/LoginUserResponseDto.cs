@@ -1,8 +1,10 @@
+using Zootify_Backend.Model.Auth;
+
 namespace Zootify_Backend.DTOs.Auth.Response;
 
 public class LoginUserResponseDto
 {
-    public required string Token { get; set; }
+    public required TokenResult Token { get; set; }
     
-    public required int ExpiresInMinutes { get; set; }
+    public required string Name { get; set; }
 }
