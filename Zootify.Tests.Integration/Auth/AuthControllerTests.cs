@@ -425,7 +425,7 @@ public class AuthControllerTests : IntegrationTestBase
     [Fact]
     public async Task Login_ValidCredentials_Returns200WithJwtToken()
     {
-        await UserRepo.CreateUserAsync("login-ok@test.com");
+        var user = await UserRepo.CreateUserAsync("login-ok@test.com");
 
         var request = new LoginUserRequestDto
         {
@@ -437,8 +437,10 @@ public class AuthControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<LoginUserResponseDto>();
-        dto!.Token.Should().NotBeNullOrEmpty();
-        dto.ExpiresInMinutes.Should().BeGreaterThan(0);
+        dto.Should().NotBeNull();
+        dto!.Token.Token.Should().NotBeNullOrEmpty();
+        dto.Token.ExpiresInMinutes.Should().BeGreaterThan(0);
+        dto.Name.Should().Be(user.FirstName + " "  + user.LastName);
     }
 
     /// <summary>
