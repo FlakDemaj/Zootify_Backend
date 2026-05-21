@@ -45,7 +45,7 @@ public class AuthController : BaseRestController
         await _authService.ConfirmRegistrationAsync(token);
         return Ok();
     }
-
+    
     /// <summary>
     /// Sends a new registration confirmation email to a pending user.
     /// Returns 204 No Content on success.

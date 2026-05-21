@@ -1,5 +1,6 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration.Json;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Utils.Extensions;
 
@@ -20,22 +21,19 @@ public class Program
     /// <param name="args">Command-line arguments</param>
     public static async Task Main(string[] args)
     {
-        // WebApplication.CreateBuilder already adds (in order):
-        //   1. config.json
-        //   2. User Secrets (Development only)
-        //   3. Environment variables
-        // Initializing here gives ZootifyConfiguration access to all of them.
+        // Configuration priority (last wins): config.json → appsettings → User Secrets → Env vars → CLI args
         var builder = WebApplication.CreateBuilder(args);
 
-        var startup = new Startup();
-        
-        builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
-            .ConfigureContainer<ContainerBuilder>(startup.ConfigureContainer);
-        
-        builder.Configuration.AddJsonFile(
-            "config.json",
-            optional: false,
-            reloadOnChange: true);
+        // Insert config.json at position 0 (lowest priority) so that user secrets,
+        // environment variables, and command-line args all override its values.
+        builder.Configuration.Sources.Insert(
+            0,
+            new JsonConfigurationSource
+            {
+                Path = "config.json", 
+                Optional = true, 
+                ReloadOnChange = true
+            });
         
         ZootifyConfiguration.InitializeFromHost(
             builder.Configuration,
@@ -43,11 +41,17 @@ public class Program
                 .BuildServiceProvider()
                 .GetRequiredService<ILogger<BaseConfiguration>>());
 
+        var startup = new Startup();
+
         startup.ConfigureServices(builder);
 
+        builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
+            .ConfigureContainer<ContainerBuilder>(startup.ConfigureContainer);
+
         var app = builder.Build();
-        
-        if (!app.Environment.IsEnvironment("Testing") && !app.Environment.IsEnvironment("IntegrationTest"))
+
+        if (!app.Environment.IsEnvironment("Testing") &&
+            !app.Environment.IsEnvironment("IntegrationTest"))
         {
             app.Migrate();
         }
