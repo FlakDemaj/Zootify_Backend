@@ -1,4 +1,5 @@
 using AutoMapper;
+using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Auth.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -66,5 +67,16 @@ public class UserMapper : Profile
             .ForMember(d => d.DeletedBy,
                 o => o.MapFrom<AuditUserFullNameResolver, UserEntity?>(
                     s => s.DeletedByUser));
+
+        CreateMap<UpdateUserRequestDto, UserEntity>(MemberList.None)
+            .ForMember(d => d.Role,
+                o => o.MapFrom(s => s.Role))
+            .ForMember(d => d.FirstName,
+                o => o.MapFrom(s => s.FirstName))
+            .ForMember(d => d.LastName,
+                o => o.MapFrom(s => s.LastName))
+            .ForMember(dest => dest.Guid,
+                opt => opt.Ignore());
+
     }
 }

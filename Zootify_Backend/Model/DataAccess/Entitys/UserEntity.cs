@@ -10,17 +10,17 @@ namespace Zootify_Backend.Model.DataAccess.Entitys;
 /// </summary>
 public class UserEntity : BaseDeletionEntity
 {
-    public string FirstName { get; private set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
 
-    public string LastName { get; private set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
 
     public string Email { get; private set; } = string.Empty;
 
     public string? PasswordHash { get; private set; } = string.Empty;
 
-    public UserRole Role { get; private set; } = UserRole.User;
+    public UserRole Role { get; set; } = UserRole.User;
 
-    public UserStatus Status { get; private set; } = UserStatus.Pending;
+    public UserStatus Status { get; set; } = UserStatus.Pending;
 
     public int LoginAttempts { get; private set; }
 

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
-using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
+using Zootify_Backend.Model.DataAccess.Repositorys.System.Interfaces;
 using Zootify_Backend.Models.DataAccess.DBContext;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.System.Classes;

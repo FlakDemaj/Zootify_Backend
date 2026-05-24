@@ -21,7 +21,12 @@ public class Program
     /// <param name="args">Command-line arguments</param>
     public static async Task Main(string[] args)
     {
-        // Configuration priority (last wins): config.json → appsettings → User Secrets → Env vars → CLI args
+        // Configuration priority:
+        // config.json →
+        // appsettings →
+        // User Secrets →
+        // Env vars →
+        // CLI args
         var builder = WebApplication.CreateBuilder(args);
 
         // Insert config.json at position 0 (lowest priority) so that user secrets,

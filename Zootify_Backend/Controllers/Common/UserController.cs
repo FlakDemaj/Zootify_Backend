@@ -7,7 +7,10 @@ using Zootify_Backend.Model.Services.Common.Interfaces;
 
 namespace Zootify_Backend.Controllers.Common;
 
-[Authorize(Roles = $"{Roles.Moderator}, {Roles.Admin}")]
+/// <summary>
+/// Controllers used by more than one roles
+/// </summary>
+[Authorize(Roles = $"{Roles.Moderator}, {Roles.Admin}, {Roles.User}")]
 public class UserController : BaseRestController
 {
     private readonly IUserService _userService;
@@ -24,10 +27,10 @@ public class UserController : BaseRestController
         return Ok(/*UserDto*/);
     }
 
-    [HttpGet("{userGuid}")]
-    public async Task<ActionResult<GetUserResponseDto>> GetUser(Guid userGuid)
+    [HttpGet("common/{userGuid}")]
+    public async Task<ActionResult<GetUserResponseDto>> GetUserAsync(Guid userGuid)
     {
-        var user = await _userService.GetUserByGuidAsync(userGuid);
+        var user = await _userService.GetUserByGuidAsync(Authentication,userGuid);
         return Ok(user);
     }
 }

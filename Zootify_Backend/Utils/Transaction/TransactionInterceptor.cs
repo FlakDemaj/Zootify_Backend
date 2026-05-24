@@ -31,9 +31,10 @@ namespace Zootify_Backend.Transaction
         {
             var method = GetTargetMethod(invocation);
             var attribute = method.GetCustomAttribute<TransactionAttribute>();
-
-            // Skip interception if no transaction attribute is present or in testing environment
-            if (attribute == null || Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing")
+            
+            // Skip interception if no transaction attribute is present
+            // or if NoTransactionAttribute is present
+            if (attribute == null)
             {
                 invocation.Proceed();
                 return;

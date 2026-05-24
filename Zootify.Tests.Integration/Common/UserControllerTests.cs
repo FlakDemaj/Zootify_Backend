@@ -9,6 +9,8 @@ public class UserControllerTests : IntegrationTestBase
     {
     }
 
+    #region GetUser
+
     [Fact]
     public async Task GetUser_ValidGuid_ReturnsUser()
     {
@@ -39,7 +41,7 @@ public class UserControllerTests : IntegrationTestBase
 
         var response = await Client.
             GetFromJsonAsync<GetUserResponseDto>(
-                $"{Routings.UserRouting}/{userToGet.Guid}");
+                $"{Routings.CommonUserRouting}/{userToGet.Guid}");
         
         response.Should().NotBeNull();
         
@@ -71,11 +73,32 @@ public class UserControllerTests : IntegrationTestBase
 
         var response = await Client.
             GetAsync(
-                $"{Routings.UserRouting}/{Guid.CreateVersion7()}");
+                $"{Routings.CommonUserRouting}/{Guid.CreateVersion7()}");
 
         var error = await ReadErrorAsync(response);
         
         error.Should().NotBeNull();
         error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
     }
+    
+    [Fact]
+    public async Task GetUser_InvalidRequester_ReturnsForbidden()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.User);
+        
+        AuthenticateAs(requester);
+
+        var response = await Client.
+            GetAsync(
+                $"{Routings.CommonUserRouting}/{Guid.CreateVersion7()}");
+
+        var error = await ReadErrorAsync(response);
+        
+        error.Should().NotBeNull();
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    #endregion
 }

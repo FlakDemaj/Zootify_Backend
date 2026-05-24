@@ -61,6 +61,17 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             .Include(u => u.ResetPasswordToken)
             .FirstOrDefaultAsync(u => u.Email == email.ToLower());
     }
+    
+    /// <summary>
+    /// Fetches a user from the database by email, eagerly loading their registration and reset-password tokens.
+    /// Returns <c>null</c> if no user with the given email exists.
+    /// </summary>
+    protected async Task<UserEntity?> GetUserFromDbByGuidAsync(Guid guid)
+    {
+        return await _dbContext.Set<UserEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Guid == guid);
+    }
 
     /// <summary>
     /// Deserializes the error response body into an <see cref="ErrorDto"/> and asserts it is not null.

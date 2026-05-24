@@ -30,7 +30,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
@@ -62,7 +62,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         Fixture.BrevoMock.Verify(
             b => b.SendRegistrationEmail(
@@ -89,7 +89,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         var user = await GetUserFromDbByEmailAsync("uppercase@example.com");
         user.Should().NotBeNull();
@@ -113,7 +113,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -134,7 +134,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -156,7 +156,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "Ts1!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -178,7 +178,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "testpass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -200,7 +200,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TESTPASS123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -222,7 +222,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPassword!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -244,7 +244,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/Register", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -264,7 +264,7 @@ public class AuthControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("confirm@test.com", status: UserStatus.Pending);
         var token = user.RegistrationToken!.Token;
 
-        var response = await Client.GetAsync($"{Routings.AuthRouting}/confirm-registration?token={token}");
+        var response = await Client.GetAsync($"{Routings.SystemAuthRouting}/confirm-registration?token={token}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -280,7 +280,7 @@ public class AuthControllerTests : IntegrationTestBase
     [Fact]
     public async Task ConfirmRegistration_InvalidToken_Returns400WithNoUserWithThisToken()
     {
-        var response = await Client.GetAsync($"{Routings.AuthRouting}/confirm-registration?token=invalidtoken");
+        var response = await Client.GetAsync($"{Routings.SystemAuthRouting}/confirm-registration?token=invalidtoken");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -298,9 +298,9 @@ public class AuthControllerTests : IntegrationTestBase
         var token = user.RegistrationToken!.Token;
 
         // first call consumes the token
-        await Client.GetAsync($"{Routings.AuthRouting}/confirm-registration?token={token}");
+        await Client.GetAsync($"{Routings.SystemAuthRouting}/confirm-registration?token={token}");
 
-        var response = await Client.GetAsync($"{Routings.AuthRouting}/confirm-registration?token={token}");
+        var response = await Client.GetAsync($"{Routings.SystemAuthRouting}/confirm-registration?token={token}");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -323,7 +323,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "WrongPassword!"
         };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
         
         var user = await GetUserFromDbByEmailAsync("blocked@test.com");
         user!.Status.Should().Be(UserStatus.Blocked);
@@ -348,7 +348,7 @@ public class AuthControllerTests : IntegrationTestBase
 
         var request = new SendNewRegistrationEmailRequestDto { Email = "pending-new@test.com" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new-registration-email", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new-registration-email", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         Fixture.BrevoMock.Verify(
@@ -373,7 +373,7 @@ public class AuthControllerTests : IntegrationTestBase
 
         var request = new SendNewRegistrationEmailRequestDto { Email = "token-replace@test.com" };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new-registration-email", request);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new-registration-email", request);
 
         var updated = await GetUserFromDbByEmailAsync("token-replace@test.com");
         updated!.RegistrationToken.Should().NotBeNull();
@@ -389,7 +389,7 @@ public class AuthControllerTests : IntegrationTestBase
     {
         var request = new SendNewRegistrationEmailRequestDto { Email = "unknown@test.com" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new-registration-email", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new-registration-email", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -408,7 +408,7 @@ public class AuthControllerTests : IntegrationTestBase
 
         var request = new SendNewRegistrationEmailRequestDto { Email = "active-reg-email@test.com" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new-registration-email", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new-registration-email", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         var error = await ReadErrorAsync(response);
@@ -433,7 +433,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<LoginUserResponseDto>();
@@ -457,7 +457,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -475,7 +475,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -497,7 +497,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -518,7 +518,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "WrongPassword!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -539,7 +539,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "Wrong!"
         };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         var user = await GetUserFromDbByEmailAsync("attempts@test.com");
         user!.LoginAttempts.Should().Be(1);
@@ -563,7 +563,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "WrongPassword!"
         };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", wrongRequest);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", wrongRequest);
 
         var user = await GetUserFromDbByEmailAsync(email);
         user!.Status.Should().Be(UserStatus.Blocked);
@@ -574,7 +574,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", correctRequest);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", correctRequest);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.UserIsBlocked);
@@ -601,8 +601,8 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", wrongRequest);
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", correctRequest);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", wrongRequest);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", correctRequest);
 
         var user = await GetUserFromDbByEmailAsync(email);
         user!.LoginAttempts.Should().Be(0);
@@ -628,7 +628,7 @@ public class AuthControllerTests : IntegrationTestBase
 
         var request = new SendNewResetPasswordEmailRequestDto { Email = "reset-req@test.com" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new/reset-password", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new/reset-password", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
@@ -650,7 +650,7 @@ public class AuthControllerTests : IntegrationTestBase
     {
         var request = new SendNewResetPasswordEmailRequestDto { Email = "nobody@test.com" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new/reset-password", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new/reset-password", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -668,7 +668,7 @@ public class AuthControllerTests : IntegrationTestBase
 
         var request = new SendNewResetPasswordEmailRequestDto { Email = "pending-reset@test.com" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/new/reset-password", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new/reset-password", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -701,7 +701,7 @@ public class AuthControllerTests : IntegrationTestBase
         };
 
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token={resetToken}", request);
+            $"{Routings.SystemAuthRouting}/reset-password?token={resetToken}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -711,7 +711,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "TestPass123!"
         };
 
-        var oldLoginResponse = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", oldLoginRequest);
+        var oldLoginResponse = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", oldLoginRequest);
         oldLoginResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var newLoginRequest = new LoginUserRequestDto
@@ -720,7 +720,7 @@ public class AuthControllerTests : IntegrationTestBase
             Password = "NewPass456!"
         };
 
-        var newLoginResponse = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", newLoginRequest);
+        var newLoginResponse = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", newLoginRequest);
         newLoginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -741,7 +741,7 @@ public class AuthControllerTests : IntegrationTestBase
         var request = new ResetPasswordRequestDto { Password = "NewPass456!", RepeatedPassword = "NewPass456!" };
 
         await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token={resetToken}", request);
+            $"{Routings.SystemAuthRouting}/reset-password?token={resetToken}", request);
 
         var updated = await GetUserFromDbByEmailAsync("reset-token-remove@test.com");
         updated!.ResetPasswordToken.Should().BeNull();
@@ -764,7 +764,7 @@ public class AuthControllerTests : IntegrationTestBase
         var request = new ResetPasswordRequestDto { Password = "NewPass456!", RepeatedPassword = "NewPass456!" };
 
         await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token={resetToken}", request);
+            $"{Routings.SystemAuthRouting}/reset-password?token={resetToken}", request);
 
         Fixture.BrevoMock.Verify(
             b => b.SendConfirmationResetPasswordEmail(
@@ -782,7 +782,7 @@ public class AuthControllerTests : IntegrationTestBase
         var request = new ResetPasswordRequestDto { Password = "NewPass456!", RepeatedPassword = "NewPass456!" };
 
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token=invalidtoken", request);
+            $"{Routings.SystemAuthRouting}/reset-password?token=invalidtoken", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -806,7 +806,7 @@ public class AuthControllerTests : IntegrationTestBase
         };
 
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token={resetToken}", request);
+            $"{Routings.SystemAuthRouting}/reset-password?token={resetToken}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -826,7 +826,7 @@ public class AuthControllerTests : IntegrationTestBase
         var request = new ResetPasswordRequestDto { Password = "Ts1!", RepeatedPassword = "Ts1!" };
 
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token={resetToken}", request);
+            $"{Routings.SystemAuthRouting}/reset-password?token={resetToken}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -852,9 +852,9 @@ public class AuthControllerTests : IntegrationTestBase
         var loginRequest = new LoginUserRequestDto { Email = email, Password = "Wrong!" };
         var resetRequest = new ResetPasswordRequestDto { Password = "NewPass456!", RepeatedPassword = "NewPass456!" };
 
-        await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", loginRequest);
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", loginRequest);
         await Client.PostAsJsonAsync(
-            $"{Routings.AuthRouting}/reset-password?token={resetToken}", resetRequest);
+            $"{Routings.SystemAuthRouting}/reset-password?token={resetToken}", resetRequest);
 
         var updated = await GetUserFromDbByEmailAsync(email);
         updated!.LoginAttempts.Should().Be(0);

@@ -86,4 +86,10 @@
   <data name="NoUserWithThisGuid" xml:space="preserve">
     <value>A user with this token does not exists.</value>
   </data>
+  <data name="NoUpdatedData" xml:space="preserve">
+    <value>Please provide changes.</value>
+  </data>
+  <data name="Forbidden" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
 </root>
