@@ -7,5 +7,8 @@ public interface IUserRepository : IBaseRepository<UserEntity>
 {
     Task<UserEntity?> GetUserByGuidWithAuditInformationAsync(Guid guid);
     
-    Task<UserEntity?> GetUserByGuid(Guid guid);
+    Task<UserEntity?> GetActiveUserByGuid(Guid guid);
+    
+    Task<UserEntity?> GetDeletedUserByGuid(Guid guid);
+
 }

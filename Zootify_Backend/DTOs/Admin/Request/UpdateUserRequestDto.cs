@@ -9,4 +9,5 @@ public class UpdateUserRequestDto
     public required string LastName { get; set; }
     
     public required UserRole Role { get; set; }
+    
 }

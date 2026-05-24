@@ -6,7 +6,7 @@ namespace Zootify_Backend.Model.Services.System.Interfaces;
 /// <summary>
 /// Defines all user-related business operations including registration, login, and password management.
 /// </summary>
-public interface IAuthService
+public interface ISystemAuthService
 {
     /// <summary>
     /// Authenticates a user with the provided credentials and returns a JWT token.

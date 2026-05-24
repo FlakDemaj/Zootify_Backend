@@ -15,24 +15,10 @@ public class BaseEntitysTests
     #region BaseUpdatedEntity
 
     /// <summary>
-    /// Verifies that passing <c>null</c> clears the UpdatedByUserGuid and still sets the UpdatedDate.
-    /// </summary>
-    [Fact]
-    public void SetUpdatedBy_NullGuid_SetsUpdatedByUserGuidToNull()
-    {
-        var user = UserTestData.CreateUser();
-
-        user.SetUpdatedBy(null);
-
-        user.UpdatedByUserGuid.Should().BeNull();
-        user.UpdatedDate.Should().NotBeNull();
-    }
-
-    /// <summary>
     /// Verifies that passing a GUID stores it in UpdatedByUserGuid.
     /// </summary>
     [Fact]
-    public void SetUpdatedBy_WithGuid_SetsUpdatedByUserGuid()
+    public void SetUpdatedBy_WithGuid_SetsUpdatedByUserGuidAndUpdatedDate()
     {
         var user = UserTestData.CreateUser();
         var adminGuid = Guid.NewGuid();
@@ -40,7 +26,41 @@ public class BaseEntitysTests
         user.SetUpdatedBy(adminGuid);
 
         user.UpdatedByUserGuid.Should().Be(adminGuid);
+        user.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
     }
 
+    #endregion
+    
+    #region BaseDeletedEntity
+
+    /// <summary>
+    /// Verifies that passing a GUID stores it in DeletedByUserGuid.
+    /// </summary>
+    [Fact]
+    public void SetDeletedBy_WithGuid_SetsDeletedByUSerGuidAndDeletionDate()
+    {
+        var user = UserTestData.CreateUser();
+        var adminGuid = Guid.NewGuid();
+
+        user.SetDeletedBy(adminGuid);
+
+        user.DeletedByUserGuid.Should().Be(adminGuid);
+        user.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
+    }
+    
+    /// <summary>
+    /// Verifies that in removes the deleted reverence in DeletedByUserGuid.
+    /// </summary>
+    [Fact]
+    public void RemoveDeletedByReference_SetsDeletedByUserGuidAndDeletionDateNull()
+    {
+        var user = UserTestData.CreateUser();
+
+        user.RemoveDeletion();
+
+        user.DeletedByUserGuid.Should().Be(null);
+        user.DeletionDate.Should().Be(null);
+    }
+    
     #endregion
 }

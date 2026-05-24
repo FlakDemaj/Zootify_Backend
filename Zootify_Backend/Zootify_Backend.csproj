@@ -51,7 +51,6 @@
 
   <ItemGroup>
     <Folder Include="DTOs\Auth\" />
-    <Folder Include="DTOs\Common\Request\" />
     <Folder Include="DTOs\Moderator\Request\" />
     <Folder Include="DTOs\Moderator\Response\" />
     <Folder Include="Model\DataAccess\Repositorys\System\" />

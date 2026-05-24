@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
@@ -22,9 +23,16 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
             .FirstOrDefaultAsync(u => u.Guid == guid);
     }
 
-    public async Task<UserEntity?> GetUserByGuid(Guid guid)
+    public async Task<UserEntity?> GetActiveUserByGuid(Guid guid)
     {
         return await Context.GetTrackingSet<UserEntity>()
-            .FirstOrDefaultAsync(u => u.Guid == guid);
+            .FirstOrDefaultAsync(u => u.Guid == guid 
+                                      && u.Status == UserStatus.Active);
     }
+
+    public async Task<UserEntity?> GetDeletedUserByGuid(Guid guid)
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .FirstOrDefaultAsync(u => u.Guid == guid
+                                      && u.Status == UserStatus.Deleted);    }
 }

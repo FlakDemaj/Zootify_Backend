@@ -7,7 +7,7 @@ namespace Zootify_Backend.Model.Mappers;
 public class AuditUserFullNameResolver 
     : IMemberValueResolver<UserEntity, GetUserResponseDto, UserEntity?, string?>
 {
-    public string? Resolve(
+    public string Resolve(
         UserEntity source,
         GetUserResponseDto destination,
         UserEntity? sourceMember,
@@ -16,7 +16,7 @@ public class AuditUserFullNameResolver
     {
         if (sourceMember == null)
         {
-            return null;
+            return "Deleted User";
         }
 
         return sourceMember.FirstName + " " + sourceMember.LastName;

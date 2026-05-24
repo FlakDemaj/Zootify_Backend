@@ -15,7 +15,7 @@ namespace Zootify_Backend.Model.Services.System.Classes;
 /// <summary>
 /// Handles all user-related business logic including registration, login, and password management.
 /// </summary>
-public class AuthService : IAuthService
+public class SystemSystemAuthService : ISystemAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly IBrevoProvider _brevoProvider;
@@ -24,9 +24,9 @@ public class AuthService : IAuthService
     private IMapper Mapper { get; }
 
     /// <summary>
-    /// Initializes a new <see cref="AuthService"/> with its required dependencies.
+    /// Initializes a new <see cref="SystemSystemAuthService"/> with its required dependencies.
     /// </summary>
-    public AuthService(
+    public SystemSystemAuthService(
         IAuthRepository authRepository,
         IMapper mapper,
         IBrevoProvider brevoProvider,
@@ -57,7 +57,7 @@ public class AuthService : IAuthService
             throw new ZootifyException(ErrorCode.UserWithThisEmailAlreadyExists);
         }
 
-        CheckEmail(request.Email.ToLower());
+        HelperMethods.CheckEmail(request.Email.ToLower());
 
         var user = Mapper.Map<UserEntity>(request);
 
@@ -105,7 +105,7 @@ public class AuthService : IAuthService
         }
 
         user.ActivateUser();
-        user.SetUpdatedBy(null);
+        user.SetUpdatedBy(user.Guid);
         user.RemoveRegistrationToken();
 
         await _authRepository.UpdateAsync(user);
@@ -240,7 +240,7 @@ public class AuthService : IAuthService
         CheckPassword(request.Password);
 
         user.SetPassword(request.RepeatedPassword);
-        user.SetUpdatedBy(null);
+        user.SetUpdatedBy(user.Guid);
         user.ResetLoginAttempts();
         user.ActivateUser();
         user.RemoveResetPasswordToken();
@@ -382,20 +382,6 @@ public class AuthService : IAuthService
         if (!hasSpecialCharacter)
         {
             throw new ZootifyException(ErrorCode.PasswordMissingSpecialCharacter);
-        }
-    }
-
-    /// <summary>
-    /// Validates that the email contains "@" and ".", and meets the minimum length requirement.
-    /// Throws a <see cref="ZootifyException"/> with <see cref="ErrorCode.EmailError"/> on failure.
-    /// </summary>
-    private void CheckEmail(string email)
-    {
-        if (!email.Contains("@")
-            || !email.Contains(".")
-            || email.Length < 7)
-        {
-            throw new ZootifyException(ErrorCode.EmailError);
         }
     }
 

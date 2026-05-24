@@ -13,11 +13,11 @@ namespace Zootify_Backend.Controllers.System;
 [AllowAnonymous]
 public class AuthController : BaseRestController
 {
-    private readonly IAuthService _authService;
+    private readonly ISystemAuthService _systemAuthService;
     
-    public AuthController(IAuthService authService)
+    public AuthController(ISystemAuthService systemAuthService)
     {
-        _authService = authService;
+        _systemAuthService = systemAuthService;
     }
     
     #region Registration
@@ -30,7 +30,7 @@ public class AuthController : BaseRestController
     public async Task<IActionResult> RegisterAsync(
         [FromBody] RegisterUserRequestDto registerUserRequestDto)
     {
-        await _authService.RegisterAsync(registerUserRequestDto);
+        await _systemAuthService.RegisterAsync(registerUserRequestDto);
         return Created();
     }
 
@@ -42,7 +42,7 @@ public class AuthController : BaseRestController
     public async Task<IActionResult> ConfirmRegistrationAsync(
         [FromQuery] string token)
     {
-        await _authService.ConfirmRegistrationAsync(token);
+        await _systemAuthService.ConfirmRegistrationAsync(token);
         return Ok();
     }
     
@@ -54,7 +54,7 @@ public class AuthController : BaseRestController
     public async Task<IActionResult> SendNewConfirmationRegistrationEmailAsync(
         [FromBody] SendNewRegistrationEmailRequestDto request)
     {
-        await _authService.SendNewRegistrationEmailAsync(request);
+        await _systemAuthService.SendNewRegistrationEmailAsync(request);
         return NoContent();
     }
 
@@ -71,7 +71,7 @@ public class AuthController : BaseRestController
     public async Task<ActionResult<LoginUserResponseDto>> LoginAsync(
         [FromBody] LoginUserRequestDto user)
     {
-        return Ok(await _authService.LoginAsync(user));
+        return Ok(await _systemAuthService.LoginAsync(user));
     }
 
     /// <summary>
@@ -82,7 +82,7 @@ public class AuthController : BaseRestController
     public async Task<IActionResult> SendNewResetPasswordEmailAsync(
         [FromBody] SendNewResetPasswordEmailRequestDto request)
     {
-        await _authService.SendNewResetPasswordEmailAsync(request);
+        await _systemAuthService.SendNewResetPasswordEmailAsync(request);
         return NoContent();
     }
 
@@ -95,7 +95,7 @@ public class AuthController : BaseRestController
         [FromQuery] string token,
         [FromBody] ResetPasswordRequestDto request)
     {
-        await _authService.ResetPasswordAsync(request, token);
+        await _systemAuthService.ResetPasswordAsync(request, token);
         return Ok();
     }
 

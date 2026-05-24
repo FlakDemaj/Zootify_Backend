@@ -14,7 +14,7 @@ public class UserEntity : BaseDeletionEntity
 
     public string LastName { get; set; } = string.Empty;
 
-    public string Email { get; private set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 
     public string? PasswordHash { get; private set; } = string.Empty;
 

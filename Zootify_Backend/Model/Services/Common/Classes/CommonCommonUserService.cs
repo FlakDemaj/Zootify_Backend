@@ -1,5 +1,6 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Admin.Request;
+using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
@@ -10,20 +11,21 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Common.Classes;
 
-public class UserService : IUserService
+public class CommonCommonUserService : ICommonUserService
 {
     private readonly IUserRepository _userRepository;
     
     private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IMapper mapper)
+    public CommonCommonUserService(IUserRepository userRepository, IMapper mapper)
     {
         _userRepository = userRepository;
         _mapper = mapper;
     }
 
     [Transaction(ReadOnly = false)]
-    public async Task<GetUserResponseDto> GetUserByGuidAsync(IAuthentication authentication,
+    public async Task<GetUserResponseDto> GetUserByGuidAsync(
+        IAuthentication authentication,
         Guid guid)
     {
         if (authentication.Role == UserRole.User)
@@ -40,43 +42,63 @@ public class UserService : IUserService
         
         return _mapper.Map<GetUserResponseDto>(user);
     }
-
+    
     [Transaction(ReadOnly = false)]
-    public async Task UpdateUserAsync(
+    public async Task DeleteUserAsync(
         IAuthentication authentication,
-        Guid userToUpdateGuid,
-        UpdateUserRequestDto updateUserRequestDto)
+        Guid userToDeleteGuid)
     {
-        if (authentication.Role != UserRole.Admin)
+        if (authentication.Role != UserRole.Admin
+            && authentication.UserGuid != userToDeleteGuid)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }
         
+        var userToDelete = await _userRepository
+            .GetActiveUserByGuid(userToDeleteGuid);
+
+        if (userToDelete == null)
+        {
+            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+        }
+        
+        userToDelete.Status = UserStatus.Deleted;
+        userToDelete.SetDeletedBy(authentication.UserGuid);
+        
+        await _userRepository.UpdateAsync(userToDelete);
+    }
+    
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateOwnUserAsync(
+        IAuthentication authentication,
+        UpdateOwnUserRequestDto updateOwnUserRequestDto)
+    {
         var requester =  await _userRepository
-            .GetUserByGuid(authentication.UserGuid);
+            .GetActiveUserByGuid(authentication.UserGuid);
 
         if (requester == null)
         {
             throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
         }
         
-        var mappedUser = _mapper.Map<UserEntity>(updateUserRequestDto);
+        HelperMethods.CheckEmail(updateOwnUserRequestDto.Email);
         
-        await UpdateUserAsync(mappedUser, userToUpdateGuid, requester.Guid);
+        var mappedUser = _mapper.Map<UserEntity>(updateOwnUserRequestDto);
+        
+        mappedUser.FormatEmail();
+        
+        await UpdateUserAsync(
+            mappedUser,
+            requester,
+            authentication.UserGuid);
     }
 
-    private async Task UpdateUserAsync(
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateUserAsync(
         UserEntity newUser,
-        Guid userToUpdateGuid,
+        UserEntity oldUser,
         Guid requesterGuid)
     {
-        var oldUser = await _userRepository
-            .GetUserByGuidWithAuditInformationAsync(userToUpdateGuid);
-
-        if (oldUser == null)
-        {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
-        }
 
         if (!CheckUserAttributes(oldUser, newUser))
         {
@@ -86,17 +108,19 @@ public class UserService : IUserService
         oldUser.FirstName = newUser.FirstName;
         oldUser.LastName = newUser.LastName;
         oldUser.Role = newUser.Role;
+        oldUser.Email = newUser.Email;
         oldUser.SetUpdatedBy(requesterGuid);
         
         await _userRepository.UpdateAsync(oldUser);
     }
 
-    private bool CheckUserAttributes(
+    private static bool CheckUserAttributes(
         UserEntity oldUser,
         UserEntity newUser)
     {
         return oldUser.FirstName != newUser.FirstName
                || oldUser.LastName != newUser.LastName
+               || oldUser.Email != newUser.Email
                || oldUser.Role != newUser.Role;
     }
     
