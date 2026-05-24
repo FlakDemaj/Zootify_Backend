@@ -25,7 +25,7 @@ public class LocalizationTests : IntegrationTestBase
 
         var request = new LoginUserRequestDto { Email = UnknownEmail, Password = "Test123!" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorMessage.Should().Be(NoUserWithThisEmailDe);
@@ -45,7 +45,7 @@ public class LocalizationTests : IntegrationTestBase
 
         var request = new LoginUserRequestDto { Email = UnknownEmail, Password = "Test123!" };
 
-        var response = await Client.PostAsJsonAsync($"{Routings.AuthRouting}/login", request);
+        var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/login", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorMessage.Should().Be(NoUserWithThisEmailEn);

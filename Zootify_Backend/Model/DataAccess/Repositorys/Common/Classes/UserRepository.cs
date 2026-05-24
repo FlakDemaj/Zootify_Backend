@@ -21,4 +21,10 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
             .Include(u => u.DeletedByUser)
             .FirstOrDefaultAsync(u => u.Guid == guid);
     }
+
+    public async Task<UserEntity?> GetUserByGuid(Guid guid)
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .FirstOrDefaultAsync(u => u.Guid == guid);
+    }
 }

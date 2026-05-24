@@ -5,7 +5,7 @@ using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
-using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
+using Zootify_Backend.Model.DataAccess.Repositorys.System.Interfaces;
 using Zootify_Backend.Model.Services.System.Interfaces;
 using Zootify_Backend.Models.Providers;
 using Zootify_Backend.Transaction;
@@ -158,6 +158,7 @@ public class AuthService : IAuthService
     /// Validates the user's credentials, tracks failed attempts (blocking after 5),
     /// resets the counter on success, and returns a signed JWT token.
     /// </summary>
+    [NoTransaction]
     public async Task<LoginUserResponseDto> LoginAsync(
         LoginUserRequestDto request)
     {

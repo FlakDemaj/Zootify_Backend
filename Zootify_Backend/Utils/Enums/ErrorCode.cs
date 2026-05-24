@@ -12,6 +12,8 @@ public enum ErrorCode
     DefaultErrorCode = -1000000,
 
     DatabaseError = -1000001,
+    
+    Forbidden = -1000002,
 
     EmailError = -1001000,
 
@@ -44,6 +46,8 @@ public enum ErrorCode
     UserPending = -1002006,
     
     NoUserWithThisGuid = -1002007,
+    
+    NoUpdatedData = -1002008,
 
     InvalidRegistrationToken = -1003000,
 
