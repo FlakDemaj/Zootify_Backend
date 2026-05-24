@@ -440,7 +440,8 @@ public class AuthControllerTests : IntegrationTestBase
         dto.Should().NotBeNull();
         dto!.Token.Token.Should().NotBeNullOrEmpty();
         dto.Token.ExpiresInMinutes.Should().BeGreaterThan(0);
-        dto.Name.Should().Be(user.FirstName + " "  + user.LastName);
+        dto.FirstName.Should().Be(user.FirstName);
+        dto.LastName.Should().Be(user.LastName);
     }
 
     /// <summary>

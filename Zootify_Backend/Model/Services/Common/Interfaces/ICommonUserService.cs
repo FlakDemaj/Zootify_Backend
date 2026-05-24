@@ -24,4 +24,6 @@ public interface ICommonUserService
         UserEntity newUser,
         UserEntity oldUser,
         Guid requesterGuid);
+    
+    Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication);
 }

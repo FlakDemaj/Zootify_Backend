@@ -198,7 +198,8 @@ public class SystemSystemAuthService : ISystemAuthService
         return new LoginUserResponseDto
         {
             Token = token,
-            Name = user.FirstName + " " + user.LastName
+            FirstName = user.FirstName,
+            LastName = user.LastName,
         };
     }
 

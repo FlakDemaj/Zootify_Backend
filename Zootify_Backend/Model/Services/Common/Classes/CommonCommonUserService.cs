@@ -114,6 +114,19 @@ public class CommonCommonUserService : ICommonUserService
         await _userRepository.UpdateAsync(oldUser);
     }
 
+    public async Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication)
+    {
+        var user = await _userRepository
+            .GetActiveUserByGuid(authentication.UserGuid);
+
+        if (user == null)
+        {
+            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+        }
+        
+        return _mapper.Map<GetOwnUserData>(user);
+    }
+
     private static bool CheckUserAttributes(
         UserEntity oldUser,
         UserEntity newUser)
