@@ -3,9 +3,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Admin;
 
-public class UserControllerTests : IntegrationTestBase
+public class AdminUserControllerTests : IntegrationTestBase
 {
-    public UserControllerTests(IntegrationTestFixture fixture) : base(fixture)
+    public AdminUserControllerTests(IntegrationTestFixture fixture) : base(fixture)
     {
     }
 
@@ -32,7 +32,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -71,7 +71,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -110,7 +110,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -149,7 +149,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -188,7 +188,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         var error = await ReadErrorAsync(response);
@@ -217,7 +217,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         var error = await ReadErrorAsync(response);
@@ -245,7 +245,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -268,7 +268,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/update/{requester.Guid}",
+            $"{Routings.AdminUserRouting}/{requester.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -298,7 +298,7 @@ public class UserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
         
         var response = await Client.PostAsync(
-            $"{Routings.AdminUserRouting}/activate/{userToActivate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToActivate.Guid}",
             new StringContent(string.Empty));
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -329,7 +329,7 @@ public class UserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
         
         var response = await Client.PostAsync(
-            $"{Routings.AdminUserRouting}/activate/{userToActivate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToActivate.Guid}",
             new StringContent(string.Empty));
         
         var error = await ReadErrorAsync(response);

@@ -9,16 +9,16 @@ using Zootify_Backend.Model.Services.Common.Interfaces;
 namespace Zootify_Backend.Controllers.Admin;
 
 [Authorize(Roles = Roles.Admin)]
-public class UserController : BaseRestController
+public class AdminUserController : BaseRestController
 {
     private readonly IAdminUserServices _adminUserServices;
 
-    public UserController(IAdminUserServices adminUserServices)
+    public AdminUserController(IAdminUserServices adminUserServices)
     {
         _adminUserServices = adminUserServices;
     }
 
-    [HttpPatch("admin/update/{userGuid}")]
+    [HttpPatch("{userGuid}")]
     public async Task<IActionResult> UpdateUserAsync(
         Guid userGuid,
         [FromBody] UpdateUserRequestDto updateUserRequestDto)
@@ -31,7 +31,7 @@ public class UserController : BaseRestController
         return Ok();
     }
     
-    [HttpPost("admin/activate/{userGuid}")]
+    [HttpPost("{userGuid}")]
     public async Task<IActionResult> ActivateUserAsync(
         Guid userGuid)
     {

@@ -12,11 +12,11 @@ namespace Zootify_Backend.Controllers.Common;
 /// Controllers used by more than one roles
 /// </summary>
 [Authorize(Roles = $"{Roles.Moderator}, {Roles.Admin}, {Roles.User}")]
-public class UserController : BaseRestController
+public class CommonUserController : BaseRestController
 {
     private readonly ICommonUserService _commonUserService;
     
-    public UserController(ICommonUserService commonUserService) 
+    public CommonUserController(ICommonUserService commonUserService) 
     {
         _commonUserService = commonUserService;
     }
@@ -28,14 +28,14 @@ public class UserController : BaseRestController
         return Ok(/*UserDto*/);
     }
 
-    [HttpGet("common/{userGuid}")]
+    [HttpGet("{userGuid}")]
     public async Task<ActionResult<GetUserResponseDto>> GetUserAsync(Guid userGuid)
     {
         var user = await _commonUserService.GetUserByGuidAsync(Authentication,userGuid);
         return Ok(user);
     }
     
-    [HttpPatch("common/updateOwnUser")]
+    [HttpPatch]
     public async Task<IActionResult> UpdateUserAsync(
         Guid userGuid,
         [FromBody] UpdateOwnUserRequestDto updateOwnUserRequestDto)
@@ -47,7 +47,7 @@ public class UserController : BaseRestController
         return Ok();
     }
     
-    [HttpDelete("common/delete/{userGuid}")]
+    [HttpDelete("{userGuid}")]
     public async Task<IActionResult> DeleteUserAsync(
         Guid userGuid)
     {

@@ -4,9 +4,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
-public class UserControllerTests : IntegrationTestBase
+public class CommonUserControllerTests : IntegrationTestBase
 {
-    public UserControllerTests(IntegrationTestFixture fixture) : base(fixture)
+    public CommonUserControllerTests(IntegrationTestFixture fixture) : base(fixture)
     {
     }
 
@@ -246,7 +246,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonUserRouting}/updateOwnUser",
+            $"{Routings.CommonUserRouting}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -279,7 +279,7 @@ public class UserControllerTests : IntegrationTestBase
         };
         
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonUserRouting}/updateOwnUser",
+            $"{Routings.CommonUserRouting}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -313,7 +313,7 @@ public class UserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
         
         var response = await Client.DeleteAsync(
-            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+            $"{Routings.CommonUserRouting}/{userToDelete.Guid}");
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         
@@ -341,7 +341,7 @@ public class UserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
         
         var response = await Client.DeleteAsync(
-            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+            $"{Routings.CommonUserRouting}/{userToDelete.Guid}");
         
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
@@ -362,7 +362,7 @@ public class UserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
         
         var response = await Client.DeleteAsync(
-            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+            $"{Routings.CommonUserRouting}/{userToDelete.Guid}");
         
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -383,7 +383,7 @@ public class UserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
         
         var response = await Client.DeleteAsync(
-            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+            $"{Routings.CommonUserRouting}/{userToDelete.Guid}");
         
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -399,7 +399,7 @@ public class UserControllerTests : IntegrationTestBase
         AuthenticateAs(requester);
         
         var response = await Client.DeleteAsync(
-            $"{Routings.CommonUserRouting}/delete/{requester.Guid}");
+            $"{Routings.CommonUserRouting}/{requester.Guid}");
         
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         
