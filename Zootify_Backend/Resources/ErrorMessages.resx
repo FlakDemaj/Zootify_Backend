@@ -92,4 +92,7 @@
   <data name="NoUpdatedData" xml:space="preserve">
     <value>Bitte geben Sie änderungen mit.</value>
   </data>
+  <data name="Forbidden" xml:space="preserve">
+    <value>Sie haben keine Berechtigung für diese Aktion.</value>
+  </data>
 </root>
