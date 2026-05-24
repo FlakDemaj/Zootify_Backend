@@ -15,7 +15,7 @@ namespace Zootify_Backend.Model.Services.System.Classes;
 /// <summary>
 /// Handles all user-related business logic including registration, login, and password management.
 /// </summary>
-public class AuthService : IAuthService
+public class SystemSystemAuthService : ISystemAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly IBrevoProvider _brevoProvider;
@@ -24,9 +24,9 @@ public class AuthService : IAuthService
     private IMapper Mapper { get; }
 
     /// <summary>
-    /// Initializes a new <see cref="AuthService"/> with its required dependencies.
+    /// Initializes a new <see cref="SystemSystemAuthService"/> with its required dependencies.
     /// </summary>
-    public AuthService(
+    public SystemSystemAuthService(
         IAuthRepository authRepository,
         IMapper mapper,
         IBrevoProvider brevoProvider,
@@ -105,7 +105,7 @@ public class AuthService : IAuthService
         }
 
         user.ActivateUser();
-        user.SetUpdatedBy(null);
+        user.SetUpdatedBy(user.Guid);
         user.RemoveRegistrationToken();
 
         await _authRepository.UpdateAsync(user);
@@ -240,7 +240,7 @@ public class AuthService : IAuthService
         CheckPassword(request.Password);
 
         user.SetPassword(request.RepeatedPassword);
-        user.SetUpdatedBy(null);
+        user.SetUpdatedBy(user.Guid);
         user.ResetLoginAttempts();
         user.ActivateUser();
         user.RemoveResetPasswordToken();

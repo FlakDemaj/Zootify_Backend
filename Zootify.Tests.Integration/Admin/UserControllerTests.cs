@@ -31,7 +31,7 @@ public class UserControllerTests : IntegrationTestBase
             Role = UserRole.Admin
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
             requestDto);
         
@@ -70,7 +70,7 @@ public class UserControllerTests : IntegrationTestBase
             Role = userToUpdate.Role
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
             requestDto);
         
@@ -109,7 +109,7 @@ public class UserControllerTests : IntegrationTestBase
             Role = userToUpdate.Role
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
             requestDto);
         
@@ -148,7 +148,7 @@ public class UserControllerTests : IntegrationTestBase
             Role = UserRole.User
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
             requestDto);
         
@@ -187,12 +187,41 @@ public class UserControllerTests : IntegrationTestBase
             Role = userToUpdate.Role
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
             requestDto);
         
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
+    }
+    
+    [Fact]
+    public async Task UpdateUser_NoActiveUser_ErrorCode()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var userToUpdate = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            status: UserStatus.Deleted,
+            role: UserRole.Moderator);
+
+        var requestDto = new UpdateUserRequestDto
+        {
+            FirstName = userToUpdate.FirstName,
+            LastName = userToUpdate.LastName,
+            Role = userToUpdate.Role
+        };
+        
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            requestDto);
+        
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
     }
     
     [Fact]
@@ -215,7 +244,7 @@ public class UserControllerTests : IntegrationTestBase
             Role = userToUpdate.Role
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
             requestDto);
         
@@ -238,11 +267,74 @@ public class UserControllerTests : IntegrationTestBase
             Role = requester.Role
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{requester.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    #endregion
+
+    #region ActivateUser
+
+    [Fact]
+    public async Task ActivateUser_Success()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        var deleter = await UserRepo.CreateUserAsync(
+            "test2@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var userToActivate = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            status: UserStatus.Deleted,
+            deleter: deleter.Guid,
+            role: UserRole.Moderator);
+        
+        var response = await Client.PostAsync(
+            $"{Routings.AdminUserRouting}/activate/{userToActivate.Guid}",
+            new StringContent(string.Empty));
+        
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var updatedUser = await GetUserFromDbByGuidAsync(userToActivate.Guid);
+
+        updatedUser.Should().NotBeNull();
+        updatedUser!.Status.Should().Be(UserStatus.Active);
+        updatedUser.DeletedByUserGuid.Should().Be(null);
+        updatedUser.DeletionDate.Should().Be(null);
+        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
+        updatedUser.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow,
+            precision: TimeSpan.FromSeconds(5));
+    }
+    
+    [Fact]
+    public async Task ActivateUser_NoDeletedUser_ErrorCode()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var userToActivate = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            status: UserStatus.Active,
+            role: UserRole.Moderator);
+        
+        var response = await Client.PostAsync(
+            $"{Routings.AdminUserRouting}/activate/{userToActivate.Guid}",
+            new StringContent(string.Empty));
+        
+        var error = await ReadErrorAsync(response);
+        
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
     }
 
     #endregion

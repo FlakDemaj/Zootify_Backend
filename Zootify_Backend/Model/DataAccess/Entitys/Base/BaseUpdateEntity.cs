@@ -15,7 +15,7 @@ public abstract class BaseUpdateEntity : BaseCreationEntity
     /// Records the user who performed the last update and sets the update timestamp to now.
     /// Pass <c>null</c> for system-triggered updates (e.g., token confirmation).
     /// </summary>
-    public void SetUpdatedBy(Guid? updatedBy)
+    public void SetUpdatedBy(Guid updatedBy)
     {
         UpdatedByUserGuid = updatedBy;
         UpdatedDate = DateTime.UtcNow;

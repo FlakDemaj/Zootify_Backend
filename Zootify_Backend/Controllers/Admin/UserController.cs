@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.Enums;
+using Zootify_Backend.Model.Services.Admin.Interfaces;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 
 namespace Zootify_Backend.Controllers.Admin;
@@ -10,22 +11,33 @@ namespace Zootify_Backend.Controllers.Admin;
 [Authorize(Roles = Roles.Admin)]
 public class UserController : BaseRestController
 {
-    private readonly IUserService _userService;
+    private readonly IAdminUserServices _adminUserServices;
 
-    public UserController(IUserService userService)
+    public UserController(IAdminUserServices adminUserServices)
     {
-        _userService = userService;
+        _adminUserServices = adminUserServices;
     }
 
-    [HttpPost("admin/update/{userGuid}")]
+    [HttpPatch("admin/update/{userGuid}")]
     public async Task<IActionResult> UpdateUserAsync(
         Guid userGuid,
         [FromBody] UpdateUserRequestDto updateUserRequestDto)
     {
-        await _userService.UpdateUserAsync(
+        await _adminUserServices.UpdateUserAsync(
             Authentication,
             userGuid,
             updateUserRequestDto);
+
+        return Ok();
+    }
+    
+    [HttpPost("admin/activate/{userGuid}")]
+    public async Task<IActionResult> ActivateUserAsync(
+        Guid userGuid)
+    {
+        await _adminUserServices.ActivateUserAsync(
+            Authentication,
+            userGuid);
 
         return Ok();
     }

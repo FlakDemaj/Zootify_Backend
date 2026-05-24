@@ -245,7 +245,7 @@ public class UserControllerTests : IntegrationTestBase
             Email = "changedEmail@test.de"
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.CommonUserRouting}/updateOwnUser",
             requestDto);
         
@@ -278,7 +278,7 @@ public class UserControllerTests : IntegrationTestBase
             Email = "changedEmail@test.de"
         };
         
-        var response = await Client.PostAsJsonAsync(
+        var response = await Client.PatchAsJsonAsync(
             $"{Routings.CommonUserRouting}/updateOwnUser",
             requestDto);
         
@@ -292,6 +292,122 @@ public class UserControllerTests : IntegrationTestBase
         updatedUser.Email.Should().Be(requestDto.Email.ToLower());
         updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
         updatedUser.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow,
+            precision: TimeSpan.FromSeconds(5));
+    }
+    
+    #endregion
+    
+    #region DeleteUser
+
+    [Fact]
+    public async Task DeleteUser_Success()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var userToDelete = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            role: UserRole.Moderator);
+        
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+        
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var updatedUser = await GetUserFromDbByGuidAsync(userToDelete.Guid);
+
+        updatedUser.Should().NotBeNull();
+        updatedUser!.Status.Should().Be(UserStatus.Deleted);
+        updatedUser.DeletedByUserGuid.Should().Be(requester.Guid);
+        updatedUser.DeletionDate.Should().BeCloseTo(DateTime.UtcNow,
+            precision: TimeSpan.FromSeconds(5));
+    }
+    
+    [Fact]
+    public async Task DeleteUser_NoUserToDeleteFound_ErrorCode()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var userToDelete = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            status: UserStatus.Deleted,
+            role: UserRole.Moderator);
+        
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+        
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
+    }
+    
+    [Fact]
+    public async Task DeleteUser_ModeratorTrysToDeleteAnotherUser_ErrorCode()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Moderator);
+        
+        AuthenticateAs(requester);
+
+        var userToDelete = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            status: UserStatus.Deleted,
+            role: UserRole.Moderator);
+        
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+        
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task DeleteUser_UserTrysToDeleteAnotherUser_ErrorCode()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.User);
+        
+        AuthenticateAs(requester);
+
+        var userToDelete = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            status: UserStatus.Deleted,
+            role: UserRole.Moderator);
+        
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonUserRouting}/delete/{userToDelete.Guid}");
+        
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+    
+    [Fact]
+    public async Task DeleteUser_UserDeletesHimself_Success()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.User);
+        
+        AuthenticateAs(requester);
+        
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonUserRouting}/delete/{requester.Guid}");
+        
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var updatedUser = await GetUserFromDbByGuidAsync(requester.Guid);
+
+        updatedUser.Should().NotBeNull();
+        updatedUser!.DeletedByUserGuid.Should().Be(requester.Guid);
+        updatedUser.DeletionDate.Should().BeCloseTo(DateTime.UtcNow,
             precision: TimeSpan.FromSeconds(5));
     }
     

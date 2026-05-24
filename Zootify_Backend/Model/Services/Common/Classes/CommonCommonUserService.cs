@@ -11,13 +11,13 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Common.Classes;
 
-public class UserService : IUserService
+public class CommonCommonUserService : ICommonUserService
 {
     private readonly IUserRepository _userRepository;
     
     private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IMapper mapper)
+    public CommonCommonUserService(IUserRepository userRepository, IMapper mapper)
     {
         _userRepository = userRepository;
         _mapper = mapper;
@@ -42,42 +42,30 @@ public class UserService : IUserService
         
         return _mapper.Map<GetUserResponseDto>(user);
     }
-
+    
     [Transaction(ReadOnly = false)]
-    public async Task UpdateUserAsync(
+    public async Task DeleteUserAsync(
         IAuthentication authentication,
-        Guid userToUpdateGuid,
-        UpdateUserRequestDto updateUserRequestDto)
+        Guid userToDeleteGuid)
     {
         if (authentication.Role != UserRole.Admin
-            || authentication.UserGuid == userToUpdateGuid)
+            && authentication.UserGuid != userToDeleteGuid)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }
         
-        var requester =  await _userRepository
-            .GetUserByGuid(authentication.UserGuid);
+        var userToDelete = await _userRepository
+            .GetActiveUserByGuid(userToDeleteGuid);
 
-        if (requester == null)
+        if (userToDelete == null)
         {
             throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
         }
         
-        var oldUser = await _userRepository
-            .GetUserByGuidWithAuditInformationAsync(userToUpdateGuid);
-
-        if (oldUser == null)
-        {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
-        }
+        userToDelete.Status = UserStatus.Deleted;
+        userToDelete.SetDeletedBy(authentication.UserGuid);
         
-        var mappedUser = _mapper.Map<UserEntity>(updateUserRequestDto);
-        mappedUser.Email = oldUser.Email;
-        
-        await UpdateUserAsync(
-            mappedUser,
-            oldUser,
-            requester.Guid);
+        await _userRepository.UpdateAsync(userToDelete);
     }
     
     [Transaction(ReadOnly = false)]
@@ -86,7 +74,7 @@ public class UserService : IUserService
         UpdateOwnUserRequestDto updateOwnUserRequestDto)
     {
         var requester =  await _userRepository
-            .GetUserByGuid(authentication.UserGuid);
+            .GetActiveUserByGuid(authentication.UserGuid);
 
         if (requester == null)
         {
@@ -105,10 +93,11 @@ public class UserService : IUserService
             authentication.UserGuid);
     }
 
-    private async Task UpdateUserAsync(
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateUserAsync(
         UserEntity newUser,
         UserEntity oldUser,
-        Guid? requesterGuid)
+        Guid requesterGuid)
     {
 
         if (!CheckUserAttributes(oldUser, newUser))
@@ -125,7 +114,7 @@ public class UserService : IUserService
         await _userRepository.UpdateAsync(oldUser);
     }
 
-    private bool CheckUserAttributes(
+    private static bool CheckUserAttributes(
         UserEntity oldUser,
         UserEntity newUser)
     {
