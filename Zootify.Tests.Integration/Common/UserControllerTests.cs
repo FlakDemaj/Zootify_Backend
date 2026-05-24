@@ -1,3 +1,4 @@
+using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify.Tests.Integration.Utils;
 
@@ -63,6 +64,130 @@ public class UserControllerTests : IntegrationTestBase
     }
     
     [Fact]
+    public async Task GetUser_ValidGuid_UpdaterIsNull()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+
+        var deleter = await UserRepo.CreateUserAsync(
+            "test3@test.de",
+            firstName: "Stephan",
+            lastName: "Billig");
+
+        var userToGet = await UserRepo.CreateUserAsync(
+            "test4@test.de",
+            updateDateTime: DateTime.UtcNow.AddDays(-23),
+            deleter: deleter.Guid,
+            deletionDateTime: DateTime.UtcNow.AddDays(-5),
+            role: UserRole.Admin,
+            status: UserStatus.Deleted);
+        
+        AuthenticateAs(requester);
+
+        var response = await Client.
+            GetFromJsonAsync<GetUserResponseDto>(
+                $"{Routings.CommonUserRouting}/{userToGet.Guid}");
+        
+        response.Should().NotBeNull();
+        
+        response!.FirstName.Should().Be(userToGet.FirstName);
+        response.LastName.Should().Be(userToGet.LastName);
+        response.Email.Should().Be(userToGet.Email);
+        response.UserGuid.Should().Be(userToGet.Guid);
+        response.UserRole.Should().Be(userToGet.Role);
+        response.LoginAttempts.Should().Be(userToGet.LoginAttempts);
+        response.UserStatus.Should().Be(userToGet.Status);
+        
+        response.CreatedAt.Should().Be(userToGet.CreationDate);
+        
+        response.UpdatedAt.Should().Be(userToGet.UpdatedDate);
+        response.UpdatedBy.Should().Be("Deleted User");
+        
+        response.DeletedAt.Should().Be(userToGet.DeletionDate);
+        response.DeletedBy.Should().Be(deleter.FirstName + " " + deleter.LastName);
+    }
+    
+    [Fact]
+    public async Task GetUser_ValidGuid_UpdaterAndDeleterIsNull()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+
+        var userToGet = await UserRepo.CreateUserAsync(
+            "test4@test.de",
+            updateDateTime: DateTime.UtcNow.AddDays(-23),
+            deletionDateTime: DateTime.UtcNow.AddDays(-5),
+            role: UserRole.Admin,
+            status: UserStatus.Deleted);
+        
+        AuthenticateAs(requester);
+
+        var response = await Client.
+            GetFromJsonAsync<GetUserResponseDto>(
+                $"{Routings.CommonUserRouting}/{userToGet.Guid}");
+        
+        response.Should().NotBeNull();
+        
+        response!.FirstName.Should().Be(userToGet.FirstName);
+        response.LastName.Should().Be(userToGet.LastName);
+        response.Email.Should().Be(userToGet.Email);
+        response.UserGuid.Should().Be(userToGet.Guid);
+        response.UserRole.Should().Be(userToGet.Role);
+        response.LoginAttempts.Should().Be(userToGet.LoginAttempts);
+        response.UserStatus.Should().Be(userToGet.Status);
+        
+        response.CreatedAt.Should().Be(userToGet.CreationDate);
+        
+        response.UpdatedAt.Should().Be(userToGet.UpdatedDate);
+        response.UpdatedBy.Should().Be("Deleted User");
+        
+        response.DeletedAt.Should().Be(userToGet.DeletionDate);
+        response.DeletedBy.Should().Be("Deleted User");
+    }
+    
+    [Fact]
+    public async Task GetUser_ValidGuid_UpdaterIsHimSelf()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+
+        var userToGet = await UserRepo.CreateUserAsync(
+            "test4@test.de",
+            updater: requester.Guid,
+            updateDateTime: DateTime.UtcNow.AddDays(-23),
+            deletionDateTime: DateTime.UtcNow.AddDays(-5),
+            role: UserRole.Admin,
+            status: UserStatus.Deleted);
+        
+        AuthenticateAs(requester);
+
+        var response = await Client.
+            GetFromJsonAsync<GetUserResponseDto>(
+                $"{Routings.CommonUserRouting}/{userToGet.Guid}");
+        
+        response.Should().NotBeNull();
+        
+        response!.FirstName.Should().Be(userToGet.FirstName);
+        response.LastName.Should().Be(userToGet.LastName);
+        response.Email.Should().Be(userToGet.Email);
+        response.UserGuid.Should().Be(userToGet.Guid);
+        response.UserRole.Should().Be(userToGet.Role);
+        response.LoginAttempts.Should().Be(userToGet.LoginAttempts);
+        response.UserStatus.Should().Be(userToGet.Status);
+        
+        response.CreatedAt.Should().Be(userToGet.CreationDate);
+        
+        response.UpdatedAt.Should().Be(userToGet.UpdatedDate);
+        response.UpdatedBy.Should().Be(requester.FirstName + " " + requester.LastName);
+        
+        response.DeletedAt.Should().Be(userToGet.DeletionDate);
+        response.DeletedBy.Should().Be("Deleted User");
+    }
+    
+    [Fact]
     public async Task GetUser_InvalidGuid_ReturnsNoUser()
     {
         var requester = await UserRepo.CreateUserAsync(
@@ -100,5 +225,75 @@ public class UserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    #endregion
+    
+    #region UpdateOwnUser
+    
+    [Fact]
+    public async Task UpdateOwnUser_Success_AllData()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var requestDto = new UpdateOwnUserRequestDto
+        {
+            FirstName = "ChangedName",
+            LastName = "ChangedLastName",
+            Email = "changedEmail@test.de"
+        };
+        
+        var response = await Client.PostAsJsonAsync(
+            $"{Routings.CommonUserRouting}/updateOwnUser",
+            requestDto);
+        
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var updatedUser = await GetUserFromDbByGuidAsync(requester.Guid);
+
+        updatedUser.Should().NotBeNull();
+        updatedUser!.FirstName.Should().Be(requestDto.FirstName);
+        updatedUser.LastName.Should().Be(requestDto.LastName);
+        updatedUser.Email.Should().Be(requestDto.Email.ToLower());
+        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
+        updatedUser.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow,
+            precision: TimeSpan.FromSeconds(5));
+    }
+    
+    [Fact]
+    public async Task UpdateOwnUser_Success_JustEmail()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var requestDto = new UpdateOwnUserRequestDto
+        {
+            FirstName = requester.FirstName,
+            LastName = requester.LastName,
+            Email = "changedEmail@test.de"
+        };
+        
+        var response = await Client.PostAsJsonAsync(
+            $"{Routings.CommonUserRouting}/updateOwnUser",
+            requestDto);
+        
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var updatedUser = await GetUserFromDbByGuidAsync(requester.Guid);
+
+        updatedUser.Should().NotBeNull();
+        updatedUser!.FirstName.Should().Be(requester.FirstName);
+        updatedUser.LastName.Should().Be(requester.LastName);
+        updatedUser.Email.Should().Be(requestDto.Email.ToLower());
+        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
+        updatedUser.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow,
+            precision: TimeSpan.FromSeconds(5));
+    }
+    
     #endregion
 }

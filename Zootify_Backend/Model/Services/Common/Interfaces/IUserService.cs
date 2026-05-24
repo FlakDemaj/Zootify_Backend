@@ -1,4 +1,5 @@
 using Zootify_Backend.DTOs.Admin.Request;
+using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Model.Auth;
 
@@ -14,4 +15,8 @@ public interface IUserService
         IAuthentication authentication,
         Guid userToUpdateGuid,
         UpdateUserRequestDto updateUserRequestDto);
+
+    Task UpdateOwnUserAsync(
+        IAuthentication authentication,
+        UpdateOwnUserRequestDto updateOwnUserRequestDto);
 }

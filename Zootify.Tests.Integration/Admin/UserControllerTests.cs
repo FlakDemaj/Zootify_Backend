@@ -10,7 +10,6 @@ public class UserControllerTests : IntegrationTestBase
     }
 
     #region UpdateUser
-
     
     [Fact]
     public async Task UpdateUser_Success_AllData()
@@ -169,7 +168,7 @@ public class UserControllerTests : IntegrationTestBase
     }
     
     [Fact]
-    public async Task UpdateUser_Success_NoChanges()
+    public async Task UpdateUser_ErrorCode_NoChanges()
     {
         var requester = await UserRepo.CreateUserAsync(
             "test1@test.de",
@@ -197,7 +196,7 @@ public class UserControllerTests : IntegrationTestBase
     }
     
     [Fact]
-    public async Task UpdateUser_Success_Forbidden()
+    public async Task UpdateUser_NoPermission_Forbidden()
     {
         var requester = await UserRepo.CreateUserAsync(
             "test1@test.de",
@@ -218,6 +217,29 @@ public class UserControllerTests : IntegrationTestBase
         
         var response = await Client.PostAsJsonAsync(
             $"{Routings.AdminUserRouting}/update/{userToUpdate.Guid}",
+            requestDto);
+        
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+    
+    [Fact]
+    public async Task UpdateUser_UpdateOwnUser_Forbidden()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Moderator);
+        
+        AuthenticateAs(requester);
+
+        var requestDto = new UpdateUserRequestDto
+        {
+            FirstName = "ChangedFirstName",
+            LastName = requester.LastName,
+            Role = requester.Role
+        };
+        
+        var response = await Client.PostAsJsonAsync(
+            $"{Routings.AdminUserRouting}/update/{requester.Guid}",
             requestDto);
         
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);

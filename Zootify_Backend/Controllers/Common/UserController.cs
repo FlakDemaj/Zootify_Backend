@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
+using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Common.Interfaces;
@@ -32,5 +33,17 @@ public class UserController : BaseRestController
     {
         var user = await _userService.GetUserByGuidAsync(Authentication,userGuid);
         return Ok(user);
+    }
+    
+    [HttpPost("common/updateOwnUser")]
+    public async Task<IActionResult> UpdateUserAsync(
+        Guid userGuid,
+        [FromBody] UpdateOwnUserRequestDto updateOwnUserRequestDto)
+    {
+        await _userService.UpdateOwnUserAsync(
+            Authentication,
+            updateOwnUserRequestDto);
+
+        return Ok();
     }
 }

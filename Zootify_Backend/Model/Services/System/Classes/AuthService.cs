@@ -57,7 +57,7 @@ public class AuthService : IAuthService
             throw new ZootifyException(ErrorCode.UserWithThisEmailAlreadyExists);
         }
 
-        CheckEmail(request.Email.ToLower());
+        HelperMethods.CheckEmail(request.Email.ToLower());
 
         var user = Mapper.Map<UserEntity>(request);
 
@@ -382,20 +382,6 @@ public class AuthService : IAuthService
         if (!hasSpecialCharacter)
         {
             throw new ZootifyException(ErrorCode.PasswordMissingSpecialCharacter);
-        }
-    }
-
-    /// <summary>
-    /// Validates that the email contains "@" and ".", and meets the minimum length requirement.
-    /// Throws a <see cref="ZootifyException"/> with <see cref="ErrorCode.EmailError"/> on failure.
-    /// </summary>
-    private void CheckEmail(string email)
-    {
-        if (!email.Contains("@")
-            || !email.Contains(".")
-            || email.Length < 7)
-        {
-            throw new ZootifyException(ErrorCode.EmailError);
         }
     }
 

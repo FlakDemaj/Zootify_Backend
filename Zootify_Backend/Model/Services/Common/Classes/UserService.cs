@@ -1,5 +1,6 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Admin.Request;
+using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
@@ -23,7 +24,8 @@ public class UserService : IUserService
     }
 
     [Transaction(ReadOnly = false)]
-    public async Task<GetUserResponseDto> GetUserByGuidAsync(IAuthentication authentication,
+    public async Task<GetUserResponseDto> GetUserByGuidAsync(
+        IAuthentication authentication,
         Guid guid)
     {
         if (authentication.Role == UserRole.User)
@@ -47,7 +49,8 @@ public class UserService : IUserService
         Guid userToUpdateGuid,
         UpdateUserRequestDto updateUserRequestDto)
     {
-        if (authentication.Role != UserRole.Admin)
+        if (authentication.Role != UserRole.Admin
+            || authentication.UserGuid == userToUpdateGuid)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }
@@ -60,16 +63,6 @@ public class UserService : IUserService
             throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
         }
         
-        var mappedUser = _mapper.Map<UserEntity>(updateUserRequestDto);
-        
-        await UpdateUserAsync(mappedUser, userToUpdateGuid, requester.Guid);
-    }
-
-    private async Task UpdateUserAsync(
-        UserEntity newUser,
-        Guid userToUpdateGuid,
-        Guid requesterGuid)
-    {
         var oldUser = await _userRepository
             .GetUserByGuidWithAuditInformationAsync(userToUpdateGuid);
 
@@ -77,6 +70,46 @@ public class UserService : IUserService
         {
             throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
         }
+        
+        var mappedUser = _mapper.Map<UserEntity>(updateUserRequestDto);
+        mappedUser.Email = oldUser.Email;
+        
+        await UpdateUserAsync(
+            mappedUser,
+            oldUser,
+            requester.Guid);
+    }
+    
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateOwnUserAsync(
+        IAuthentication authentication,
+        UpdateOwnUserRequestDto updateOwnUserRequestDto)
+    {
+        var requester =  await _userRepository
+            .GetUserByGuid(authentication.UserGuid);
+
+        if (requester == null)
+        {
+            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+        }
+        
+        HelperMethods.CheckEmail(updateOwnUserRequestDto.Email);
+        
+        var mappedUser = _mapper.Map<UserEntity>(updateOwnUserRequestDto);
+        
+        mappedUser.FormatEmail();
+        
+        await UpdateUserAsync(
+            mappedUser,
+            requester,
+            authentication.UserGuid);
+    }
+
+    private async Task UpdateUserAsync(
+        UserEntity newUser,
+        UserEntity oldUser,
+        Guid? requesterGuid)
+    {
 
         if (!CheckUserAttributes(oldUser, newUser))
         {
@@ -86,6 +119,7 @@ public class UserService : IUserService
         oldUser.FirstName = newUser.FirstName;
         oldUser.LastName = newUser.LastName;
         oldUser.Role = newUser.Role;
+        oldUser.Email = newUser.Email;
         oldUser.SetUpdatedBy(requesterGuid);
         
         await _userRepository.UpdateAsync(oldUser);
@@ -97,6 +131,7 @@ public class UserService : IUserService
     {
         return oldUser.FirstName != newUser.FirstName
                || oldUser.LastName != newUser.LastName
+               || oldUser.Email != newUser.Email
                || oldUser.Role != newUser.Role;
     }
     
