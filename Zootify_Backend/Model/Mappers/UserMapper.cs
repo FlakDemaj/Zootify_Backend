@@ -84,6 +84,14 @@ public class UserMapper : Profile
                 o => o.MapFrom(s => s.LastName))
             .ForMember(d => d.Email,
                 o => o.MapFrom(s => s.Email));
+        
+        CreateMap<UserEntity, GetOwnUserData>()
+            .ForMember(d => d.FirstName,
+                o => o.MapFrom(s => s.FirstName))
+            .ForMember(d => d.LastName,
+                o => o.MapFrom(s => s.LastName))
+            .ForMember(d => d.Email,
+                o => o.MapFrom(s => s.Email));
 
     }
 }

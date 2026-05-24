@@ -10,6 +10,30 @@ public class CommonUserControllerTests : IntegrationTestBase
     {
     }
 
+    #region GetOwnUserData
+
+    [Fact]
+    public async Task GetOwnUser_ValidUser_ReturnsUser()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            role: UserRole.Admin);
+        
+        AuthenticateAs(requester);
+
+        var response = await Client.
+            GetFromJsonAsync<GetOwnUserData>(
+                $"{Routings.CommonUserRouting}/ownData");
+        
+        response.Should().NotBeNull();
+        
+        response!.FirstName.Should().Be(requester.FirstName);
+        response.LastName.Should().Be(requester.LastName);
+        response.Email.Should().Be(requester.Email);
+    }
+
+    #endregion
+    
     #region GetUser
 
     [Fact]
