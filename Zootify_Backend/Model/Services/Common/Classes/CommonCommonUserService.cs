@@ -43,6 +43,19 @@ public class CommonCommonUserService : ICommonUserService
         return _mapper.Map<GetUserResponseDto>(user);
     }
     
+    [Transaction(ReadOnly = true)]
+    public async Task<List<GetAllUserResponseDto>> GetAllUsersAsync(
+        IAuthentication authentication)
+    {
+        if (authentication.Role == UserRole.User)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+
+        var users = await _userRepository.GetAllUsersAsync();
+        return _mapper.Map<List<GetAllUserResponseDto>>(users);
+    }
+    
     [Transaction(ReadOnly = false)]
     public async Task DeleteUserAsync(
         IAuthentication authentication,

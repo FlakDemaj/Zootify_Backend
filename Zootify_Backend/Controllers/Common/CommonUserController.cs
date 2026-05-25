@@ -22,10 +22,10 @@ public class CommonUserController : BaseRestController
     }
 
     [HttpGet]
-    public async Task<ActionResult<GetAllUserResponseDto>> GetUser()
+    public async Task<ActionResult<List<GetAllUserResponseDto>>> GetAllUsersAsync()
     {
-        //Hier könnte Ihre Werbung stehen
-        return Ok(/*UserDto*/);
+        var users = await _commonUserService.GetAllUsersAsync(Authentication);
+        return Ok(users);
     }
 
     [HttpGet("{userGuid}")]

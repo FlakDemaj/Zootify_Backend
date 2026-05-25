@@ -26,7 +26,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     public async Task<UserEntity?> GetActiveUserByGuid(Guid guid)
     {
         return await Context.GetTrackingSet<UserEntity>()
-            .FirstOrDefaultAsync(u => u.Guid == guid 
+            .FirstOrDefaultAsync(u => u.Guid == guid
                                       && u.Status == UserStatus.Active);
     }
 
@@ -34,5 +34,12 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     {
         return await Context.GetTrackingSet<UserEntity>()
             .FirstOrDefaultAsync(u => u.Guid == guid
-                                      && u.Status == UserStatus.Deleted);    }
+                                      && u.Status == UserStatus.Deleted);
+    }
+
+    public async Task<List<UserEntity>> GetAllUsersAsync()
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .ToListAsync();
+    }
 }
