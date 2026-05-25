@@ -18,7 +18,7 @@ public class AdminUserController : BaseRestController
         _adminUserServices = adminUserServices;
     }
 
-    [HttpPatch("{userGuid}")]
+    [HttpPatch("{userGuid:guid}")]
     public async Task<IActionResult> UpdateUserAsync(
         Guid userGuid,
         [FromBody] UpdateUserRequestDto updateUserRequestDto)
@@ -31,7 +31,7 @@ public class AdminUserController : BaseRestController
         return Ok();
     }
     
-    [HttpPost("{userGuid}")]
+    [HttpPost("{userGuid:guid}")]
     public async Task<IActionResult> ActivateUserAsync(
         Guid userGuid)
     {

@@ -26,4 +26,8 @@ public interface ICommonUserService
         Guid requesterGuid);
     
     Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication);
+    
+    Task<List<GetAllUserResponseDto>> GetAllUsersAsync(
+        IAuthentication authentication,
+        GetAllUsersFilterDto query);
 }

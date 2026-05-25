@@ -68,7 +68,7 @@ public class UserMapper : Profile
             .ForMember(d => d.DeletedBy,
                 o => o.MapFrom<AuditUserFullNameResolver, UserEntity?>(
                     s => s.DeletedByUser));
-
+        
         CreateMap<UpdateUserRequestDto, UserEntity>(MemberList.None)
             .ForMember(d => d.Role,
                 o => o.MapFrom(s => s.Role))
@@ -84,7 +84,7 @@ public class UserMapper : Profile
                 o => o.MapFrom(s => s.LastName))
             .ForMember(d => d.Email,
                 o => o.MapFrom(s => s.Email));
-        
+
         CreateMap<UserEntity, GetOwnUserData>()
             .ForMember(d => d.FirstName,
                 o => o.MapFrom(s => s.FirstName))
@@ -93,5 +93,18 @@ public class UserMapper : Profile
             .ForMember(d => d.Email,
                 o => o.MapFrom(s => s.Email));
 
+        CreateMap<UserEntity, GetAllUserResponseDto>()
+            .ForMember(d => d.Guid,
+                o => o.MapFrom(s => s.Guid))
+            .ForMember(d => d.FirstName,
+                o => o.MapFrom(s => s.FirstName))
+            .ForMember(d => d.LastName,
+                o => o.MapFrom(s => s.LastName))
+            .ForMember(d => d.Email,
+                o => o.MapFrom(s => s.Email))
+            .ForMember(d => d.Role,
+                o => o.MapFrom(s => s.Role))
+            .ForMember(d => d.Status,
+                o => o.MapFrom(s => s.Status));
     }
 }

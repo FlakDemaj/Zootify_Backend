@@ -5,7 +5,7 @@ using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
-using Zootify_Backend.Model.DataAccess.Repositorys.Common.Interfaces;
+using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 using Zootify_Backend.Transaction;
 
@@ -41,6 +41,21 @@ public class CommonCommonUserService : ICommonUserService
         }
         
         return _mapper.Map<GetUserResponseDto>(user);
+    }
+    
+    [Transaction(ReadOnly = true)]
+    public async Task<List<GetAllUserResponseDto>> GetAllUsersAsync(
+        IAuthentication authentication,
+        GetAllUsersFilterDto query)
+    {
+        if (authentication.Role == UserRole.User)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+
+        var users = await _userRepository.GetAllUsersAsync(
+            query);
+        return _mapper.Map<List<GetAllUserResponseDto>>(users);
     }
     
     [Transaction(ReadOnly = false)]
