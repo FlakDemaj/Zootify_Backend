@@ -575,7 +575,7 @@ public class CommonUserControllerTests : IntegrationTestBase
             "test1@test.de",
             firstName: "Hans",
             lastName: "Müller",
-            status: UserStatus.Active,
+            status: UserStatus.Deleted,
             role: UserRole.Moderator);
 
         var user2 = await UserRepo.CreateUserAsync(
@@ -591,13 +591,6 @@ public class CommonUserControllerTests : IntegrationTestBase
             lastName: "Eberhart",
             status: UserStatus.Blocked,
             role: UserRole.User);
-
-        var user4 = await UserRepo.CreateUserAsync(
-            "test4@test.de",
-            firstName: "Hanzi",
-            lastName: "Eberhart",
-            status: UserStatus.Deleted,
-            role: UserRole.User);
         
         AuthenticateAs(requester);
 
@@ -611,13 +604,12 @@ public class CommonUserControllerTests : IntegrationTestBase
             .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
 
         response.Should().NotBeNull();
-        response!.Should().HaveCount(5);
+        response!.Should().HaveCount(4);
 
         response!.FindIndex(u => u.Guid == user2.Guid).Should().Be(0);
-        response!.FindIndex(u => u.Guid == user4.Guid).Should().Be(1);
+        response!.FindIndex(u => u.Guid == user1.Guid).Should().Be(1);
         response!.FindIndex(u => u.Guid == user3.Guid).Should().Be(2);
         response!.FindIndex(u => u.Guid == requester.Guid).Should().Be(3);
-        response!.FindIndex(u => u.Guid == user1.Guid).Should().Be(4);
     }
     
     [Fact]
