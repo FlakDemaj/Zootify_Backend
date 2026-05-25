@@ -1,7 +1,8 @@
+using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
-namespace Zootify_Backend.Model.DataAccess.Repositorys.Common.Interfaces;
+namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 public interface IUserRepository : IBaseRepository<UserEntity>
 {
@@ -11,5 +12,6 @@ public interface IUserRepository : IBaseRepository<UserEntity>
 
     Task<UserEntity?> GetDeletedUserByGuid(Guid guid);
 
-    Task<List<UserEntity>> GetAllUsersAsync();
+    Task<List<UserEntity>> GetAllUsersAsync(
+        GetAllUsersFilterDto query);
 }

@@ -27,5 +27,7 @@ public interface ICommonUserService
     
     Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication);
     
-    Task<List<GetAllUserResponseDto>> GetAllUsersAsync(IAuthentication authentication);
+    Task<List<GetAllUserResponseDto>> GetAllUsersAsync(
+        IAuthentication authentication,
+        GetAllUsersFilterDto query);
 }

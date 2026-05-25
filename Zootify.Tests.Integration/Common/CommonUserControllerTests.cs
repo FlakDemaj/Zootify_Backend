@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.WebUtilities;
+using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify.Tests.Integration.Utils;
@@ -460,14 +462,214 @@ public class CommonUserControllerTests : IntegrationTestBase
         response.Should().NotBeNull();
         response!.Should().HaveCount(3);
 
-        var returnedUser2 = response.First(u => u.Guid == user2.Guid);
+        var returnedUser2 = response!.First(u => u.Guid == user2.Guid);
         returnedUser2.FirstName.Should().Be(user2.FirstName);
         returnedUser2.LastName.Should().Be(user2.LastName);
         returnedUser2.Email.Should().Be(user2.Email);
         returnedUser2.Role.Should().Be(user2.Role);
         returnedUser2.Status.Should().Be(user2.Status);
     }
+    
+    [Fact]
+    public async Task GetAllUsers_WithPaging_ReturnsAllUsers()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            role: UserRole.Admin);
+        
+        var numberOfUsers = 39;
+        for (var i = 0; i <= numberOfUsers ;i++)
+        {
+            await UserRepo.CreateUserAsync(
+                $"test{i}@test.de");
+        }
 
+        AuthenticateAs(requester);
+
+        var url = CreateQueryFilterUrl(
+            1,
+            20);
+
+        var response1 = await Client
+            .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
+
+        response1.Should().NotBeNull();
+        response1!.Should().HaveCount(20);
+
+        url = CreateQueryFilterUrl(
+            2,
+            20);
+        
+        var response2 = await Client
+            .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
+
+        response2.Should().NotBeNull();
+        response2!.Should().HaveCount(20);
+        
+        response1!.Intersect(response2!).Should().BeEmpty();
+
+        url = CreateQueryFilterUrl(
+            3,
+            20);
+        
+        var response3 = await Client
+            .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
+        
+        response3.Should().NotBeNull();
+        response3.Should().HaveCount(1);
+        
+        response3!.Intersect(response2!).Should().BeEmpty();
+    }
+    
+    [Fact]
+    public async Task GetAllUsers_WithFilter_ReturnsTwoUsers()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            role: UserRole.Admin);
+
+        var user2 = await UserRepo.CreateUserAsync(
+            "test2@test.de",
+            firstName: "Hans",
+            lastName: "Müller",
+            role: UserRole.Moderator);
+
+            await UserRepo.CreateUserAsync(
+            "test3@test.de",
+            firstName: "Anna",
+            lastName: "Schmidt",
+            role: UserRole.User);
+        
+        var user3 = await UserRepo.CreateUserAsync(
+            "test4@test.de",
+            firstName: "Hanzi",
+            lastName: "Eberhart",
+            role: UserRole.User);
+
+        AuthenticateAs(requester);
+
+        var url = CreateQueryFilterUrl(
+            1,
+            20,
+            filterParameter: "firstName",
+            filter: "Han");
+
+        var response = await Client
+            .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
+
+        response.Should().NotBeNull();
+        response!.Should().HaveCount(2);
+        
+        response!.Where(u => u.Guid == user2.Guid).Should().NotBeEmpty();
+        response!.Where(u => u.Guid == user3.Guid).Should().NotBeEmpty();
+    }
+    
+    [Fact]
+    public async Task GetAllUsers_WithSort_ReturnsSortedUsers()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "test@test.de",
+            role: UserRole.Admin);
+
+        var user1 = await UserRepo.CreateUserAsync(
+            "test1@test.de",
+            firstName: "Hans",
+            lastName: "Müller",
+            status: UserStatus.Active,
+            role: UserRole.Moderator);
+
+        var user2 = await UserRepo.CreateUserAsync(
+            "test2@test.de",
+            firstName: "Anna",
+            lastName: "Schmidt",
+            status: UserStatus.Pending,
+            role: UserRole.User);
+        
+        var user3 = await UserRepo.CreateUserAsync(
+            "test3@test.de",
+            firstName: "Hanzi",
+            lastName: "Eberhart",
+            status: UserStatus.Blocked,
+            role: UserRole.User);
+
+        var user4 = await UserRepo.CreateUserAsync(
+            "test4@test.de",
+            firstName: "Hanzi",
+            lastName: "Eberhart",
+            status: UserStatus.Deleted,
+            role: UserRole.User);
+        
+        AuthenticateAs(requester);
+
+        var url = CreateQueryFilterUrl(
+            1,
+            20,
+            sortBy: "status",
+            sortDirection: SortDirection.DESC);
+
+        var response = await Client
+            .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
+
+        response.Should().NotBeNull();
+        response!.Should().HaveCount(5);
+
+        response!.FindIndex(u => u.Guid == user2.Guid).Should().Be(0);
+        response!.FindIndex(u => u.Guid == user4.Guid).Should().Be(1);
+        response!.FindIndex(u => u.Guid == user3.Guid).Should().Be(2);
+        response!.FindIndex(u => u.Guid == requester.Guid).Should().Be(3);
+        response!.FindIndex(u => u.Guid == user1.Guid).Should().Be(4);
+    }
+    
+    [Fact]
+    public async Task GetAllUsers_WithFilterSortAndPaging_ReturnsCorrectSlice()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "admin@test.de",
+            role: UserRole.Admin);
+
+        var matchingUsers = new List<UserEntity>();
+        for (var i = 0; i < 10; i++)
+        {
+            var user = await UserRepo.CreateUserAsync(
+                $"hans{i}@test.de",
+                firstName: "Hans");
+            matchingUsers.Add(user);
+        }
+
+        // 5 noise users (filter excludes them)
+        for (var i = 0; i < 5; i++)
+        {
+            await UserRepo.CreateUserAsync(
+                $"anna{i}@test.de",
+                firstName: "Anna");
+        }
+
+        AuthenticateAs(requester);
+
+        var url = CreateQueryFilterUrl(
+            page: 2,
+            pageSize: 5,
+            sortBy: "email",
+            sortDirection: SortDirection.DESC,
+            filterParameter: "firstName",
+            filter: "Ha");
+
+        // Act
+        var response = await Client
+            .GetFromJsonAsync<List<GetAllUserResponseDto>>(url);
+
+        // Assert
+        var expectedEmails = matchingUsers
+            .OrderByDescending(u => u.Email)
+            .Skip(5)
+            .Take(5)
+            .Select(u => u.Email)
+            .ToList();
+
+        response.Should().NotBeNull();
+        response!.Select(u => u.Email).Should().Equal(expectedEmails);
+    }
+    
     [Fact]
     public async Task GetAllUsers_ValidModerator_ReturnsAllUsers()
     {
@@ -490,31 +692,6 @@ public class CommonUserControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetAllUsers_OnlyRequesterInDb_ReturnsSingleUser()
-    {
-        var requester = await UserRepo.CreateUserAsync(
-            "test1@test.de",
-            role: UserRole.Admin);
-
-        AuthenticateAs(requester);
-
-        var response = await Client
-            .GetFromJsonAsync<List<GetAllUserResponseDto>>(
-                Routings.CommonUserRouting);
-
-        response.Should().NotBeNull();
-        response!.Should().HaveCount(1);
-
-        var returnedUser = response.First();
-        returnedUser.Guid.Should().Be(requester.Guid);
-        returnedUser.FirstName.Should().Be(requester.FirstName);
-        returnedUser.LastName.Should().Be(requester.LastName);
-        returnedUser.Email.Should().Be(requester.Email);
-        returnedUser.Role.Should().Be(requester.Role);
-        returnedUser.Status.Should().Be(requester.Status);
-    }
-
-    [Fact]
     public async Task GetAllUsers_UserRole_ReturnsForbidden()
     {
         var requester = await UserRepo.CreateUserAsync(
@@ -528,6 +705,32 @@ public class CommonUserControllerTests : IntegrationTestBase
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+    
+    private static string CreateQueryFilterUrl(
+        int page,
+        int pageSize,
+        string? sortBy = null,
+        SortDirection? sortDirection = null,
+        string? filterParameter = null,
+        string? filter = null)
+    {
+        var url = QueryHelpers.AddQueryString(
+            Routings.CommonUserRouting,
+            new Dictionary<string, string?>
+            {
+                ["sortBy"] = sortBy,
+                ["sortDirection"] = sortDirection.ToString(),
+                ["page"] = page.ToString(),
+                ["pageSize"] = pageSize.ToString()
+                
+            });
+
+        if (filterParameter != null)
+        {
+            url += "&" + $"{filterParameter}={filter}";
+        }
+        return url;
     }
 
     #endregion

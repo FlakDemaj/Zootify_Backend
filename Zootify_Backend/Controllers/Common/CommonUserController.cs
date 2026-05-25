@@ -22,13 +22,18 @@ public class CommonUserController : BaseRestController
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<GetAllUserResponseDto>>> GetAllUsersAsync()
+    public async Task<ActionResult<List<GetAllUserResponseDto>>> 
+        GetAllUsersAsync(
+            [FromQuery] GetAllUsersFilterDto query)
     {
-        var users = await _commonUserService.GetAllUsersAsync(Authentication);
+        var users = await _commonUserService
+            .GetAllUsersAsync(
+                Authentication,
+                query);
         return Ok(users);
     }
 
-    [HttpGet("{userGuid}")]
+    [HttpGet("{userGuid:guid}")]
     public async Task<ActionResult<GetUserResponseDto>> GetUserAsync(Guid userGuid)
     {
         var user = await _commonUserService.GetUserByGuidAsync(Authentication,userGuid);
