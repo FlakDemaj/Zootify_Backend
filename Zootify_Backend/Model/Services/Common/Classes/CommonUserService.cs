@@ -11,13 +11,13 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Common.Classes;
 
-public class CommonCommonUserService : ICommonUserService
+public class CommonUserService : ICommonUserService
 {
     private readonly IUserRepository _userRepository;
     
     private readonly IMapper _mapper;
 
-    public CommonCommonUserService(IUserRepository userRepository, IMapper mapper)
+    public CommonUserService(IUserRepository userRepository, IMapper mapper)
     {
         _userRepository = userRepository;
         _mapper = mapper;
@@ -115,20 +115,19 @@ public class CommonCommonUserService : ICommonUserService
         Guid requesterGuid)
     {
 
-        if (!CheckUserAttributes(oldUser, newUser))
+        if (!oldUser.CheckChanges(newUser))
         {
             throw new ZootifyException(ErrorCode.NoUpdatedData);
         }
         
-        oldUser.FirstName = newUser.FirstName;
-        oldUser.LastName = newUser.LastName;
-        oldUser.Role = newUser.Role;
-        oldUser.Email = newUser.Email;
-        oldUser.SetUpdatedBy(requesterGuid);
+        oldUser.UpdateUserData(
+            newUser,
+            requesterGuid);
         
         await _userRepository.UpdateAsync(oldUser);
     }
 
+    [Transaction(ReadOnly = true)]
     public async Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication)
     {
         var user = await _userRepository
@@ -140,16 +139,6 @@ public class CommonCommonUserService : ICommonUserService
         }
         
         return _mapper.Map<GetOwnUserData>(user);
-    }
-
-    private static bool CheckUserAttributes(
-        UserEntity oldUser,
-        UserEntity newUser)
-    {
-        return oldUser.FirstName != newUser.FirstName
-               || oldUser.LastName != newUser.LastName
-               || oldUser.Email != newUser.Email
-               || oldUser.Role != newUser.Role;
     }
     
 }
