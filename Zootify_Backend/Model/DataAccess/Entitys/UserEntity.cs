@@ -140,4 +140,23 @@ public class UserEntity : BaseDeletionEntity
     {
         ResetPasswordToken = null;
     }
+
+    public bool CheckChanges(UserEntity newUserData)
+    {
+        return FirstName != newUserData.FirstName
+               || LastName != newUserData.LastName
+               || Email != newUserData.Email
+               || Role != newUserData.Role;
+    }
+
+    public void UpdateUserData(
+        UserEntity newUserData,
+        Guid requesterGuid)
+    {
+        FirstName = newUserData.FirstName;
+        LastName = newUserData.LastName;
+        Role = newUserData.Role;
+        Email = newUserData.Email;
+        SetUpdatedBy(requesterGuid);
+    }
 }
