@@ -2,7 +2,7 @@ using SendWithBrevo;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Enums;
 
-namespace Zootify_Backend.Models.Providers;
+namespace Zootify_Backend.Model.Providers.Brevo;
 
 /// <summary>
 /// Email provider implementation using Brevo (formerly Sendinblue) for sending

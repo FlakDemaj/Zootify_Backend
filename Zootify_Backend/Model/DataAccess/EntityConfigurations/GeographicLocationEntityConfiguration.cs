@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
 using Zootify_Backend.Models.DataAccess.Entitys;
 
-namespace Zootify_Backend.Models.DataAccess.EntityConfigurations;
+namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
 public class GeographicLocationEntityConfiguration : BaseGuidEntityConfiguration<GeographicLocationEntity>
 {
@@ -29,8 +30,6 @@ public class GeographicLocationEntityConfiguration : BaseGuidEntityConfiguration
         builder
             .Property(p => p.Level)
             .HasColumnName("level")
-            .HasConversion<string>()
-            .HasMaxLength(20)
             .IsRequired();
 
         builder

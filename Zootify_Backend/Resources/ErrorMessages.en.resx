@@ -92,4 +92,16 @@
   <data name="Forbidden" xml:space="preserve">
     <value>You do not have permission to perform this action.</value>
   </data>
+  <data name="NoTagWithThisGuid" xml:space="preserve">
+    <value>A tag with this token does not exists.</value>
+  </data>
+  <data name="NoTaxonomyWithThisGuid" xml:space="preserve">
+    <value>A taxonomy with this token does not exists.</value>
+  </data>
+  <data name="SpeciesNotFound" xml:space="preserve">
+    <value>The species was not found.</value>
+  </data>
+  <data name="AddressDoesNotExist" xml:space="preserve">
+    <value>The location you entered does not exist.</value>
+  </data>
 </root>

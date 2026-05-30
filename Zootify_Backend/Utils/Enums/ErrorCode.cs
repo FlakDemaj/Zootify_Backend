@@ -56,4 +56,12 @@ public enum ErrorCode
     InvalidResetPasswordToken = -1004000,
 
     ResetPasswordTokenExpired = -1004001,
+    
+    NoTagWithThisGuid = -1005001,
+    
+    NoTaxonomyWithThisGuid = -1006001,
+    
+    SpeciesNotFound =  -1006002,
+    
+    AddressDoesNotExist =  -1006003,
 }

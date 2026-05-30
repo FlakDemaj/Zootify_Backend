@@ -5,5 +5,5 @@ internal static class Routings
     internal const string SystemAuthRouting = "/rest/auth";
     internal const string CommonUserRouting = "/rest/CommonUser";
     internal const string AdminUserRouting = "/rest/AdminUser";
-    
+    internal const string CommonSpecimenRouting = "/rest/CommonSpecimen";
 }

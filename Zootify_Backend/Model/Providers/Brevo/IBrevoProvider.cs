@@ -1,4 +1,4 @@
-namespace Zootify_Backend.Models.Providers;
+namespace Zootify_Backend.Model.Providers.Brevo;
 
 /// <summary>
 /// Defines transactional email operations sent via Brevo.

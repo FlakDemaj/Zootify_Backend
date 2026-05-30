@@ -2,7 +2,9 @@ using Autofac;
 using SendWithBrevo;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Extensions;
-using Zootify_Backend.Models.Providers;
+using Zootify_Backend.Model.Providers;
+using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Server;
@@ -36,6 +38,10 @@ public class ZootifyModule : Module
 
         builder.RegisterType<BrevoProvider>()
             .As<IBrevoProvider>()
+            .InstancePerLifetimeScope();
+        
+        builder.RegisterType<NominatimProvider>()
+            .As<INominatimProvider>()
             .InstancePerLifetimeScope();
     }
 }
