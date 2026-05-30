@@ -114,7 +114,6 @@ public class CommonUserService : ICommonUserService
         UserEntity oldUser,
         Guid requesterGuid)
     {
-
         if (!oldUser.CheckChanges(newUser))
         {
             throw new ZootifyException(ErrorCode.NoUpdatedData);

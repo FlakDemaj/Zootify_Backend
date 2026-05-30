@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
+using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
@@ -21,8 +22,23 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
         base.Configure(builder);
 
         builder
-            .Property(p => p.SpeciesGuid)
+            .Property(p => p.TaxonomySpeciesGuid)
             .HasColumnName("species_guid")
+            .IsRequired();
+        
+        builder
+            .Property(p => p.Name)
+            .HasColumnName("name")
+            .IsRequired();
+        
+        builder
+            .Property(p => p.LatinName)
+            .HasColumnName("latin_name")
+            .IsRequired();
+        
+        builder
+            .Property(p => p.DateOfDiscovery)
+            .HasColumnName("date_of_discovery")
             .IsRequired();
 
         builder
@@ -38,7 +54,7 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasColumnName("longitude");
 
         builder
-            .Property(p => p.FindDate)
+            .Property(p => p.OnLoanUntil)
             .HasColumnName("find_date");
 
         builder
@@ -69,11 +85,15 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
         builder
             .Property(p => p.IsPublic)
             .HasColumnName("is_public");
-        
+
+        builder
+            .Property(p => p.Status)
+            .HasColumnName("state");
+
         builder
             .HasOne(s => s.Species)
             .WithMany(t => t.Specimens)
-            .HasForeignKey(s => s.SpeciesGuid)
+            .HasForeignKey(s => s.TaxonomySpeciesGuid)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
@@ -81,8 +101,27 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .WithMany(g => g.Specimens)
             .HasForeignKey(s => s.GeographicLocationGuid)
             .OnDelete(DeleteBehavior.SetNull);
+        
+        builder
+            .HasOne(t => t.CreatedByUser)
+            .WithMany(u => u.CreatedSpecimens)
+            .HasForeignKey(t => t.CreatedByUserGuid)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        builder
+            .HasOne(t => t.UpdatedByUser)
+            .WithMany(u => u.UpdatedSpecimens)
+            .HasForeignKey(t => t.UpdatedByUserGuid)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        builder
+            .HasOne(t => t.DeletedByUser)
+            .WithMany(u => u.DeletedSpecimens)
+            .HasForeignKey(t => t.DeletedByUserGuid)
+            .OnDelete(DeleteBehavior.NoAction);
+
 
         builder.HasIndex(s => s.IsPublic);
-        builder.HasIndex(s => s.SpeciesGuid);
+        builder.HasIndex(s => s.TaxonomySpeciesGuid);
     }
 }

@@ -54,7 +54,10 @@ public class Startup
         AddAuthentication(builder.Services);
         AddInternalServices(builder.Services);
         AddDatabase(builder.Services);
+        
+        AddDatabase(builder.Services);
 
+        builder.Services.AddHttpClient();
     }
 
     /// <summary>

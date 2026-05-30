@@ -7,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Respawn;
 using Testcontainers.MsSql;
+using Zootify_Backend.Model.Providers;
+using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.Nominatim;
 
 namespace Zootify.Tests.Integration.Utils;
 
@@ -28,6 +31,7 @@ public class IntegrationTestFixture : IAsyncLifetime
     public HttpClient Client { get; private set; } = null!;
     private string ConnectionString { get; set; } = null!;
     public Mock<IBrevoProvider> BrevoMock { get; } = new();
+    public Mock<INominatimProvider> NominatimMock { get; } = new();
     public ZootifyDbContext DbContext { get; private set; } = null!;
 
     /// <summary>
@@ -39,7 +43,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         await _mssql.StartAsync();
         ConnectionString = _mssql.GetConnectionString();
 
-        _factory = new ZootifyTestFactory(ConnectionString, BrevoMock);
+        _factory = new ZootifyTestFactory(ConnectionString, BrevoMock, NominatimMock);
         Client = _factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
@@ -73,6 +77,7 @@ public class IntegrationTestFixture : IAsyncLifetime
         await conn.OpenAsync();
         await _respawner.ResetAsync(conn);
         BrevoMock.Reset();
+        NominatimMock.Reset();
     }
 
     /// <summary>

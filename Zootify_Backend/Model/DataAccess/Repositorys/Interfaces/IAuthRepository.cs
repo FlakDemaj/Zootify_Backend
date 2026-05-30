@@ -1,7 +1,7 @@
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
-namespace Zootify_Backend.Model.DataAccess.Repositorys.System.Interfaces;
+namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 /// <summary>
 /// Extends <see cref="IBaseRepository{T}"/> with user-specific query operations.

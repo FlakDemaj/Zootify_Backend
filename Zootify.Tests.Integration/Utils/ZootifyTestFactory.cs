@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Zootify_Backend.Model.Providers;
+using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify_Backend.Server;
 using Zootify.Tests.Integration.Utils.Helpers;
 
@@ -17,14 +20,16 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
     private readonly Mock<IBrevoProvider> _brevoMock;
+    private readonly Mock<INominatimProvider> _nominatimMock;
 
     /// <summary>
-    /// Initializes the factory with the test container connection string and a Brevo mock.
+    /// Initializes the factory with the test container connection string and provider mocks.
     /// </summary>
-    public ZootifyTestFactory(string connectionString, Mock<IBrevoProvider> brevoMock)
+    public ZootifyTestFactory(string connectionString, Mock<IBrevoProvider> brevoMock, Mock<INominatimProvider> nominatimMock)
     {
         _connectionString = connectionString;
         _brevoMock = brevoMock;
+        _nominatimMock = nominatimMock;
     }
     
 
@@ -69,6 +74,10 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
         {
             autofac.RegisterInstance(_brevoMock.Object)
                 .As<IBrevoProvider>()
+                .SingleInstance();
+
+            autofac.RegisterInstance(_nominatimMock.Object)
+                .As<INominatimProvider>()
                 .SingleInstance();
         });
 

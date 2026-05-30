@@ -47,8 +47,6 @@ public class UserEntityConfiguration : BaseDeletionEntityConfiguration<UserEntit
         builder
             .Property(p => p.Role)
             .HasColumnName("role")
-            .HasConversion<string>()
-            .HasMaxLength(20)
             .IsRequired();
         
         builder
@@ -60,8 +58,6 @@ public class UserEntityConfiguration : BaseDeletionEntityConfiguration<UserEntit
         builder
             .Property(p => p.Status)
             .HasColumnName("status")
-            .HasConversion<string>()
-            .HasMaxLength(30)
             .IsRequired();
 
         builder.Ignore(u => u.CreatedByUser);

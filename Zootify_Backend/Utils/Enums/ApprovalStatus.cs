@@ -2,7 +2,7 @@ namespace Zootify_Backend.Enums;
 
 public enum ApprovalStatus
 {
-    Pending,
-    Approved,
-    Rejected
+    Pending = 0,
+    Approved = 1,
+    Rejected = 2
 }

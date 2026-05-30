@@ -24,13 +24,23 @@ public class UserEntity : BaseDeletionEntity
 
     public int LoginAttempts { get; private set; }
 
-    public ICollection<SpecimenEntity> Specimens { get; set; } = new List<SpecimenEntity>();
+    public ICollection<SpecimenEntity> CreatedSpecimens { get; set; } = new List<SpecimenEntity>();
 
-    public ICollection<TaxonomyNodeEntity> ProposedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
+    public ICollection<SpecimenEntity> UpdatedSpecimens { get; set; } = new List<SpecimenEntity>();
+    
+    public ICollection<SpecimenEntity> DeletedSpecimens { get; set; } = new List<SpecimenEntity>();
+    
+    public ICollection<TaxonomyNodeEntity> CreatedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
 
+    public ICollection<TaxonomyNodeEntity> UpdatedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
+
+    public ICollection<TaxonomyNodeEntity> DeletedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
+    
     public ICollection<LoanEntity> LoansAsLender { get; set; } = new List<LoanEntity>();
 
     public ICollection<LoanEntity> LoansAsBorrower { get; set; } = new List<LoanEntity>();
+    
+    public ICollection<ApprovalSpecimenEntity> ApprovalSpecimens { get; set; } = new List<ApprovalSpecimenEntity>();
 
     public RegistrationTokenEntity? RegistrationToken { get; private set; }
 

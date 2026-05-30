@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
 using Zootify_Backend.Models.DataAccess.Entitys;
 
-namespace Zootify_Backend.Models.DataAccess.EntityConfigurations;
+namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
 public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<SpecimenImageEntity>
 {

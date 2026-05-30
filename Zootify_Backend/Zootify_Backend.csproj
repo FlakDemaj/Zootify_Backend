@@ -53,7 +53,6 @@
     <Folder Include="DTOs\Auth\" />
     <Folder Include="DTOs\Moderator\Request\" />
     <Folder Include="DTOs\Moderator\Response\" />
-    <Folder Include="Model\DataAccess\Repositorys\System\" />
     <Folder Include="Model\Services\System\" />
     <Folder Include="Model\Services\Moderator\" />
   </ItemGroup>

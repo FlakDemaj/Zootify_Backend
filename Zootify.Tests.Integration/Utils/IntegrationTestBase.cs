@@ -4,6 +4,9 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Moq;
+using Zootify_Backend.Model.DataAccess.Entitys;
+using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify.Tests.Integration.Utils.Helpers;
 
 namespace Zootify.Tests.Integration.Utils;
@@ -18,6 +21,8 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly IntegrationTestFixture Fixture;
     protected readonly HttpClient Client;
     protected readonly UserTestRepository UserRepo;
+    protected readonly SpecimenTestRepository SpecimenRepo;
+    protected Mock<INominatimProvider> NominatimMock => Fixture.NominatimMock;
 
     private readonly ZootifyDbContext _dbContext;
 
@@ -31,6 +36,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         Client = fixture.Client;
         _dbContext = fixture.DbContext;
         UserRepo = new UserTestRepository(_dbContext);
+        SpecimenRepo = new SpecimenTestRepository(_dbContext);
     }
 
     /// <summary>
@@ -83,6 +89,50 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         return error!;
     }
     
+    protected async Task<SpecimenEntity?> GetSpecimenFromDbAsync(Guid guid)
+    {
+        return await _dbContext.Set<SpecimenEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Guid == guid);
+    }
+
+    protected async Task<ApprovalSpecimenEntity?> GetApprovalForSpecimenFromDbAsync(Guid specimenGuid)
+    {
+        return await _dbContext.Set<ApprovalSpecimenEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.SpecimenGuid == specimenGuid);
+    }
+
+    protected async Task<List<GeographicLocationEntity>> GetAllGeographicLocationsFromDbAsync()
+    {
+        return await _dbContext.Set<GeographicLocationEntity>()
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    protected async Task<List<RelationSpecimensTagEntity>> GetTagRelationsForSpecimenFromDbAsync(Guid specimenGuid)
+    {
+        return await _dbContext.Set<RelationSpecimensTagEntity>()
+            .AsNoTracking()
+            .Where(r => r.SpecimenGuid == specimenGuid)
+            .ToListAsync();
+    }
+
+    protected async Task<List<SpecimenImageEntity>> GetImagesForSpecimenFromDbAsync(Guid specimenGuid)
+    {
+        return await _dbContext.Set<SpecimenImageEntity>()
+            .AsNoTracking()
+            .Where(i => i.SpecimenGuid == specimenGuid)
+            .ToListAsync();
+    }
+
+    protected async Task<TaxonomyNodeEntity?> GetTaxonomyNodeFromDbAsync(Guid guid)
+    {
+        return await _dbContext.Set<TaxonomyNodeEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Guid == guid);
+    }
+
     protected void AuthenticateAs(UserEntity user)
     {
         var token = GenerateTestToken(user.Role, user.Guid);

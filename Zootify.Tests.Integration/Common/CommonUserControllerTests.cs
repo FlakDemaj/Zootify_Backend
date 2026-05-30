@@ -447,7 +447,7 @@ public class CommonUserControllerTests : IntegrationTestBase
             lastName: "Müller",
             role: UserRole.Moderator);
 
-        var user3 = await UserRepo.CreateUserAsync(
+        await UserRepo.CreateUserAsync(
             "test3@test.de",
             firstName: "Anna",
             lastName: "Schmidt",
@@ -606,10 +606,10 @@ public class CommonUserControllerTests : IntegrationTestBase
         response.Should().NotBeNull();
         response!.Should().HaveCount(4);
 
-        response!.FindIndex(u => u.Guid == user2.Guid).Should().Be(0);
-        response!.FindIndex(u => u.Guid == user1.Guid).Should().Be(1);
-        response!.FindIndex(u => u.Guid == user3.Guid).Should().Be(2);
-        response!.FindIndex(u => u.Guid == requester.Guid).Should().Be(3);
+        response!.FindIndex(u => u.Guid == user2.Guid).Should().Be(3);
+        response.FindIndex(u => u.Guid == user1.Guid).Should().Be(0);
+        response.FindIndex(u => u.Guid == user3.Guid).Should().Be(1);
+        response.FindIndex(u => u.Guid == requester.Guid).Should().Be(2);
     }
     
     [Fact]

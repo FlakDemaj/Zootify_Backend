@@ -24,7 +24,6 @@ public static class ZootifyDbContextExtensions
     {
         try
         {
-
             var result = context.Add(saveData);
             await context.SaveChangesAsync();
             return result.Entity;

@@ -95,4 +95,16 @@
   <data name="Forbidden" xml:space="preserve">
     <value>Sie haben keine Berechtigung für diese Aktion.</value>
   </data>
+  <data name="NoTagWithThisGuid" xml:space="preserve">
+    <value>Ein Tag mit dieser Guid existiert nicht.</value>
+  </data>
+  <data name="NoTaxonomyWithThisGuid" xml:space="preserve">
+    <value>Eine Taxonomie mit dieser Guid existiert nicht.</value>
+  </data>
+  <data name="SpeciesNotFound" xml:space="preserve">
+    <value>Die Spezies wurde nicht gefunden.</value>
+  </data>
+  <data name="AddressDoesNotExist" xml:space="preserve">
+    <value>Der angegebene Ort existiert nicht.</value>
+  </data>
 </root>
