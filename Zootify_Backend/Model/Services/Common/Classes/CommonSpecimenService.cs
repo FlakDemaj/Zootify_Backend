@@ -83,6 +83,21 @@ public class CommonSpecimenService : ICommonSpecimenService
         
         return mappedTags.OrderBy(t => t.TagName).ToList();
     }
+    
+    [Transaction(ReadOnly = true)]
+    public async Task<List<GetAllTaxonomyNodesByFilterDto>> GetAllTaxonomyNodesAsync(
+        string startsWith)
+    {
+        var taxonomyNodes = await
+            _taxonomyRepository
+                .GetTaxonomyNodeByStartsWithNameAsync(startsWith);
+        
+        var mappedTags = _mapper.Map<List<GetAllTaxonomyNodesByFilterDto>>(taxonomyNodes);
+        
+        return mappedTags
+            .OrderBy(t => t.Name)
+            .ToList();
+    }
 
     private SpecimenEntity BuildSpecimen(
         CreateSpecimenRequestDto request,

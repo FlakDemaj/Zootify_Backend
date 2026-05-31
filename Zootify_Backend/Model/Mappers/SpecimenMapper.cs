@@ -26,5 +26,16 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.Tag,
                 opt =>
                     opt.MapFrom(src => src));
+        
+        CreateMap<TaxonomyNodeEntity, GetAllTaxonomyNodesByFilterDto>(MemberList.None)
+            .ForMember(d => d.TaxonomyGuid,
+                opt =>
+                    opt.MapFrom(src => src.Guid))
+            .ForMember(d => d.Name,
+                opt =>
+                    opt.MapFrom(src => src.Name))
+            .ForMember(d => d.Rank,
+                opt =>
+                    opt.MapFrom(src => src.Rank));
     }
 }
