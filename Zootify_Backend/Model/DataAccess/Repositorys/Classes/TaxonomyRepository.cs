@@ -28,4 +28,19 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
             throw;
         }
     }
+
+    public async Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(
+        string? startsWithName)
+    {
+        var query = Context
+            .GetTrackingSet<TaxonomyNodeEntity>();
+
+        if (!string.IsNullOrWhiteSpace(startsWithName))
+        {
+            query = query
+                .Where(tn => tn.Name.StartsWith(startsWithName));
+        }
+        
+        return await query.ToListAsync();
+    }
 }

@@ -23,4 +23,11 @@ public class CommonSpecimenController : BaseRestController
     {
         return Ok(await _commonSpecimenService.CreateSpecimenAsync(specimen));
     }
+    
+    [HttpGet("Taxonomy")]
+    public async Task<ActionResult<List<GetAllTaxonomyNodesByFilterDto>>> GetTaxonomyNodesForCreation(
+        [FromQuery] string startsWith)
+    {
+        return Ok(await _commonSpecimenService.GetAllTaxonomyNodesAsync(startsWith));
+    }
 }

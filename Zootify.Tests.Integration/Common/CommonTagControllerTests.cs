@@ -33,8 +33,8 @@ public class CommonTagControllerTests : IntegrationTestBase
         
         response.Should().NotBeNull();
         response!.Count.Should().Be(5);
-        
-         response[0].TagGuid.Should().Be(tagOne.Guid);
+
+        response[0].TagGuid.Should().Be(tagOne.Guid);
         response[0].TagName.Should().Be(tagOne.Tag);
         
         response[1].TagGuid.Should().Be(tagTwo.Guid);
@@ -88,13 +88,13 @@ public class CommonTagControllerTests : IntegrationTestBase
     [Fact]
     public async Task GetAllTags_WithFilter_ReturnsNothing()
     {
-        var tagOne = await TagRepo.CreateTagAsync(
+        await TagRepo.CreateTagAsync(
             "TestA");
         await TagRepo.CreateTagAsync(
             "BTag");
         await TagRepo.CreateTagAsync(
             "CTag");
-        var tagFour = await TagRepo.CreateTagAsync(
+        await TagRepo.CreateTagAsync(
             "TestD");
         await TagRepo.CreateTagAsync(
             "SuperE");

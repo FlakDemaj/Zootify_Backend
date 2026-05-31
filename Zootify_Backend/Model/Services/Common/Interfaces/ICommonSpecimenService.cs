@@ -8,4 +8,7 @@ public interface ICommonSpecimenService
     Task<CreatedObjectResponseDto> CreateSpecimenAsync(CreateSpecimenRequestDto request);
 
     Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(string startsWith);
+
+    Task<List<GetAllTaxonomyNodesByFilterDto>> GetAllTaxonomyNodesAsync(
+        string startsWith);
 }

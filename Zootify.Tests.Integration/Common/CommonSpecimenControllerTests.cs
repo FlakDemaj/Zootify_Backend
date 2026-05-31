@@ -471,6 +471,140 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     #endregion
+
+    #region GetTaxonomyNodes
+
+    [Fact]
+    public async Task GetAllTaxonomyNodes_ReturnsAllNodes()
+    {
+        var nodeOne = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "A",
+            TaxonomyRank.Phylum);
+        var nodeTwo = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "B",
+            TaxonomyRank.Class,
+            parentGuid: nodeOne.Guid);
+        var nodeThree = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "C",
+            TaxonomyRank.Phylum);
+        var nodeFour = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "D",
+            TaxonomyRank.Phylum);
+        var nodeFive = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "E",
+            TaxonomyRank.Order,
+            parentGuid: nodeTwo.Guid);
+
+        var requester = await UserRepo.CreateUserAsync(
+            "test@test.de");
+        
+        AuthenticateAs(requester);
+        
+        var response = await Client.GetFromJsonAsync<List<GetAllTaxonomyNodesByFilterDto>>(
+            $"{Routings.CommonSpecimenRouting}/Taxonomy");
+        
+        response.Should().NotBeNull();
+        response!.Count.Should().Be(5);
+        
+        response[0].TaxonomyGuid.Should().Be(nodeOne.Guid);
+        response[0].Name.Should().Be(nodeOne.Name);
+        response[0].Rank.Should().Be(nodeOne.Rank);
+        
+        response[1].TaxonomyGuid.Should().Be(nodeTwo.Guid);
+        response[1].Name.Should().Be(nodeTwo.Name);
+        response[1].Rank.Should().Be(nodeTwo.Rank);
+        
+        response[2].TaxonomyGuid.Should().Be(nodeThree.Guid);
+        response[2].Name.Should().Be(nodeThree.Name);
+        response[2].Rank.Should().Be(nodeThree.Rank);
+
+        response[3].TaxonomyGuid.Should().Be(nodeFour.Guid);
+        response[3].Name.Should().Be(nodeFour.Name);
+        response[3].Rank.Should().Be(nodeFour.Rank);
+
+        response[4].TaxonomyGuid.Should().Be(nodeFive.Guid);
+        response[4].Name.Should().Be(nodeFive.Name);
+        response[4].Rank.Should().Be(nodeFive.Rank);
+    }
+    
+    [Fact]
+    public async Task GetAllTaxonomyNodes_WithFilter_ReturnsNodes()
+    {
+        var nodeOne = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "TestA",
+            TaxonomyRank.Phylum);
+        var nodeTwo = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "SuperB",
+            TaxonomyRank.Class,
+            parentGuid: nodeOne.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "KleinC",
+            TaxonomyRank.Phylum);
+        var nodeFour = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "TestD",
+            TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "SiebenE",
+            TaxonomyRank.Order,
+            parentGuid: nodeTwo.Guid);
+
+        var requester = await UserRepo.CreateUserAsync(
+            "test@test.de");
+        
+        AuthenticateAs(requester);
+
+        var startsWith = "t";
+        var response = await Client.GetFromJsonAsync<List<GetAllTaxonomyNodesByFilterDto>>(
+            $"{Routings.CommonSpecimenRouting}/Taxonomy?startsWith={startsWith}");
+        
+        response.Should().NotBeNull();
+        response!.Count.Should().Be(2);
+        
+        response[0].TaxonomyGuid.Should().Be(nodeOne.Guid);
+        response[0].Name.Should().Be(nodeOne.Name);
+        response[0].Rank.Should().Be(nodeOne.Rank);
+        
+        response[1].TaxonomyGuid.Should().Be(nodeFour.Guid);
+        response[1].Name.Should().Be(nodeFour.Name);
+        response[1].Rank.Should().Be(nodeFour.Rank);
+    }
+    
+    [Fact]
+    public async Task GetAllTaxonomyNodes_WithFilter_ReturnsNothing()
+    {
+        var nodeOne = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "TestA",
+            TaxonomyRank.Phylum);
+        var nodeTwo = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "SuperB",
+            TaxonomyRank.Class,
+            parentGuid: nodeOne.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "KleinC",
+            TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "TestD",
+            TaxonomyRank.Phylum);
+       await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "SiebenE",
+            TaxonomyRank.Order,
+            parentGuid: nodeTwo.Guid);
+
+        var requester = await UserRepo.CreateUserAsync(
+            "test@test.de");
+        
+        AuthenticateAs(requester);
+
+        var startsWith = "Eins";
+        var response = await Client.GetFromJsonAsync<List<GetAllTaxonomyNodesByFilterDto>>(
+            $"{Routings.CommonSpecimenRouting}/Taxonomy?startsWith={startsWith}");
+        
+        response.Should().NotBeNull();
+        response!.Count.Should().Be(0);
+    }
+
+
+    #endregion
     
     #region Helpers
 
