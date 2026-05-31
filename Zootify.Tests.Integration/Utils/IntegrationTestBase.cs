@@ -4,8 +4,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Moq;
-using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify.Tests.Integration.Utils.Helpers;
 
@@ -22,6 +20,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly HttpClient Client;
     protected readonly UserTestRepository UserRepo;
     protected readonly SpecimenTestRepository SpecimenRepo;
+    protected readonly TagTestRepository TagRepo;
     protected Mock<INominatimProvider> NominatimMock => Fixture.NominatimMock;
 
     private readonly ZootifyDbContext _dbContext;
@@ -37,6 +36,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _dbContext = fixture.DbContext;
         UserRepo = new UserTestRepository(_dbContext);
         SpecimenRepo = new SpecimenTestRepository(_dbContext);
+        TagRepo = new TagTestRepository(_dbContext);
     }
 
     /// <summary>

@@ -14,6 +14,11 @@ public interface IBaseRepository<T>
     Task<T> CreateAsync(T objectToCreate);
 
     /// <summary>
+    /// Persists a set of new entitys to the database and returns the saved instance.
+    /// </summary>
+    Task<List<T>> MassCreateAsync(List<T> objectsToCreate);
+
+    /// <summary>
     /// Removes the given entity from the database.
     /// </summary>
     Task DeleteAsync(T objectToDelete);

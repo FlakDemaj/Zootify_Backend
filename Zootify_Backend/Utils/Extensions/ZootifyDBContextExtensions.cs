@@ -33,6 +33,34 @@ public static class ZootifyDbContextExtensions
             context.Entry(saveData).State = EntityState.Detached;
         }
     }
+    
+    /// <summary>
+    /// Adds a mass of entitys to the context, saves changes, and detaches it to avoid stale tracking.
+    /// </summary>
+    /// <typeparam name="TSaveType">The entity type to persist.</typeparam>
+    /// <param name="context">The database context.</param>
+    /// <param name="saveData">The entity instance to save.</param>
+    /// <returns>The saved and detached entity.</returns>
+    public static async Task<List<TSaveType>> MassCreateAsync<TSaveType>(
+        this ZootifyDbContext context,
+        List<TSaveType> saveData)
+        where TSaveType : BaseGuidEntity
+    {
+        try
+        {
+            context.AddRange(saveData);
+            await context.SaveChangesAsync();
+            
+            return saveData;
+        }
+        finally
+        {
+            foreach (var entity in saveData)
+            {
+                context.Entry(entity).State = EntityState.Detached;
+            }        
+        }
+    }
 
     /// <summary>
     /// Removes the entity from the context and saves changes.

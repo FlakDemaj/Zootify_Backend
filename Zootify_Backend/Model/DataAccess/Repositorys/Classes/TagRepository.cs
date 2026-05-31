@@ -13,10 +13,25 @@ public class TagRepository : BaseRepository<TagEntity>, ITagRepository
     {
     }
 
-    public Task<TagEntity?> GetTagByGuidAsync(Guid guid)
+    public Task<List<TagEntity>> GetTagByGuidAsync(List<Guid> guids)
     {
         return Context
             .GetTrackingSet<TagEntity>()
-            .FirstOrDefaultAsync(x => x.Guid == guid);
+            .Where(gl => guids.Contains(gl.Guid))
+            .ToListAsync();
+    }
+
+    public Task<List<TagEntity>> GetTagsByStartsWithNameAsync(string? startsWith)
+    {
+        var getAllTagsQuery =  Context
+            .GetTrackingSet<TagEntity>();
+
+        if (!string.IsNullOrWhiteSpace(startsWith))
+        {
+            getAllTagsQuery = getAllTagsQuery
+                .Where(t => t.Tag.StartsWith(startsWith));
+        }
+        
+        return getAllTagsQuery.ToListAsync();
     }
 }

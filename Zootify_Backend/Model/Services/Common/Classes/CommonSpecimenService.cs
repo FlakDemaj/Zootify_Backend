@@ -73,6 +73,17 @@ public class CommonSpecimenService : ICommonSpecimenService
             needApproval);
     }
 
+    [Transaction(ReadOnly = true)]
+    public async Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(
+        string startsWith)
+    {
+        var tags = await _tagRepository.GetTagsByStartsWithNameAsync(startsWith);
+        
+        var mappedTags = _mapper.Map<List<GetAllTagsByFilterDto>>(tags);
+        
+        return mappedTags.OrderBy(t => t.TagName).ToList();
+    }
+
     private SpecimenEntity BuildSpecimen(
         CreateSpecimenRequestDto request,
         bool needApproval)
@@ -83,14 +94,7 @@ public class CommonSpecimenService : ICommonSpecimenService
             request.Location.Latitude,
             request.Location.Longitude);
 
-        if (needApproval)
-        {
-            specimen.Status = SpecimenStatus.Pending;
-        }
-        else
-        {
-            specimen.Status = SpecimenStatus.Active;
-        }
+        specimen.Status = needApproval ? SpecimenStatus.Pending : SpecimenStatus.Active;
 
         return specimen;
     }
@@ -135,20 +139,17 @@ public class CommonSpecimenService : ICommonSpecimenService
     {
         var newNodes = taxonomyTree
             .Where(node => node.ApprovalStatus == ApprovalStatus.Pending);
+        
+        var nodesToCreate = new List<TaxonomyNodeEntity>();
 
         foreach (var node in newNodes)
         {
-            if (needApproval)
-            {
-                node.ApprovalStatus = ApprovalStatus.Pending;
-            }
-            else
-            {
-                node.ApprovalStatus = ApprovalStatus.Approved;
-            }
+            node.ApprovalStatus = needApproval ? ApprovalStatus.Pending : ApprovalStatus.Approved;
 
-            await _taxonomyRepository.CreateAsync(node);
+            nodesToCreate.Add(node);
         }
+        
+        await _taxonomyRepository.MassCreateAsync(nodesToCreate);
     }
 
     private async Task<List<TagEntity>> PersistAndCombineTagsAsync(
@@ -170,6 +171,8 @@ public class CommonSpecimenService : ICommonSpecimenService
         SpecimenEntity specimen,
         List<TagEntity> tags)
     {
+        var relationsToCreate = new List<RelationSpecimensTagEntity>();
+        
         foreach (var tag in tags)
         {
             var relation = new RelationSpecimensTagEntity
@@ -178,14 +181,19 @@ public class CommonSpecimenService : ICommonSpecimenService
                 TagGuid = tag.Guid
             };
 
-            await _specimenTagRepository.CreateAsync(relation);
+            relationsToCreate.Add(relation);
         }
+        
+        await _specimenTagRepository.MassCreateAsync(relationsToCreate);
     }
 
     private async Task PersistSpecimenImagesAsync(
         SpecimenEntity specimen,
         List<string> imagesBase64)
     {
+        
+        var imagesToCreate = new List<SpecimenImageEntity>();
+        
         foreach (var image in imagesBase64)
         {
             var imageEntity = new SpecimenImageEntity
@@ -195,8 +203,10 @@ public class CommonSpecimenService : ICommonSpecimenService
                 UploadedAt = DateTime.UtcNow
             };
 
-            await _specimenImageRepository.CreateAsync(imageEntity);
+            imagesToCreate.Add(imageEntity);
         }
+        
+        await _specimenImageRepository.MassCreateAsync(imagesToCreate);
     }
 
     private async Task CreatePendingApprovalAsync(SpecimenEntity specimen)
@@ -279,18 +289,11 @@ public class CommonSpecimenService : ICommonSpecimenService
 
     private async Task<List<TagEntity>> GetExistingTagsAsync(List<Guid> guids)
     {
-        var tags = new List<TagEntity>();
+        var tags = await _tagRepository.GetTagByGuidAsync(guids);
 
-        foreach (var guid in guids)
+        if (tags.Count == 0 && guids.Count > 0)
         {
-            var tag = await _tagRepository.GetTagByGuidAsync(guid);
-
-            if (tag == null)
-            {
-                throw new ZootifyException(ErrorCode.NoTagWithThisGuid);
-            }
-
-            tags.Add(tag);
+            throw new ZootifyException(ErrorCode.NoTagsFound);
         }
 
         return tags;

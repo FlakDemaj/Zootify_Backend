@@ -133,8 +133,8 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     public async Task CreateSpecimen_WithExistingTags_TagsLinkedToSpecimen()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        var tag1 = await SpecimenRepo.CreateTagAsync("mammal");
-        var tag2 = await SpecimenRepo.CreateTagAsync("endangered");
+        var tag1 = await TagRepo.CreateTagAsync("mammal");
+        var tag2 = await TagRepo.CreateTagAsync("endangered");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
 
         SetupNominatimMock();
@@ -183,7 +183,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     public async Task CreateSpecimen_WithExistingAndNewTags_AllTagsLinked()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        var existingTag = await SpecimenRepo.CreateTagAsync("mammal");
+        var existingTag = await TagRepo.CreateTagAsync("mammal");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
 
         SetupNominatimMock();
@@ -391,7 +391,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoTagWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTagsFound);
     }
 
     [Fact]

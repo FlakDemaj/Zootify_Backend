@@ -92,8 +92,8 @@
   <data name="Forbidden" xml:space="preserve">
     <value>You do not have permission to perform this action.</value>
   </data>
-  <data name="NoTagWithThisGuid" xml:space="preserve">
-    <value>A tag with this token does not exists.</value>
+  <data name="NoTagsFound" xml:space="preserve">
+    <value>No tags were found with the following IDs.</value>
   </data>
   <data name="NoTaxonomyWithThisGuid" xml:space="preserve">
     <value>A taxonomy with this token does not exists.</value>
