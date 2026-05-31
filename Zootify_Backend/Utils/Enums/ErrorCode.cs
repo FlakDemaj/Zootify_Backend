@@ -57,7 +57,7 @@ public enum ErrorCode
 
     ResetPasswordTokenExpired = -1004001,
     
-    NoTagWithThisGuid = -1005001,
+    NoTagsFound = -1005001,
     
     NoTaxonomyWithThisGuid = -1006001,
     

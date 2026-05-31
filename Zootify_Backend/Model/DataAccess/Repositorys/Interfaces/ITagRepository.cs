@@ -5,5 +5,7 @@ namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 public interface ITagRepository : IBaseRepository<TagEntity>
 {
-    Task<TagEntity?> GetTagByGuidAsync(Guid guid);
+    Task<List<TagEntity>> GetTagByGuidAsync(List<Guid> guids);
+    
+    Task<List<TagEntity>> GetTagsByStartsWithNameAsync(string? startsWith);
 }

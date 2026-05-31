@@ -28,6 +28,14 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     {
         return await Context.CreateAsync(objectToCreate);
     }
+    
+    /// <summary>
+    /// Persists a Set of new entity to the database and returns the saved instance.
+    /// </summary>
+    public async Task<List<T>> MassCreateAsync(List<T> objectsToCreate)
+    {
+        return await Context.MassCreateAsync(objectsToCreate);
+    }
 
     /// <summary>
     /// Removes the given entity from the database.
