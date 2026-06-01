@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -58,6 +59,16 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
         return await sortedQuery
             .Skip((query.Page-1) * query.PageSize)
             .Take(query.PageSize)
+            .ToListAsync();
+    }
+
+    public async Task<List<UserEntity>> GetAllAdminsAndModeratorUsersWithSettingsAsync()
+    {
+        return await Context
+            .GetTrackingSet<UserEntity>()
+            .Include(u => u.Settings)
+            .Where(u => u.Status == UserStatus.Active
+                && u.Role == UserRole.Moderator || u.Role == UserRole.Admin)
             .ToListAsync();
     }
 

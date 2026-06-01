@@ -1,5 +1,6 @@
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify.Tests.Integration.Utils;
 
@@ -10,24 +11,19 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     public CommonSpecimenControllerTests(IntegrationTestFixture fixture) : base(fixture)
     {
     }
-    
-    #region CreateSpecimen – Status & Approval
+
+    #region CreateSpecimen – Happy Path
 
     [Fact]
-    public async Task CreateSpecimen_AllExistingTaxonomies_SpecimenIsActiveNoApproval()
+    public async Task CreateSpecimen_ValidSpeciesGuid_ReturnsCreatedSpecimen()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
-        var species = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "leo", TaxonomyRank.Species, parentGuid: genus.Guid);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
 
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest([
-            new TaxonomyDto { Guid = genus.Guid, Name = genus.Name, Rank = TaxonomyRank.Genus },
-            new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }
-        ]);
+        var request = BuildRequest(species.Guid);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -38,91 +34,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
         specimen.Should().NotBeNull();
-        specimen!.Status.Should().Be(SpecimenStatus.Active);
-        specimen.TaxonomySpeciesGuid.Should().Be(species.Guid);
-
-        var approval = await GetApprovalForSpecimenFromDbAsync(result.CreatedObjectGuid);
-        approval.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task CreateSpecimen_AllNewTaxonomies_SpecimenIsPendingWithApproval()
-    {
-        var user = await UserRepo.CreateUserAsync("test@test.de");
-        SetupNominatimMock();
-        AuthenticateAs(user);
-
-        var request = BuildRequest([
-            new TaxonomyDto { Name = "Panthera", Rank = TaxonomyRank.Genus },
-            new TaxonomyDto { Name = "leo", Rank = TaxonomyRank.Species }
-        ]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
-        result.Should().NotBeNull();
-
-        var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
-        specimen.Should().NotBeNull();
-        specimen!.Status.Should().Be(SpecimenStatus.Pending);
-
-        var approval = await GetApprovalForSpecimenFromDbAsync(result.CreatedObjectGuid);
-        approval.Should().NotBeNull();
-        approval!.ApprovalStatus.Should().Be(ApprovalStatus.Pending);
-    }
-
-    [Fact]
-    public async Task CreateSpecimen_MixedTaxonomies_SpecimenIsPendingWithApproval()
-    {
-        var user = await UserRepo.CreateUserAsync("test@test.de");
-        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
-
-        SetupNominatimMock();
-        AuthenticateAs(user);
-
-        var request = BuildRequest([
-            new TaxonomyDto { Guid = genus.Guid, Name = genus.Name, Rank = TaxonomyRank.Genus },
-            new TaxonomyDto { Name = "leo", Rank = TaxonomyRank.Species }
-        ]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
-        result.Should().NotBeNull();
-
-        var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
-        specimen!.Status.Should().Be(SpecimenStatus.Pending);
-
-        var approval = await GetApprovalForSpecimenFromDbAsync(result.CreatedObjectGuid);
-        approval.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task CreateSpecimen_NewTaxonomies_TaxonomyNodesAreStoredAsPending()
-    {
-        var user = await UserRepo.CreateUserAsync("test@test.de");
-        SetupNominatimMock();
-        AuthenticateAs(user);
-
-        var request = BuildRequest([
-            new TaxonomyDto { Name = "Panthera", Rank = TaxonomyRank.Genus },
-            new TaxonomyDto { Name = "leo", Rank = TaxonomyRank.Species }
-        ]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
-        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
-
-        var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
-        var speciesNode = await GetTaxonomyNodeFromDbAsync(specimen!.TaxonomySpeciesGuid);
-
-        speciesNode.Should().NotBeNull();
-        speciesNode!.Name.Should().Be("leo");
-        speciesNode.Rank.Should().Be(TaxonomyRank.Species);
-        speciesNode.ApprovalStatus.Should().Be(ApprovalStatus.Pending);
+        specimen!.TaxonomySpeciesGuid.Should().Be(species.Guid);
     }
 
     #endregion
@@ -140,9 +52,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            taxonomies: [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }],
-            tags: [tag1.Guid, tag2.Guid]);
+        var request = BuildRequest(species.Guid, tags: [tag1.Guid, tag2.Guid]);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -165,9 +75,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            taxonomies: [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }],
-            tagsToCreate: ["mammal", "endangered"]);
+        var request = BuildRequest(species.Guid, tagsToCreate: ["mammal", "endangered"]);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -189,10 +97,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            taxonomies: [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }],
-            tags: [existingTag.Guid],
-            tagsToCreate: ["endangered"]);
+        var request = BuildRequest(species.Guid, tags: [existingTag.Guid], tagsToCreate: ["endangered"]);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -218,9 +123,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            taxonomies: [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }],
-            base64Images: ["base64image1", "base64image2", "base64image3"]);
+        var request = BuildRequest(species.Guid, base64Images: ["base64image1", "base64image2", "base64image3"]);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -252,10 +155,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -275,18 +175,11 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
 
-        SetupNominatimMock(
-            countryCode: "DE",
-            state: null,
-            city: null,
-            postcode: null);
+        SetupNominatimMock(countryCode: "DE", state: null, city: null, postcode: null);
 
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -303,19 +196,11 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
 
-        SetupNominatimMock(
-            countryCode: "DE",
-            state: "Bayern",
-            city: "Munich",
-            postcode: null,
-            road: null);
+        SetupNominatimMock(countryCode: "DE", state: "Bayern", city: "Munich", postcode: null, road: null);
 
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
         var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
 
         var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
@@ -335,8 +220,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
+        var request = BuildRequest(species.Guid);
 
         await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
         var locationsAfterFirst = await GetAllGeographicLocationsFromDbAsync();
@@ -360,8 +244,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
+        var request = BuildRequest(species.Guid);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
         var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
@@ -373,7 +256,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #endregion
 
-    #region CreateSpecimen – Error cases
+    #region CreateSpecimen – Error Cases
 
     [Fact]
     public async Task CreateSpecimen_InvalidTagGuid_ReturnsNoTagWithThisGuid()
@@ -384,9 +267,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            taxonomies: [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }],
-            tags: [Guid.CreateVersion7()]);
+        var request = BuildRequest(species.Guid, tags: [Guid.CreateVersion7()]);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -395,21 +276,36 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateSpecimen_InvalidTaxonomyGuid_ReturnsNoTaxonomyWithThisGuid()
+    public async Task CreateSpecimen_InvalidSpeciesGuid_ReturnsNoTaxonomyWithThisGuid()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
 
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest([
-            new TaxonomyDto { Guid = Guid.CreateVersion7(), Name = "Unknown", Rank = TaxonomyRank.Species }
-        ]);
+        var request = BuildRequest(Guid.CreateVersion7());
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyWithThisGuid);
+    }
+
+    [Fact]
+    public async Task CreateSpecimen_SpeciesGuidWithNonSpeciesRank_ReturnsTaxonomyRankIsNoSpecies()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
+
+        SetupNominatimMock();
+        AuthenticateAs(user);
+
+        var request = BuildRequest(genus.Guid);
+
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.TaxonomyRankIsNoSpecies);
     }
 
     [Fact]
@@ -424,10 +320,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.AddressDoesNotExist);
@@ -448,10 +341,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.AddressDoesNotExist);
@@ -462,150 +352,13 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     {
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
 
-        var request = BuildRequest(
-            [new TaxonomyDto { Guid = species.Guid, Name = species.Name, Rank = TaxonomyRank.Species }]);
-
-        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     #endregion
 
-    #region GetTaxonomyNodes
-
-    [Fact]
-    public async Task GetAllTaxonomyNodes_ReturnsAllNodes()
-    {
-        var nodeOne = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "A",
-            TaxonomyRank.Phylum);
-        var nodeTwo = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "B",
-            TaxonomyRank.Class,
-            parentGuid: nodeOne.Guid);
-        var nodeThree = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "C",
-            TaxonomyRank.Phylum);
-        var nodeFour = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "D",
-            TaxonomyRank.Phylum);
-        var nodeFive = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "E",
-            TaxonomyRank.Order,
-            parentGuid: nodeTwo.Guid);
-
-        var requester = await UserRepo.CreateUserAsync(
-            "test@test.de");
-        
-        AuthenticateAs(requester);
-        
-        var response = await Client.GetFromJsonAsync<List<GetAllTaxonomyNodesByFilterDto>>(
-            $"{Routings.CommonSpecimenRouting}/Taxonomy");
-        
-        response.Should().NotBeNull();
-        response!.Count.Should().Be(5);
-        
-        response[0].TaxonomyGuid.Should().Be(nodeOne.Guid);
-        response[0].Name.Should().Be(nodeOne.Name);
-        response[0].Rank.Should().Be(nodeOne.Rank);
-        
-        response[1].TaxonomyGuid.Should().Be(nodeTwo.Guid);
-        response[1].Name.Should().Be(nodeTwo.Name);
-        response[1].Rank.Should().Be(nodeTwo.Rank);
-        
-        response[2].TaxonomyGuid.Should().Be(nodeThree.Guid);
-        response[2].Name.Should().Be(nodeThree.Name);
-        response[2].Rank.Should().Be(nodeThree.Rank);
-
-        response[3].TaxonomyGuid.Should().Be(nodeFour.Guid);
-        response[3].Name.Should().Be(nodeFour.Name);
-        response[3].Rank.Should().Be(nodeFour.Rank);
-
-        response[4].TaxonomyGuid.Should().Be(nodeFive.Guid);
-        response[4].Name.Should().Be(nodeFive.Name);
-        response[4].Rank.Should().Be(nodeFive.Rank);
-    }
-    
-    [Fact]
-    public async Task GetAllTaxonomyNodes_WithFilter_ReturnsNodes()
-    {
-        var nodeOne = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "TestA",
-            TaxonomyRank.Phylum);
-        var nodeTwo = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "SuperB",
-            TaxonomyRank.Class,
-            parentGuid: nodeOne.Guid);
-        await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "KleinC",
-            TaxonomyRank.Phylum);
-        var nodeFour = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "TestD",
-            TaxonomyRank.Phylum);
-        await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "SiebenE",
-            TaxonomyRank.Order,
-            parentGuid: nodeTwo.Guid);
-
-        var requester = await UserRepo.CreateUserAsync(
-            "test@test.de");
-        
-        AuthenticateAs(requester);
-
-        var startsWith = "t";
-        var response = await Client.GetFromJsonAsync<List<GetAllTaxonomyNodesByFilterDto>>(
-            $"{Routings.CommonSpecimenRouting}/Taxonomy?startsWith={startsWith}");
-        
-        response.Should().NotBeNull();
-        response!.Count.Should().Be(2);
-        
-        response[0].TaxonomyGuid.Should().Be(nodeOne.Guid);
-        response[0].Name.Should().Be(nodeOne.Name);
-        response[0].Rank.Should().Be(nodeOne.Rank);
-        
-        response[1].TaxonomyGuid.Should().Be(nodeFour.Guid);
-        response[1].Name.Should().Be(nodeFour.Name);
-        response[1].Rank.Should().Be(nodeFour.Rank);
-    }
-    
-    [Fact]
-    public async Task GetAllTaxonomyNodes_WithFilter_ReturnsNothing()
-    {
-        var nodeOne = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "TestA",
-            TaxonomyRank.Phylum);
-        var nodeTwo = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "SuperB",
-            TaxonomyRank.Class,
-            parentGuid: nodeOne.Guid);
-        await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "KleinC",
-            TaxonomyRank.Phylum);
-        await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "TestD",
-            TaxonomyRank.Phylum);
-       await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "SiebenE",
-            TaxonomyRank.Order,
-            parentGuid: nodeTwo.Guid);
-
-        var requester = await UserRepo.CreateUserAsync(
-            "test@test.de");
-        
-        AuthenticateAs(requester);
-
-        var startsWith = "Eins";
-        var response = await Client.GetFromJsonAsync<List<GetAllTaxonomyNodesByFilterDto>>(
-            $"{Routings.CommonSpecimenRouting}/Taxonomy?startsWith={startsWith}");
-        
-        response.Should().NotBeNull();
-        response!.Count.Should().Be(0);
-    }
-
-
-    #endregion
-    
     #region Helpers
 
     private void SetupNominatimMock(
@@ -633,7 +386,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     private static CreateSpecimenRequestDto BuildRequest(
-        List<TaxonomyDto> taxonomies,
+        Guid taxonomySpeciesGuid,
         List<Guid>? tags = null,
         List<string>? tagsToCreate = null,
         List<string>? base64Images = null) => new()
@@ -642,7 +395,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         LatinName = "Testus specienus",
         DateOfDiscovery = DateTime.UtcNow,
         Location = new GeoDto { Latitude = 48.137, Longitude = 11.575 },
-        Taxonomies = taxonomies,
+        TaxonomySpeciesGuid = taxonomySpeciesGuid,
         Tags = tags ?? [],
         TagsToCreate = tagsToCreate ?? [],
         Base64Images = base64Images ?? []

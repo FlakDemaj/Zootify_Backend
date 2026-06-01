@@ -11,7 +11,7 @@ public interface IAuthRepository : IBaseRepository<UserEntity>
     /// <summary>
     /// Returns the user with the given email address, or <c>null</c> if not found.
     /// </summary>
-    public Task<UserEntity?> GetUserByEmailAsync(string email, bool tracking = false);
+    public Task<UserEntity?> GetUserByEmailWithSettingsAsync(string email, bool tracking = false);
 
     /// <summary>
     /// Returns the user whose reset-password token matches the given token string,

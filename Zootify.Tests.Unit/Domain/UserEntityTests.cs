@@ -301,6 +301,50 @@ public class UserEntityTests
 
     #endregion
 
+    #region CreateUserSettings
+
+    [Fact]
+    public void CreateUserSettings_SetsSettingsOnEntity()
+    {
+        var user = UserTestData.CreateUser();
+
+        user.CreateUserSettings();
+
+        user.Settings.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void CreateUserSettings_SetsUserGuid()
+    {
+        var user = UserTestData.CreateUser();
+
+        user.CreateUserSettings();
+
+        user.Settings.UserGuid.Should().Be(user.Guid);
+    }
+
+    [Fact]
+    public void CreateUserSettings_DefaultLanguageIsDe()
+    {
+        var user = UserTestData.CreateUser();
+
+        user.CreateUserSettings();
+
+        user.Settings.Language.Should().Be("de");
+    }
+
+    [Fact]
+    public void CreateUserSettings_DefaultDarkModeIsFalse()
+    {
+        var user = UserTestData.CreateUser();
+
+        user.CreateUserSettings();
+
+        user.Settings.DarkMode.Should().BeFalse();
+    }
+
+    #endregion
+
     #region ResetLoginAttempts
 
     /// <summary>

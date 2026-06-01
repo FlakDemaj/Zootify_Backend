@@ -1,7 +1,6 @@
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
-using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
@@ -23,6 +22,8 @@ public class UserEntity : BaseDeletionEntity
     public UserStatus Status { get; set; } = UserStatus.Pending;
 
     public int LoginAttempts { get; private set; }
+    
+    public UserSettingsEntity? Settings { get; set; }
 
     public ICollection<SpecimenEntity> CreatedSpecimens { get; set; } = new List<SpecimenEntity>();
 
@@ -40,8 +41,6 @@ public class UserEntity : BaseDeletionEntity
 
     public ICollection<LoanEntity> LoansAsBorrower { get; set; } = new List<LoanEntity>();
     
-    public ICollection<ApprovalSpecimenEntity> ApprovalSpecimens { get; set; } = new List<ApprovalSpecimenEntity>();
-
     public RegistrationTokenEntity? RegistrationToken { get; private set; }
 
     public ResetPasswordTokenEntity? ResetPasswordToken { get; private set; }
@@ -149,6 +148,16 @@ public class UserEntity : BaseDeletionEntity
     public void RemoveResetPasswordToken()
     {
         ResetPasswordToken = null;
+    }
+
+    public void CreateUserSettings()
+    {
+        var userSettings = new UserSettingsEntity
+        {
+            UserGuid = Guid,
+        };
+        
+        Settings = userSettings;
     }
 
     public bool CheckChanges(UserEntity newUserData)

@@ -1,3 +1,5 @@
+using Zootify_Backend.DTOs.Common.Response;
+
 namespace Zootify_Backend.DTOs.Common.Request;
 
 public class CreateSpecimenRequestDto
@@ -12,7 +14,15 @@ public class CreateSpecimenRequestDto
 
     public required DateTime DateOfDiscovery { get; set; }
 
-    public required List<TaxonomyDto> Taxonomies { get; set; }
+    public required Guid TaxonomySpeciesGuid { get; set; }
+    
+    public string? StorageBuilding { get; set; }
+    
+    public string? StorageCabinet { get; set; }
+    
+    public string? StorageShelf { get; set; }
+    
+    public string? StorageCompartment { get; set; }
     
     public List<Guid> Tags { get; set; }
 

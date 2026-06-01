@@ -1,3 +1,4 @@
+using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
@@ -7,5 +8,7 @@ public interface ITaxonomyRepository : IBaseRepository<TaxonomyNodeEntity>
 {
     Task<TaxonomyNodeEntity?> GetTaxonomyNodeByGuidAsync(Guid guid);
     
-    Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(string? startsWithName);
+    Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(
+        string? startsWithName,
+        TaxonomyRank rank);
 }

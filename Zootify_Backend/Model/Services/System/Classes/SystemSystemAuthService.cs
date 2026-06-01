@@ -6,7 +6,6 @@ using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Services.System.Interfaces;
 using Zootify_Backend.Transaction;
@@ -19,8 +18,12 @@ namespace Zootify_Backend.Model.Services.System.Classes;
 public class SystemSystemAuthService : ISystemAuthService
 {
     private readonly IAuthRepository _authRepository;
+    
     private readonly IBrevoProvider _brevoProvider;
+   
     private readonly ITokenManager _tokenManager;
+    
+    private readonly IMapper _mapper;
 
     private IMapper Mapper { get; }
 
@@ -34,6 +37,7 @@ public class SystemSystemAuthService : ISystemAuthService
         ITokenManager tokenManager)
     {
         _authRepository = authRepository;
+        _mapper = mapper;
         Mapper = mapper;
         _brevoProvider = brevoProvider;
         _tokenManager = tokenManager;
@@ -51,7 +55,7 @@ public class SystemSystemAuthService : ISystemAuthService
     {
         var existingUser = await
             _authRepository
-                .GetUserByEmailAsync(request.Email.ToLower());
+                .GetUserByEmailWithSettingsAsync(request.Email.ToLower());
 
         if (existingUser != null)
         {
@@ -65,6 +69,8 @@ public class SystemSystemAuthService : ISystemAuthService
         user.FormatEmail();
         CheckPassword(request.Password);
         user.SetPassword(request.Password);
+        
+        user.CreateUserSettings();
 
         await CreateUserAsync(user);
     }
@@ -163,7 +169,7 @@ public class SystemSystemAuthService : ISystemAuthService
     public async Task<LoginUserResponseDto> LoginAsync(
         LoginUserRequestDto request)
     {
-        var user = await _authRepository.GetUserByEmailAsync(
+        var user = await _authRepository.GetUserByEmailWithSettingsAsync(
             request.Email.ToLower(),
             true);
 
@@ -196,12 +202,7 @@ public class SystemSystemAuthService : ISystemAuthService
             user.Guid,
             user.Role);
 
-        return new LoginUserResponseDto
-        {
-            Token = token,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-        };
+        return _mapper.Map<LoginUserResponseDto>((user, token));
     }
 
     /// <summary>

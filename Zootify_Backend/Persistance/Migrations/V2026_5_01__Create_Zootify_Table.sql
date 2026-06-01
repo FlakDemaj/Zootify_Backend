@@ -317,34 +317,6 @@ END
 GO
 
 -- ────────────────────────────────────────────────────────────
---  APPROVAL_SPECIMEN
---  approval_status  INT  (enum)
--- ────────────────────────────────────────────────────────────
-IF NOT EXISTS (
-    SELECT 1 FROM sys.tables t
-    JOIN sys.schemas s ON t.schema_id = s.schema_id
-    WHERE s.name = 'zootify' AND t.name = 'approval_specimen'
-)
-BEGIN
-CREATE TABLE [zootify].[approval_specimen] (
-                                               guid                    UNIQUEIDENTIFIER    NOT NULL,
-                                               specimen_guid           UNIQUEIDENTIFIER    NOT NULL,
-                                               approval_status         INT                 NOT NULL,
-                                               approved_by_user_guid   UNIQUEIDENTIFIER    NULL,
-                                               approved_at             DATETIME2           NULL,
-                                               is_taken                BIT                 NULL,
-                                               comment                 NVARCHAR(250)       NULL,
-
-    CONSTRAINT pk_approval_specimen          PRIMARY KEY (guid),
-    CONSTRAINT fk_approval_specimen_specimen FOREIGN KEY (specimen_guid)
-    REFERENCES [zootify].[specimens] (guid) ON DELETE CASCADE,
-    CONSTRAINT fk_approval_specimen_user     FOREIGN KEY (approved_by_user_guid)
-    REFERENCES [zootify].[users] (guid)     ON DELETE SET NULL
-    )
-END
-GO
-
--- ────────────────────────────────────────────────────────────
 --  LOANS
 -- ────────────────────────────────────────────────────────────
 IF NOT EXISTS (
@@ -376,3 +348,20 @@ CREATE TABLE [zootify].[loans] (
     )
 END
 GO
+
+-- ────────────────────────────────────────────────────────────
+--  User Settings
+-- ────────────────────────────────────────────────────────────
+IF NOT EXISTS (SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
+               WHERE s.name = 'zootify' AND t.name = 'user_settings')
+CREATE TABLE [zootify].[user_settings] (
+    [guid]      UNIQUEIDENTIFIER NOT NULL,
+    [user_guid] UNIQUEIDENTIFIER NOT NULL,
+    [dark_mode] BIT              NOT NULL CONSTRAINT df_user_settings_dark_mode DEFAULT 0,
+    [language]  VARCHAR(10)      NOT NULL CONSTRAINT df_user_settings_language  DEFAULT 'de',
+
+    CONSTRAINT pk_user_settings          PRIMARY KEY (guid),
+    CONSTRAINT uq_user_settings_user_guid UNIQUE      (user_guid),
+    CONSTRAINT fk_user_settings_user     FOREIGN KEY (user_guid)
+    REFERENCES [zootify].[users] (guid) ON DELETE CASCADE
+    );

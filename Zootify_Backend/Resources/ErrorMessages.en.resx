@@ -104,4 +104,10 @@
   <data name="AddressDoesNotExist" xml:space="preserve">
     <value>The location you entered does not exist.</value>
   </data>
+  <data name="TaxonomyRankIsAtTheDeepestLevel" xml:space="preserve">
+    <value>You are on the lowest level. It is not possible to add another level.</value>
+  </data>
+  <data name="TaxonomyRankIsNoSpecies" xml:space="preserve">
+    <value>This is not a species you selected.</value>
+  </data>
 </root>

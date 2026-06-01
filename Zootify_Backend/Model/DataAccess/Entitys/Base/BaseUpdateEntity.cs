@@ -1,5 +1,3 @@
-using Zootify_Backend.Models.DataAccess.Entitys;
-
 namespace Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 /// <summary>

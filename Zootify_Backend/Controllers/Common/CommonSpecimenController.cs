@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 
 namespace Zootify_Backend.Controllers.Common;
 
-[Authorize]
+[Authorize(Roles = $"{Roles.Moderator}, {Roles.Admin}, {Roles.User}")]
 public class CommonSpecimenController : BaseRestController
 {
     private readonly ICommonSpecimenService _commonSpecimenService;
@@ -22,12 +23,5 @@ public class CommonSpecimenController : BaseRestController
         [FromBody] CreateSpecimenRequestDto specimen)
     {
         return Ok(await _commonSpecimenService.CreateSpecimenAsync(specimen));
-    }
-    
-    [HttpGet("Taxonomy")]
-    public async Task<ActionResult<List<GetAllTaxonomyNodesByFilterDto>>> GetTaxonomyNodesForCreation(
-        [FromQuery] string startsWith)
-    {
-        return Ok(await _commonSpecimenService.GetAllTaxonomyNodesAsync(startsWith));
     }
 }

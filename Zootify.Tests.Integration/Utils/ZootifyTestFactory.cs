@@ -1,6 +1,7 @@
 using Autofac;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Providers.Nominatim;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Server;
 using Zootify.Tests.Integration.Utils.Helpers;
 
@@ -21,15 +23,21 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
     private readonly string _connectionString;
     private readonly Mock<IBrevoProvider> _brevoMock;
     private readonly Mock<INominatimProvider> _nominatimMock;
+    private readonly Mock<IHubContext<NotificationHub>> _hubContextMock;
 
     /// <summary>
     /// Initializes the factory with the test container connection string and provider mocks.
     /// </summary>
-    public ZootifyTestFactory(string connectionString, Mock<IBrevoProvider> brevoMock, Mock<INominatimProvider> nominatimMock)
+    public ZootifyTestFactory(
+        string connectionString,
+        Mock<IBrevoProvider> brevoMock,
+        Mock<INominatimProvider> nominatimMock,
+        Mock<IHubContext<NotificationHub>> hubContextMock)
     {
         _connectionString = connectionString;
         _brevoMock = brevoMock;
         _nominatimMock = nominatimMock;
+        _hubContextMock = hubContextMock;
     }
     
 
@@ -78,6 +86,10 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
 
             autofac.RegisterInstance(_nominatimMock.Object)
                 .As<INominatimProvider>()
+                .SingleInstance();
+
+            autofac.RegisterInstance(_hubContextMock.Object)
+                .As<IHubContext<NotificationHub>>()
                 .SingleInstance();
         });
 

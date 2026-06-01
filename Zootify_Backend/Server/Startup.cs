@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Model.Auth;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Models.DataAccess.DBContext;
 using Zootify_Backend.Persistance;
 using Zootify_Backend.Server.Middlewares;
@@ -55,9 +56,8 @@ public class Startup
         AddInternalServices(builder.Services);
         AddDatabase(builder.Services);
         
-        AddDatabase(builder.Services);
-
         builder.Services.AddHttpClient();
+        builder.Services.AddSignalR();
     }
 
     /// <summary>
@@ -93,6 +93,7 @@ public class Startup
 
         EnableMiddlewares(app);
         app.MapControllers();
+        app.MapHub<NotificationHub>("/hubs/notifications");
     }
 
     /// <summary>

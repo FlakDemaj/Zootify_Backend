@@ -3,7 +3,7 @@ using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
-public interface IApprovalSpecimenRepository : IBaseRepository<ApprovalSpecimenEntity>
+public interface IUserSettingsRepository : IBaseRepository<UserSettingsEntity>
 {
-    
+    Task<UserSettingsEntity?> GetByUserGuidAsync(Guid userGuid);
 }

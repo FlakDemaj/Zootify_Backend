@@ -1,4 +1,5 @@
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 
 namespace Zootify_Backend.Model.Providers.Nominatim;
 

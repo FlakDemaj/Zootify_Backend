@@ -97,6 +97,35 @@ public class AuthControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Verifies that a successful registration automatically creates UserSettings with default values.
+    /// </summary>
+    [Fact]
+    public async Task Register_ValidRequest_CreatesDefaultUserSettings()
+    {
+        Fixture.BrevoMock
+            .Setup(b => b.SendRegistrationEmail(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        var request = new RegisterUserRequestDto
+        {
+            FirstName = "Max",
+            LastName = "Mustermann",
+            Email = "settings@example.com",
+            Password = "TestPass123!"
+        };
+
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
+
+        var user = await GetUserFromDbByEmailAsync("settings@example.com");
+        var settings = await GetUserSettingsFromDbAsync(user!.Guid);
+
+        settings.Should().NotBeNull();
+        settings!.DarkMode.Should().BeFalse();
+        settings.Language.Should().Be("de");
+    }
+
+    /// <summary>
     /// Verifies that registering with an already existing email returns 400
     /// with the <see cref="ErrorCode.UserWithThisEmailAlreadyExists"/> error code.
     /// </summary>
