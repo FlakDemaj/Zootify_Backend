@@ -23,7 +23,7 @@ public class UserEntity : BaseDeletionEntity
 
     public int LoginAttempts { get; private set; }
     
-    public UserSettingsEntity Settings { get; set; } = new UserSettingsEntity();
+    public UserSettingsEntity? Settings { get; set; }
 
     public ICollection<SpecimenEntity> CreatedSpecimens { get; set; } = new List<SpecimenEntity>();
 

@@ -129,8 +129,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             .FirstOrDefaultAsync(s => s.UserGuid == userGuid);
     }
 
-    protected async Task<UserSettingsEntity> CreateUserSettingsInDbAsync(
-        Guid userGuid,
+    protected async Task CreateUserSettingsInDbAsync(Guid userGuid,
         bool darkMode = false,
         string language = "de")
     {
@@ -143,7 +142,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _dbContext.Add(settings);
         await _dbContext.SaveChangesAsync();
         _dbContext.ChangeTracker.Clear();
-        return settings;
     }
 
     protected async Task<TaxonomyNodeEntity?> GetTaxonomyNodeFromDbAsync(Guid guid)
