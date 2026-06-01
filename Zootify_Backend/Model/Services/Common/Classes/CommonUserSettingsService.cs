@@ -27,14 +27,7 @@ public class CommonUserSettingsService : ICommonUserSettingsService
 
         if (settings == null)
         {
-            await _userSettingsRepository.CreateAsync(new UserSettingsEntity
-            {
-                UserGuid = authentication.UserGuid,
-                DarkMode = requestDto.DarkMode,
-                Language = requestDto.Language
-            });
-
-            return;
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
 
         if (!settings.CheckChanges(requestDto.DarkMode, requestDto.Language))
