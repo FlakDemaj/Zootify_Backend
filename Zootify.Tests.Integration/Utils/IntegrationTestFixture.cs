@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +11,7 @@ using Testcontainers.MsSql;
 using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Providers.Nominatim;
+using Zootify_Backend.Model.Providers.SignalR;
 
 namespace Zootify.Tests.Integration.Utils;
 
@@ -32,6 +34,9 @@ public class IntegrationTestFixture : IAsyncLifetime
     private string ConnectionString { get; set; } = null!;
     public Mock<IBrevoProvider> BrevoMock { get; } = new();
     public Mock<INominatimProvider> NominatimMock { get; } = new();
+    public Mock<IHubContext<NotificationHub>> HubContextMock { get; } = new();
+    private readonly Mock<IHubClients> _hubClientsMock = new();
+    private readonly Mock<IClientProxy> _hubClientProxyMock = new();
     public ZootifyDbContext DbContext { get; private set; } = null!;
 
     /// <summary>
@@ -43,7 +48,8 @@ public class IntegrationTestFixture : IAsyncLifetime
         await _mssql.StartAsync();
         ConnectionString = _mssql.GetConnectionString();
 
-        _factory = new ZootifyTestFactory(ConnectionString, BrevoMock, NominatimMock);
+        SetupHubContextMock();
+        _factory = new ZootifyTestFactory(ConnectionString, BrevoMock, NominatimMock, HubContextMock);
         Client = _factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
@@ -78,6 +84,17 @@ public class IntegrationTestFixture : IAsyncLifetime
         await _respawner.ResetAsync(conn);
         BrevoMock.Reset();
         NominatimMock.Reset();
+        HubContextMock.Reset();
+        SetupHubContextMock();
+    }
+
+    private void SetupHubContextMock()
+    {
+        HubContextMock.Setup(h => h.Clients).Returns(_hubClientsMock.Object);
+        _hubClientsMock.Setup(c => c.User(It.IsAny<string>())).Returns(_hubClientProxyMock.Object);
+        _hubClientProxyMock
+            .Setup(c => c.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
     }
 
     /// <summary>

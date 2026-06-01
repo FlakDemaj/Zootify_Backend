@@ -1,3 +1,4 @@
+using System.Globalization;
 using SendWithBrevo;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Enums;
@@ -40,10 +41,14 @@ public class BrevoProvider : IBrevoProvider
 
             var (sender, recipients) = CreateSenderAndRecipient(fullName, email);
 
+            var subject = IsEnglish()
+                ? "Confirm your registration"
+                : "Bestätigen Sie Ihre Registrierung";
+
             var wasSent = await BrevoClient.SendAsync(
                 sender,
                 recipients,
-                "Bestätigen Sie Ihre Registrierung",
+                subject,
                 templateContent,
                 isHtml: true);
 
@@ -74,10 +79,14 @@ public class BrevoProvider : IBrevoProvider
 
         var (sender, recipients) = CreateSenderAndRecipient(fullName, email);
 
+        var subject = IsEnglish()
+            ? "Reset your password"
+            : "Passwort zurücksetzen";
+
         return await BrevoClient.SendAsync(
             sender,
             recipients,
-            "Passwort zurücksetzen",
+            subject,
             templateContent,
             isHtml: true);
     }
@@ -99,10 +108,14 @@ public class BrevoProvider : IBrevoProvider
 
             var (sender, recipients) = CreateSenderAndRecipient(fullName, email);
 
+            var subject = IsEnglish()
+                ? "Password changed!"
+                : "Passwort zurückgesetzt!";
+
             var wasSent = await BrevoClient.SendAsync(
                 sender,
                 recipients,
-                "Passwort zurückgesetzt!",
+                subject,
                 template,
                 isHtml: true);
 
@@ -167,23 +180,35 @@ public class BrevoProvider : IBrevoProvider
         return (sender, recipients);
     }
 
+    private static bool IsEnglish() =>
+        CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
+
     /// <summary>
     /// Loads an HTML email template from the assembly's embedded resources.
-    /// Throws if the resource cannot be found.
+    /// Prefers the language-specific variant (e.g. RegistrationEmail.en.html) when available,
+    /// and falls back to the default German template.
     /// </summary>
     private static async Task<string> LoadTemplateAsync(string templateName)
     {
         var assembly = typeof(BrevoProvider).Assembly;
-        var resourceName = $"Zootify_Backend.Model.EmailTemplates.{templateName}.html";
 
-        await using var stream = assembly.GetManifestResourceStream(resourceName);
+        var localizedResourceName = IsEnglish()
+            ? $"Zootify_Backend.Model.EmailTemplates.{templateName}.en.html"
+            : $"Zootify_Backend.Model.EmailTemplates.{templateName}.html";
+
+        var stream = assembly.GetManifestResourceStream(localizedResourceName)
+            ?? assembly.GetManifestResourceStream(
+                $"Zootify_Backend.Model.EmailTemplates.{templateName}.html");
 
         if (stream == null)
         {
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
 
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync();
+        await using (stream)
+        {
+            using var reader = new StreamReader(stream);
+            return await reader.ReadToEndAsync();
+        }
     }
 }

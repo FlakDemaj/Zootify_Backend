@@ -352,7 +352,6 @@ GO
 -- ────────────────────────────────────────────────────────────
 --  User Settings
 -- ────────────────────────────────────────────────────────────
-
 IF NOT EXISTS (SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
                WHERE s.name = 'zootify' AND t.name = 'user_settings')
 CREATE TABLE [zootify].[user_settings] (
@@ -366,5 +365,3 @@ CREATE TABLE [zootify].[user_settings] (
     CONSTRAINT fk_user_settings_user     FOREIGN KEY (user_guid)
     REFERENCES [zootify].[users] (guid) ON DELETE CASCADE
     );
-END
-GO

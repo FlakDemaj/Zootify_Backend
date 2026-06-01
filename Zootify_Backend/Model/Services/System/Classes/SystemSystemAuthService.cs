@@ -6,7 +6,6 @@ using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Services.System.Interfaces;
 using Zootify_Backend.Transaction;
