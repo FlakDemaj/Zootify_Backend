@@ -20,22 +20,26 @@ public class SpecimenMapper : Profile
                     opt.MapFrom(src => src.LatinName))
             .ForMember(d => d.DateOfDiscovery,
                 opt =>
-                    opt.MapFrom(src => src.DateOfDiscovery));
+                    opt.MapFrom(src => src.DateOfDiscovery))
+            .ForMember(d => d.TaxonomySpeciesGuid,
+                opt =>
+                    opt.MapFrom(src => src.TaxonomySpeciesGuid))
+            .ForMember(d => d.StorageBuilding,
+                opt =>
+                    opt.MapFrom(src => src.StorageBuilding))
+            .ForMember(d => d.StorageCabinet,
+                opt =>
+                    opt.MapFrom(src => src.StorageCabinet))
+            .ForMember(d => d.StorageCompartment,
+                opt => 
+                    opt.MapFrom(src => src.StorageCompartment))
+            .ForMember(d => d.StorageShelf,
+                opt => 
+                    opt.MapFrom(src => src.StorageShelf));
 
         CreateMap<string, TagEntity>(MemberList.None)
             .ForMember(d => d.Tag,
                 opt =>
                     opt.MapFrom(src => src));
-        
-        CreateMap<TaxonomyNodeEntity, GetAllTaxonomyNodesByFilterDto>(MemberList.None)
-            .ForMember(d => d.TaxonomyGuid,
-                opt =>
-                    opt.MapFrom(src => src.Guid))
-            .ForMember(d => d.Name,
-                opt =>
-                    opt.MapFrom(src => src.Name))
-            .ForMember(d => d.Rank,
-                opt =>
-                    opt.MapFrom(src => src.Rank));
     }
 }

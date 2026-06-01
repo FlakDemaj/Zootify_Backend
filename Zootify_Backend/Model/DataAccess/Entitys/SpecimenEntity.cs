@@ -1,6 +1,5 @@
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
-using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
@@ -37,8 +36,6 @@ public class SpecimenEntity : BaseDeletionEntity
     public string? Comment { get; set; }
 
     public bool IsPublic { get; set; } = true;
-    
-    public SpecimenStatus Status { get; set; } 
     
     public ICollection<SpecimenImageEntity> Images { get; set; } = new List<SpecimenImageEntity>();
     

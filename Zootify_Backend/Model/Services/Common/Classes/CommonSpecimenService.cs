@@ -1,10 +1,13 @@
 using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Providers.Nominatim;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 using Zootify_Backend.Transaction;
 
@@ -13,9 +16,7 @@ namespace Zootify_Backend.Model.Services.Common.Classes;
 public class CommonSpecimenService : ICommonSpecimenService
 {
     private readonly ISpecimenRepository _specimenRepository;
-
-    private readonly IApprovalSpecimenRepository _approvalSpecimenRepository;
-
+    
     private readonly ITagRepository _tagRepository;
 
     private readonly ITaxonomyRepository _taxonomyRepository;
@@ -33,7 +34,6 @@ public class CommonSpecimenService : ICommonSpecimenService
     public CommonSpecimenService(
         ISpecimenRepository specimenRepository,
         ITagRepository tagRepository,
-        IApprovalSpecimenRepository approvalSpecimenRepository,
         IMapper mapper,
         ITaxonomyRepository taxonomyRepository,
         IRelationSpecimensTagRepository specimenTagRepository,
@@ -43,7 +43,6 @@ public class CommonSpecimenService : ICommonSpecimenService
     {
         _specimenRepository = specimenRepository;
         _tagRepository = tagRepository;
-        _approvalSpecimenRepository = approvalSpecimenRepository;
         _mapper = mapper;
         _taxonomyRepository = taxonomyRepository;
         _specimenTagRepository = specimenTagRepository;
@@ -56,78 +55,68 @@ public class CommonSpecimenService : ICommonSpecimenService
     public async Task<CreatedObjectResponseDto> CreateSpecimenAsync(
         CreateSpecimenRequestDto request)
     {
-        var needApproval = request.Taxonomies.Any(taxonomy => taxonomy.Guid == null);
-
-        var specimen = BuildSpecimen(request, needApproval);
+        var specimen = await BuildSpecimen(request);
         var tagsToCreate = _mapper.Map<List<TagEntity>>(request.TagsToCreate);
         var existingTags = await GetExistingTagsAsync(request.Tags);
-        var taxonomyTree = await BuildTaxonomyTreeAsync(request.Taxonomies);
 
         return await PersistSpecimenAsync(
             specimen,
             tagsToCreate,
             existingTags,
-            taxonomyTree,
             request.Location,
-            request.Base64Images,
-            needApproval);
+            request.Base64Images);
     }
 
     [Transaction(ReadOnly = true)]
     public async Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(
         string startsWith)
     {
-        var tags = await _tagRepository.GetTagsByStartsWithNameAsync(startsWith);
+        var tags = await _tagRepository
+            .GetTagsByStartsWithNameAsync(startsWith);
         
         var mappedTags = _mapper.Map<List<GetAllTagsByFilterDto>>(tags);
         
         return mappedTags.OrderBy(t => t.TagName).ToList();
     }
     
-    [Transaction(ReadOnly = true)]
-    public async Task<List<GetAllTaxonomyNodesByFilterDto>> GetAllTaxonomyNodesAsync(
-        string startsWith)
+    private async Task<SpecimenEntity> BuildSpecimen(
+        CreateSpecimenRequestDto request)
     {
-        var taxonomyNodes = await
-            _taxonomyRepository
-                .GetTaxonomyNodeByStartsWithNameAsync(startsWith);
-        
-        var mappedTags = _mapper.Map<List<GetAllTaxonomyNodesByFilterDto>>(taxonomyNodes);
-        
-        return mappedTags
-            .OrderBy(t => t.Name)
-            .ToList();
-    }
-
-    private SpecimenEntity BuildSpecimen(
-        CreateSpecimenRequestDto request,
-        bool needApproval)
-    {
+        await CheckSpeciesAsync(request.TaxonomySpeciesGuid);
         var specimen = _mapper.Map<SpecimenEntity>(request);
 
         specimen.SetLocation(
             request.Location.Latitude,
             request.Location.Longitude);
-
-        specimen.Status = needApproval ? SpecimenStatus.Pending : SpecimenStatus.Active;
-
+        
         return specimen;
+    }
+
+    private async Task CheckSpeciesAsync(Guid specimenGuid)
+    {
+        var species = await _taxonomyRepository
+            .GetTaxonomyNodeByGuidAsync(specimenGuid);
+
+        if (species == null)
+        {
+            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+        }
+
+        if (species.Rank != TaxonomyRank.Species)
+        {
+            throw new ZootifyException(ErrorCode.TaxonomyRankIsNoSpecies);
+        }
     }
 
     private async Task<CreatedObjectResponseDto> PersistSpecimenAsync(
         SpecimenEntity specimen,
         List<TagEntity> tagsToCreate,
         List<TagEntity> existingTags,
-        List<TaxonomyNodeEntity> taxonomyTree,
         GeoDto geoDto,
-        List<string> imagesBase64,
-        bool needApproval)
+        List<string> imagesBase64)
     {
         var locationGuid = await ResolveGeographicLocationAsync(geoDto);
-
-        await PersistNewTaxonomyNodesAsync(taxonomyTree, needApproval);
-
-        specimen.SetSpecies(taxonomyTree);
+        
         specimen.GeographicLocationGuid = locationGuid;
 
         await _specimenRepository.CreateAsync(specimen);
@@ -136,35 +125,11 @@ public class CommonSpecimenService : ICommonSpecimenService
 
         await LinkTagsToSpecimenAsync(specimen, allTags);
         await PersistSpecimenImagesAsync(specimen, imagesBase64);
-
-        if (needApproval)
-        {
-            await CreatePendingApprovalAsync(specimen);
-        }
-
+        
         return new CreatedObjectResponseDto
         {
             CreatedObjectGuid = specimen.Guid
         };
-    }
-
-    private async Task PersistNewTaxonomyNodesAsync(
-        List<TaxonomyNodeEntity> taxonomyTree,
-        bool needApproval)
-    {
-        var newNodes = taxonomyTree
-            .Where(node => node.ApprovalStatus == ApprovalStatus.Pending);
-        
-        var nodesToCreate = new List<TaxonomyNodeEntity>();
-
-        foreach (var node in newNodes)
-        {
-            node.ApprovalStatus = needApproval ? ApprovalStatus.Pending : ApprovalStatus.Approved;
-
-            nodesToCreate.Add(node);
-        }
-        
-        await _taxonomyRepository.MassCreateAsync(nodesToCreate);
     }
 
     private async Task<List<TagEntity>> PersistAndCombineTagsAsync(
@@ -222,84 +187,6 @@ public class CommonSpecimenService : ICommonSpecimenService
         }
         
         await _specimenImageRepository.MassCreateAsync(imagesToCreate);
-    }
-
-    private async Task CreatePendingApprovalAsync(SpecimenEntity specimen)
-    {
-        var approval = new ApprovalSpecimenEntity
-        {
-            ApprovalStatus = ApprovalStatus.Pending,
-            SpecimenGuid = specimen.Guid,
-            Comment = string.Empty
-        };
-
-        await _approvalSpecimenRepository.CreateAsync(approval);
-    }
-
-    private async Task<List<TaxonomyNodeEntity>> BuildTaxonomyTreeAsync(
-        List<TaxonomyDto> taxonomies)
-    {
-        var sortedTaxonomies = taxonomies
-            .OrderBy(taxonomy => taxonomy.Rank)
-            .ToList();
-
-        var taxonomyTree = new List<TaxonomyNodeEntity>();
-
-        for (var i = 0; i < sortedTaxonomies.Count; i++)
-        {
-            var taxonomy = sortedTaxonomies[i];
-
-            if (taxonomy.Guid != null)
-            {
-                var existingNode = await LoadExistingTaxonomyNodeAsync(taxonomy.Guid.Value);
-                taxonomyTree.Add(existingNode);
-            }
-            else
-            {
-                var parentGuid = ResolveParentGuid(taxonomyTree, i);
-                var newNode = BuildNewTaxonomyNode(taxonomy, parentGuid);
-                taxonomyTree.Add(newNode);
-            }
-        }
-
-        return taxonomyTree;
-    }
-
-    private async Task<TaxonomyNodeEntity> LoadExistingTaxonomyNodeAsync(Guid guid)
-    {
-        var node = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync(guid);
-
-        if (node == null)
-        {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
-        }
-
-        return node;
-    }
-
-    private static Guid? ResolveParentGuid(
-        List<TaxonomyNodeEntity> taxonomyTree,
-        int currentIndex)
-    {
-        if (currentIndex == 0)
-        {
-            return null;
-        }
-
-        return taxonomyTree[currentIndex - 1].Guid;
-    }
-
-    private static TaxonomyNodeEntity BuildNewTaxonomyNode(
-        TaxonomyDto taxonomy,
-        Guid? parentGuid)
-    {
-        return new TaxonomyNodeEntity
-        {
-            Name = taxonomy.Name,
-            ApprovalStatus = ApprovalStatus.Pending,
-            Rank = taxonomy.Rank,
-            ParentGuid = parentGuid
-        };
     }
 
     private async Task<List<TagEntity>> GetExistingTagsAsync(List<Guid> guids)

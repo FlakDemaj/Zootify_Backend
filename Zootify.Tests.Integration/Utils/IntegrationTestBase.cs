@@ -2,9 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Zootify_Backend.Model.Providers.Nominatim;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify.Tests.Integration.Utils.Helpers;
 
 namespace Zootify.Tests.Integration.Utils;
@@ -22,6 +24,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly SpecimenTestRepository SpecimenRepo;
     protected readonly TagTestRepository TagRepo;
     protected Mock<INominatimProvider> NominatimMock => Fixture.NominatimMock;
+    protected Mock<IHubContext<NotificationHub>> HubContextMock => Fixture.HubContextMock;
 
     private readonly ZootifyDbContext _dbContext;
 
@@ -96,13 +99,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             .FirstOrDefaultAsync(s => s.Guid == guid);
     }
 
-    protected async Task<ApprovalSpecimenEntity?> GetApprovalForSpecimenFromDbAsync(Guid specimenGuid)
-    {
-        return await _dbContext.Set<ApprovalSpecimenEntity>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.SpecimenGuid == specimenGuid);
-    }
-
     protected async Task<List<GeographicLocationEntity>> GetAllGeographicLocationsFromDbAsync()
     {
         return await _dbContext.Set<GeographicLocationEntity>()
@@ -124,6 +120,13 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             .AsNoTracking()
             .Where(i => i.SpecimenGuid == specimenGuid)
             .ToListAsync();
+    }
+
+    protected async Task<UserSettingsEntity?> GetUserSettingsFromDbAsync(Guid userGuid)
+    {
+        return await _dbContext.Set<UserSettingsEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserGuid == userGuid);
     }
 
     protected async Task<TaxonomyNodeEntity?> GetTaxonomyNodeFromDbAsync(Guid guid)

@@ -1,7 +1,7 @@
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Enums;
 
-namespace Zootify_Backend.DTOs.Common.Request;
+namespace Zootify_Backend.DTOs.Common.Response;
 
 public class GetAllUsersFilterDto : BaseSortAndPagingDto
 {

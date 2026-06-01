@@ -1,7 +1,6 @@
-using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
-namespace Zootify_Backend.Models.DataAccess.Entitys;
+namespace Zootify_Backend.Model.DataAccess.Entitys;
 
 public class LoanEntity : BaseGuidEntity
 {

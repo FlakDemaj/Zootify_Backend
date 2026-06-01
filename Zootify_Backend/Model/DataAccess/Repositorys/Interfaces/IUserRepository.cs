@@ -1,4 +1,4 @@
-using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
@@ -14,4 +14,6 @@ public interface IUserRepository : IBaseRepository<UserEntity>
 
     Task<List<UserEntity>> GetAllUsersAsync(
         GetAllUsersFilterDto query);
+    
+    Task<List<UserEntity>> GetAllAdminsAndModeratorUsersWithSettingsAsync();
 }

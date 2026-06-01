@@ -1,4 +1,4 @@
-using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;

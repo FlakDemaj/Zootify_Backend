@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
@@ -30,10 +31,12 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
     }
 
     public async Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(
-        string? startsWithName)
+        string? startsWithName,
+        TaxonomyRank rank)
     {
         var query = Context
-            .GetTrackingSet<TaxonomyNodeEntity>();
+            .GetTrackingSet<TaxonomyNodeEntity>()
+            .Where(tn => tn.Rank == rank);
 
         if (!string.IsNullOrWhiteSpace(startsWithName))
         {

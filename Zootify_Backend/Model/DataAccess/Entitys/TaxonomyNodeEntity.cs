@@ -8,8 +8,8 @@ public class TaxonomyNodeEntity: BaseDeletionEntity
     public string Name { get; set; } = string.Empty;
     
     public TaxonomyRank Rank { get; set; }
-    
-    public ApprovalStatus ApprovalStatus { get; set; }
+
+    public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Pending;
     
     public Guid? ParentGuid { get; set; }
     

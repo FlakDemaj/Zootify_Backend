@@ -64,4 +64,9 @@ public enum ErrorCode
     SpeciesNotFound =  -1006002,
     
     AddressDoesNotExist =  -1006003,
+    
+    TaxonomyRankIsAtTheDeepestLevel = -1006004,
+    
+    TaxonomyRankIsNoSpecies = -1006005
+
 }

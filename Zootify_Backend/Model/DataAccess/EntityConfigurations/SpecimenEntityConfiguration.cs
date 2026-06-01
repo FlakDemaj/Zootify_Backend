@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
 using Zootify_Backend.Model.DataAccess.Entitys;
-using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
@@ -54,10 +53,6 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasColumnName("longitude");
 
         builder
-            .Property(p => p.OnLoanUntil)
-            .HasColumnName("find_date");
-
-        builder
             .Property(p => p.StorageBuilding)
             .HasColumnName("storage_building")
             .HasMaxLength(100);
@@ -85,10 +80,6 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
         builder
             .Property(p => p.IsPublic)
             .HasColumnName("is_public");
-
-        builder
-            .Property(p => p.Status)
-            .HasColumnName("state");
 
         builder
             .HasOne(s => s.Species)

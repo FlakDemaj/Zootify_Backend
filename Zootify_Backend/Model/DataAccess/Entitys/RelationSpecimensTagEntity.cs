@@ -1,5 +1,4 @@
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
-using Zootify_Backend.Models.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
