@@ -150,6 +150,16 @@ public class UserEntity : BaseDeletionEntity
         ResetPasswordToken = null;
     }
 
+    public void CreateUserSettings()
+    {
+        var userSettings = new UserSettingsEntity
+        {
+            UserGuid = Guid,
+        };
+        
+        Settings = userSettings;
+    }
+
     public bool CheckChanges(UserEntity newUserData)
     {
         return FirstName != newUserData.FirstName

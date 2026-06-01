@@ -6,7 +6,7 @@ public class UserSettingsEntity : BaseGuidEntity
 {
     public Guid UserGuid { get; set; }
 
-    public bool DarkMode { get; set; }
+    public bool DarkMode { get; set; } = false;
 
     public string Language { get; set; } = "de";
 

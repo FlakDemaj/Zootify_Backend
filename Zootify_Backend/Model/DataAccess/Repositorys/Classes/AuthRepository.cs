@@ -25,12 +25,13 @@ public class AuthRepository : BaseRepository<UserEntity>, IAuthRepository
     /// </summary>
     /// <param name="email">The email address to search for.</param>
     /// <param name="tracking">Whether to enable EF change tracking on the result.</param>
-    public async Task<UserEntity?> GetUserByEmailAsync(
+    public async Task<UserEntity?> GetUserByEmailWithSettingsAsync(
         string email, bool tracking = false)
     {
         return await
             Context
                 .GetTrackingSet<UserEntity>(tracking)
+                .Include(u => u.Settings)
                 .Where(x => x.Email == email)
                 .FirstOrDefaultAsync();
     }

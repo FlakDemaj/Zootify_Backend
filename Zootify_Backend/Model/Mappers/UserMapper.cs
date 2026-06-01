@@ -1,8 +1,10 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Auth.Request;
+using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
@@ -27,6 +29,22 @@ public class UserMapper : Profile
             .ForMember(
                 d => d.PasswordHash,
                 o => o.MapFrom(s => s.Password));
+        
+        CreateMap<UserSettingsEntity, UserSettingsDto>()
+            .ForMember(d => d.Language,
+                o => o.MapFrom(s => s.Language))
+            .ForMember(d => d.DarkMode,
+                o => o.MapFrom(s => s.DarkMode));
+
+        CreateMap<(UserEntity, TokenResult), LoginUserResponseDto>()
+            .ForMember(d => d.FirstName,
+                o => o.MapFrom(s => s.Item1.FirstName))
+            .ForMember(d => d.LastName,
+                o => o.MapFrom(s => s.Item1.LastName))
+            .ForMember(d => d.Token,
+                o => o.MapFrom(s => s.Item2))
+            .ForMember(d => d.UserSettings,
+                o => o.MapFrom(s => s.Item1.Settings));
 
         CreateMap<UserEntity, GetUserResponseDto>()
             .ForMember(d => d.UserGuid,
