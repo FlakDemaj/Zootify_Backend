@@ -129,12 +129,17 @@ public class CommonTaxonomyService : ICommonTaxonomyNode
     {
           
         var users = await _userRepository.GetAllAdminsAndModeratorUsersWithSettingsAsync();
-      
+        var message = "New Taxonomy was created. Please check the new Taxonomy.";
+        
         foreach (var user in users)
         {
-            var message = user.Settings.Language == "de"
-                ? "Eine neue Taxonomie wurde erstellt. Bitte überprüfen Sie die neue Taxonomie."
-                : "New Taxonomy was created. Please check the new Taxonomy.";
+            
+            if (user.Settings != null)
+            {
+                message = user.Settings.Language == "de"
+                    ? "Eine neue Taxonomie wurde erstellt. Bitte überprüfen Sie die neue Taxonomie."
+                    : message;   
+            }
             
             await _hubContext.Clients
                 .User(user.Guid.ToString())
