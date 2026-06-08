@@ -151,6 +151,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         node!.Name.Should().Be("Chordata");
         node.Rank.Should().Be(TaxonomyRank.Phylum);
         node.ParentGuid.Should().BeNull();
+        node.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
     [Fact]
@@ -177,6 +178,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         node.Should().NotBeNull();
         node!.Rank.Should().Be(TaxonomyRank.Class);
         node.ParentGuid.Should().Be(phylum.Guid);
+        node.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
     [Fact]

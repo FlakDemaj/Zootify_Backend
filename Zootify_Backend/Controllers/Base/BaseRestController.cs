@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
@@ -25,5 +26,26 @@ public class BaseRestController : ControllerBase
 
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
+    }
+
+    protected IAuthentication? TryGetAuthentication()
+    {
+        HttpContext.Items.TryGetValue(nameof(IAuthentication), out var value);
+        if (value is IAuthentication authentication)
+            return authentication;
+
+        if (HttpContext.User.Identity?.IsAuthenticated != true)
+            return null;
+
+        var guidString = HttpContext.User.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var roleString = HttpContext.User.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+        if (!Guid.TryParse(guidString, out var userGuid)
+            || !Enum.TryParse<UserRole>(roleString, out var role))
+            return null;
+
+        return new Authentication(userGuid, role);
     }
 }

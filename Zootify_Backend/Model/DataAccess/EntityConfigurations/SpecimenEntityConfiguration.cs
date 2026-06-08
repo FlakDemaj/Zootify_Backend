@@ -42,7 +42,8 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
 
         builder
             .Property(p => p.GeographicLocationGuid)
-            .HasColumnName("geo_location_guid");
+            .HasColumnName("geo_location_guid")
+            .IsRequired();
 
         builder
             .Property(p => p.Latitude)
@@ -82,6 +83,10 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasColumnName("is_public");
 
         builder
+            .Property(p => p.IsPublic)
+            .HasColumnName("staus");
+        
+        builder
             .HasOne(s => s.Species)
             .WithMany(t => t.Specimens)
             .HasForeignKey(s => s.TaxonomySpeciesGuid)
@@ -91,7 +96,7 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasOne(s => s.GeographicLocation)
             .WithMany(g => g.Specimens)
             .HasForeignKey(s => s.GeographicLocationGuid)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
         
         builder
             .HasOne(t => t.CreatedByUser)

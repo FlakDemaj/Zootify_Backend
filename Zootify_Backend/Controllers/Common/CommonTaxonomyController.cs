@@ -12,11 +12,11 @@ namespace Zootify_Backend.Controllers.Common;
 [Authorize(Roles = $"{Roles.Moderator}, {Roles.Admin}, {Roles.User}")]
 public class CommonTaxonomyController : BaseRestController
 {
-    private readonly ICommonTaxonomyNode _commonTaxonomyNode;
+    private readonly ICommonTaxonomyNodeService _commonTaxonomyNodeService;
 
-    public CommonTaxonomyController(ICommonTaxonomyNode commonTaxonomyNode)
+    public CommonTaxonomyController(ICommonTaxonomyNodeService commonTaxonomyNodeService)
     {
-        _commonTaxonomyNode = commonTaxonomyNode;
+        _commonTaxonomyNodeService = commonTaxonomyNodeService;
     }
 
     [HttpGet]
@@ -24,7 +24,7 @@ public class CommonTaxonomyController : BaseRestController
         [FromQuery] string? startsWith,
         [FromQuery] TaxonomyRank rank)
     {
-        return Ok(await _commonTaxonomyNode.GetAllTaxonomyNodesAsync(
+        return Ok(await _commonTaxonomyNodeService.GetAllTaxonomyNodesAsync(
             startsWith,
             rank));
     }
@@ -33,7 +33,7 @@ public class CommonTaxonomyController : BaseRestController
     public async Task<ActionResult<CreatedObjectResponseDto>> CreateTaxonomyNode(
         [FromBody] CreateTaxonomyNodeRequestDto requestDto)
     {
-        return Ok(await _commonTaxonomyNode.CreateTaxonomyNodeAsync(requestDto));
+        return Ok(await _commonTaxonomyNodeService.CreateTaxonomyNodeAsync(Authentication, requestDto));
     }
     
 }

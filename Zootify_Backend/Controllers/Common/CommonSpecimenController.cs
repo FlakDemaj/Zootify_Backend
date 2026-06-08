@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
+using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 
 namespace Zootify_Backend.Controllers.Common;
@@ -22,6 +24,39 @@ public class CommonSpecimenController : BaseRestController
     public async Task<ActionResult<CreatedObjectResponseDto>> CreateSpecimen(
         [FromBody] CreateSpecimenRequestDto specimen)
     {
-        return Ok(await _commonSpecimenService.CreateSpecimenAsync(specimen));
+        return Ok(await _commonSpecimenService.CreateSpecimenAsync(Authentication, specimen));
+    }
+
+    [HttpGet("active")]
+    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllSpecimenAsync()
+    {
+        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
+            Authentication,
+            SpecimenStatus.Active));
+    }
+    
+    [HttpGet("pending")]
+    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllSpecimenAsync(
+        Guid collectionGuid)
+    {
+        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
+            Authentication,
+            SpecimenStatus.Pending));
+    }
+    
+    [HttpGet("deleted")]
+    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllDeletedSpecimenAsync()
+    {
+        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
+            Authentication,
+            SpecimenStatus.Deleted));
+    }
+    
+    [HttpGet("own")]
+    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllOwnSpecimenAsync()
+    {
+        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
+            Authentication,
+            SpecimenStatus.Deleted));
     }
 }

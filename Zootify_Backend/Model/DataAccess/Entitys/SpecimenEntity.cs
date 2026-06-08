@@ -15,9 +15,9 @@ public class SpecimenEntity : BaseDeletionEntity
     
     public DateTime DateOfDiscovery { get; set; }
 
-    public Guid? GeographicLocationGuid { get; set; }
+    public Guid GeographicLocationGuid { get; set; }
     
-    public GeographicLocationEntity? GeographicLocation { get; set; }
+    public GeographicLocationEntity GeographicLocation { get; set; }
 
     public double? Latitude { get; set; }
     
@@ -37,11 +37,15 @@ public class SpecimenEntity : BaseDeletionEntity
 
     public bool IsPublic { get; set; } = true;
     
+    public SpecimenStatus Status { get; set; } =  SpecimenStatus.Active;
+    
     public ICollection<SpecimenImageEntity> Images { get; set; } = new List<SpecimenImageEntity>();
     
     public ICollection<LoanEntity> Loans { get; set; } = new List<LoanEntity>();
     
     public ICollection<RelationSpecimensTagEntity> SpecimensTags { get; set; }
+    
+    public ICollection<SpecimenCollectionEntity> Collections { get; set; } = new List<SpecimenCollectionEntity>();
 
     public void SetSpecies(List<TaxonomyNodeEntity> taxonomyNodes)
     {

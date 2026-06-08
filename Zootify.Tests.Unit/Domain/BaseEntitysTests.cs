@@ -12,6 +12,22 @@ namespace Zootify.Tests.Unit.Domain;
 public class BaseEntitysTests
 {
     
+    #region BaseCreationEntity
+
+    [Fact]
+    public void SetCreatedBy_WithGuid_SetsCreatedByUserGuidAndCreationDate()
+    {
+        var entity = UserTestData.CreateUser();
+        var creatorGuid = Guid.NewGuid();
+
+        entity.SetCreatedBy(creatorGuid);
+
+        entity.CreatedByUserGuid.Should().Be(creatorGuid);
+        entity.CreationDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
+    }
+
+    #endregion
+
     #region BaseUpdatedEntity
 
     /// <summary>

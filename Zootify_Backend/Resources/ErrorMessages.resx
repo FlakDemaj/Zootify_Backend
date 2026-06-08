@@ -83,9 +83,6 @@
   <data name="ResetPasswordTokenExpired" xml:space="preserve">
     <value>Ihr Link zum Passwort zurücksetzen ist abgelaufen. Bitte fordern Sie einen neuen an.</value>
   </data>
-  <data name="NoUserWithThisToken" xml:space="preserve">
-    <value />
-  </data>
   <data name="NoUserWithThisGuid" xml:space="preserve">
     <value>Ein User mit dieser Guid existiert nicht.</value>
   </data>
@@ -112,5 +109,17 @@
   </data>
   <data name="TaxonomyRankIsNoSpecies" xml:space="preserve">
     <value>Es handelt sich um keine Spiezies, die Sie ausgewählt haben.</value>
+  </data>
+  <data name="CollectionNotFound" xml:space="preserve">
+    <value>Die angegebene Sammlung wurde nicht gefunden.</value>
+  </data>
+  <data name="NoSpecimenWithThisGuid" xml:space="preserve">
+    <value>Es wurde kein Exemplar mit dieser ID gefunden.</value>
+  </data>
+  <data name="SpecimenAlreadyInCollection" xml:space="preserve">
+    <value>Das Exemplar befindet sich bereits in dieser Sammlung.</value>
+  </data>
+  <data name="SpecimenNotInCollection" xml:space="preserve">
+    <value>Das Exemplar befindet sich nicht in dieser Sammlung.</value>
   </data>
 </root>
