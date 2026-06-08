@@ -13,6 +13,11 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
         IAuthentication authentication,
         SpecimenStatus status);
 
-    Task<List<SpecimenEntity>> GetOwnSpecimensAsync(
-        Guid userGuid);
+    Task<List<SpecimenEntity>> GetOwnSpecimensAsync(Guid userGuid);
+
+    Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication? authentication);
+
+    Task<int> CountOwnAsync(Guid userGuid);
+
+    Task<int> CountPublicAsync();
 }

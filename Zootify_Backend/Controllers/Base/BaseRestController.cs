@@ -26,4 +26,10 @@ public class BaseRestController : ControllerBase
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
     }
+
+    protected IAuthentication? TryGetAuthentication()
+    {
+        HttpContext.Items.TryGetValue(nameof(IAuthentication), out var value);
+        return value as IAuthentication;
+    }
 }

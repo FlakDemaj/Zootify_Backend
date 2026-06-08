@@ -49,6 +49,34 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .ToListAsync();
     }
 
+    public async Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication? authentication)
+    {
+        var query = Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.Status == status);
+
+        if (authentication == null || authentication.Role == UserRole.User)
+            query = query.Where(sp => sp.IsPublic);
+
+        if (authentication?.Role == UserRole.User)
+            query = query.Where(sp => sp.CreatedByUserGuid == authentication.UserGuid);
+
+        return await query.CountAsync();
+    }
+
+    public async Task<int> CountOwnAsync(Guid userGuid)
+    {
+        return await Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.CreatedByUserGuid == userGuid)
+            .CountAsync();
+    }
+
+    public async Task<int> CountPublicAsync()
+    {
+        return await Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.IsPublic)
+            .CountAsync();
+    }
+
     private IQueryable<SpecimenEntity> CreateSpecimenQuery()
     {
         return

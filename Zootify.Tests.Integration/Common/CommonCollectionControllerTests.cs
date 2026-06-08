@@ -52,30 +52,65 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     #region GetPublicCollections
 
     [Fact]
-    public async Task GetPublicCollections_ReturnsPublicCollections()
+    public async Task GetPublicCollections_Authenticated_ContainsFiveStaticCollections()
     {
-        await CollectionRepo.CreateCollectionAsync(name: "Collection A", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Collection B", isPrivate: false);
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(2);
+        result.Should().HaveCount(5);
+        result!.Should().Contain(c => c.Name == "Alle Exemplare");
+        result.Should().Contain(c => c.Name == "Meine Sammlung");
+        result.Should().Contain(c => c.Name == "Meine Aktiven");
+        result.Should().Contain(c => c.Name == "Meine Ausstehenden");
+        result.Should().Contain(c => c.Name == "Meine Gelöschten");
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_Unauthenticated_ContainsNoStaticCollections()
+    {
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_Authenticated_ReturnsStaticPlusDbCollections()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        await CollectionRepo.CreateCollectionAsync(name: "Collection A", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Collection B", isPrivate: false);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+        result.Should().HaveCount(7);
     }
 
     [Fact]
     public async Task GetPublicCollections_PrivateCollectionsNotReturned()
     {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
         await CollectionRepo.CreateCollectionAsync(name: "Public", isPrivate: false);
         await CollectionRepo.CreateCollectionAsync(name: "Private", isPrivate: true);
+
+        AuthenticateAs(user);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(1);
-        result!.Single().Name.Should().Be("Public");
+        result.Should().HaveCount(6);
+        result!.Should().Contain(c => c.Name == "Public");
+        result.Should().NotContain(c => c.Name == "Private");
     }
 
     [Fact]
@@ -94,16 +129,73 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetPublicCollections_SoftDeletedCollectionsNotReturned()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Active", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Deleted", isPrivate: false,
+        await CollectionRepo.CreateCollectionAsync(name: "ActiveColl", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "DeletedColl", isPrivate: false,
             deletedByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(1);
-        result!.Single().Name.Should().Be("Active");
+        result.Should().HaveCount(6);
+        result!.Should().Contain(c => c.Name == "ActiveColl");
+        result.Should().NotContain(c => c.Name == "DeletedColl");
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_StaticCollections_ReflectActualSpecimenCounts()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Pending,
+            createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+
+        result!.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(3);
+        result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(3);
+        result.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
+        result.Single(c => c.Name == "Meine Ausstehenden").SpecimenCount.Should().Be(1);
+        result.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_StaticCollections_UserOnlySeesOwnSpecimenCounts()
+    {
+        var user1 = await UserRepo.CreateUserAsync("user1@test.de");
+        var user2 = await UserRepo.CreateUserAsync("user2@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user1.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Deleted,
+            createdByUserGuid: user1.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user2.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user2.Guid);
+
+        AuthenticateAs(user1);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+
+        result!.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(4);
+        result.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
+        result.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(1);
+        result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(2);
     }
 
     #endregion

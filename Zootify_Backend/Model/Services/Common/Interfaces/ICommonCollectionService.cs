@@ -11,7 +11,7 @@ public interface ICommonCollectionService
         IAuthentication authentication,
         CreateCollectionRequestDto request);
 
-    Task<List<GetCollectionResponseDto>> GetPublicCollectionsAsync();
+    Task<List<GetCollectionResponseDto>> GetPublicCollectionsAsync(IAuthentication? authentication);
 
     Task AddSpecimenToCollectionAsync(
         IAuthentication authentication,

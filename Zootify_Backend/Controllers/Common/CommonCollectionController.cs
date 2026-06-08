@@ -30,7 +30,7 @@ public class CommonCollectionController : BaseRestController
     [HttpGet]
     public async Task<ActionResult<List<GetCollectionResponseDto>>> GetPublicCollectionsAsync()
     {
-        return Ok(await _commonCollectionService.GetPublicCollectionsAsync());
+        return Ok(await _commonCollectionService.GetPublicCollectionsAsync(TryGetAuthentication()));
     }
 
     [HttpPatch("{collectionGuid:guid}")]

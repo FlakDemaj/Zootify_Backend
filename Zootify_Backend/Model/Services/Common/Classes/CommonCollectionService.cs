@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Resources;
 using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
@@ -7,12 +9,22 @@ using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Services.Common.Interfaces;
+using Zootify_Backend.Resources;
 using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Common.Classes;
 
 public class CommonCollectionService : ICommonCollectionService
 {
+    private static readonly ResourceManager CollectionNamesManager =
+        new("Zootify_Backend.Resources.CollectionNames", typeof(CollectionNames).Assembly);
+
+    private static readonly Guid AllSpecimensGuid   = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid MyCollectionGuid   = new("00000000-0000-0000-0000-000000000002");
+    private static readonly Guid MyActiveGuid       = new("00000000-0000-0000-0000-000000000003");
+    private static readonly Guid MyPendingGuid      = new("00000000-0000-0000-0000-000000000004");
+    private static readonly Guid MyDeletedGuid      = new("00000000-0000-0000-0000-000000000005");
+
     private readonly ICollectionRepository _collectionRepository;
     private readonly ISpecimenCollectionRepository _specimenCollectionRepository;
     private readonly ISpecimenRepository _specimenRepository;
@@ -43,13 +55,47 @@ public class CommonCollectionService : ICommonCollectionService
     }
 
     [Transaction(ReadOnly = true)]
-    public async Task<List<GetCollectionResponseDto>> GetPublicCollectionsAsync()
+    public async Task<List<GetCollectionResponseDto>> GetPublicCollectionsAsync(IAuthentication? authentication)
     {
-        var collections = await _collectionRepository
-            .GetPublicCollectionsAsync();
+        var collections = await _collectionRepository.GetPublicCollectionsAsync();
+        var result = _mapper.Map<List<GetCollectionResponseDto>>(collections);
 
-        return _mapper.Map<List<GetCollectionResponseDto>>(collections);
+        result.InsertRange(0, await BuildStaticCollectionsAsync(authentication));
+
+        return result;
     }
+
+    private async Task<List<GetCollectionResponseDto>> BuildStaticCollectionsAsync(IAuthentication? authentication)
+    {
+        if (authentication == null)
+            return [];
+
+        var culture = CultureInfo.CurrentUICulture;
+
+        var allPublicCount = await _specimenRepository.CountPublicAsync();
+        var myCount        = await _specimenRepository.CountOwnAsync(authentication.UserGuid);
+        var activeCount    = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Active,  authentication);
+        var pendingCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Pending, authentication);
+        var deletedCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Deleted, authentication);
+
+        return
+        [
+            StaticCollection(AllSpecimensGuid,  "AllSpecimens", culture, allPublicCount),
+            StaticCollection(MyCollectionGuid,  "MyCollection", culture, myCount),
+            StaticCollection(MyActiveGuid,      "MyActive",     culture, activeCount),
+            StaticCollection(MyPendingGuid,     "MyPending",    culture, pendingCount),
+            StaticCollection(MyDeletedGuid,     "MyDeleted",    culture, deletedCount)
+        ];
+    }
+
+    private static GetCollectionResponseDto StaticCollection(
+        Guid guid, string key, CultureInfo culture, int specimenCount) => new()
+    {
+        Guid          = guid,
+        Name          = CollectionNamesManager.GetString(key, culture) ?? key,
+        IsPrivate     = true,
+        SpecimenCount = specimenCount
+    };
 
     [Transaction(ReadOnly = false)]
     public async Task AddSpecimenToCollectionAsync(
