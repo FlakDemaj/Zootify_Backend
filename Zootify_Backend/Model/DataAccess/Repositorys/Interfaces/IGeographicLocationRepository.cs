@@ -7,4 +7,6 @@ public interface IGeographicLocationRepository : IBaseRepository<GeographicLocat
 {
     Task<GeographicLocationEntity?> GetGeographicLocationByLocationNameAsync(
         string locationName, Guid? parentGuid = null);
+    
+    Task<GeographicLocationEntity?> GetGeographicLocationByLocationByGuidAsync(Guid guid);
 }

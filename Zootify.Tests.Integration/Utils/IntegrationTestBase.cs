@@ -23,6 +23,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly UserTestRepository UserRepo;
     protected readonly SpecimenTestRepository SpecimenRepo;
     protected readonly TagTestRepository TagRepo;
+    protected readonly CollectionTestRepository CollectionRepo;
     protected Mock<INominatimProvider> NominatimMock => Fixture.NominatimMock;
     protected Mock<IHubContext<NotificationHub>> HubContextMock => Fixture.HubContextMock;
 
@@ -40,6 +41,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         UserRepo = new UserTestRepository(_dbContext);
         SpecimenRepo = new SpecimenTestRepository(_dbContext);
         TagRepo = new TagTestRepository(_dbContext);
+        CollectionRepo = new CollectionTestRepository(_dbContext);
     }
 
     /// <summary>
@@ -120,6 +122,23 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             .AsNoTracking()
             .Where(i => i.SpecimenGuid == specimenGuid)
             .ToListAsync();
+    }
+
+    protected async Task<CollectionEntity?> GetCollectionFromDbAsync(Guid guid)
+    {
+        return await _dbContext.Set<CollectionEntity>()
+            .AsNoTracking()
+            .Include(c => c.Collection)
+            .FirstOrDefaultAsync(c => c.Guid == guid);
+    }
+
+    protected async Task<SpecimenCollectionEntity?> GetSpecimenCollectionFromDbAsync(
+        Guid collectionGuid,
+        Guid specimenGuid)
+    {
+        return await _dbContext.Set<SpecimenCollectionEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sc => sc.CollectionGuid == collectionGuid && sc.SpecimenGuid == specimenGuid);
     }
 
     protected async Task<UserSettingsEntity?> GetUserSettingsFromDbAsync(Guid userGuid)

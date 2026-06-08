@@ -67,6 +67,14 @@ public enum ErrorCode
     
     TaxonomyRankIsAtTheDeepestLevel = -1006004,
     
-    TaxonomyRankIsNoSpecies = -1006005
+    TaxonomyRankIsNoSpecies = -1006005,
+
+    CollectionNotFound = -1007001,
+
+    NoSpecimenWithThisGuid = -1007002,
+
+    SpecimenAlreadyInCollection = -1007003,
+
+    SpecimenNotInCollection = -1007004
 
 }

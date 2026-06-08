@@ -12,7 +12,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     {
     }
 
-    #region CreateSpecimen – Happy Path
+    #region CreateSpecimen
 
     [Fact]
     public async Task CreateSpecimen_ValidSpeciesGuid_ReturnsCreatedSpecimen()
@@ -35,6 +35,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
         specimen.Should().NotBeNull();
         specimen!.TaxonomySpeciesGuid.Should().Be(species.Guid);
+        specimen.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
     #endregion
@@ -256,6 +257,42 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #endregion
 
+    #region CreateSpecimen – Status
+
+    [Fact]
+    public async Task CreateSpecimen_WithApprovedSpecies_SpecimenStatusIsActive()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, ApprovalStatus.Approved);
+
+        SetupNominatimMock();
+        AuthenticateAs(user);
+
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
+        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
+
+        var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
+        specimen!.Status.Should().Be(SpecimenStatus.Active);
+    }
+
+    [Fact]
+    public async Task CreateSpecimen_WithPendingSpecies_SpecimenStatusIsPending()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, ApprovalStatus.Pending);
+
+        SetupNominatimMock();
+        AuthenticateAs(user);
+
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
+        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
+
+        var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
+        specimen!.Status.Should().Be(SpecimenStatus.Pending);
+    }
+
+    #endregion
+
     #region CreateSpecimen – Error Cases
 
     [Fact]
@@ -354,6 +391,170 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, BuildRequest(species.Guid));
 
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region GetPendingSpecimen
+
+    [Fact]
+    public async Task GetPendingSpecimen_AsAdmin_ReturnsAllPendingSpecimens()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var user1 = await UserRepo.CreateUserAsync("user1@test.de");
+        var user2 = await UserRepo.CreateUserAsync("user2@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Pending, createdByUserGuid: user1.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Pending, createdByUserGuid: user2.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/pending");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetPendingSpecimen_AsUser_ReturnsOnlyOwnPendingSpecimens()
+    {
+        var user1 = await UserRepo.CreateUserAsync("user1@test.de");
+        var user2 = await UserRepo.CreateUserAsync("user2@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var ownSpecimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Pending, createdByUserGuid: user1.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Pending, createdByUserGuid: user2.Guid);
+
+        AuthenticateAs(user1);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/pending");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().HaveCount(1);
+        result!.Single().Guid.Should().Be(ownSpecimen.Guid);
+    }
+
+    [Fact]
+    public async Task GetPendingSpecimen_ActiveSpecimensNotReturned()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/pending");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPendingSpecimen_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/pending");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region GetDeletedSpecimen
+
+    [Fact]
+    public async Task GetDeletedSpecimen_ReturnsDeletedSpecimens()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var user1 = await UserRepo.CreateUserAsync("user1@test.de");
+        var user2 = await UserRepo.CreateUserAsync("user2@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: user1.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: user2.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/deleted");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetDeletedSpecimen_ActiveSpecimensNotReturned()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/deleted");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetDeletedSpecimen_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/deleted");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region GetOwnSpecimen
+
+    [Fact]
+    public async Task GetOwnSpecimen_ReturnsDeletedSpecimens()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var user1 = await UserRepo.CreateUserAsync("user1@test.de");
+        var user2 = await UserRepo.CreateUserAsync("user2@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: user1.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: user2.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/own");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetOwnSpecimen_ActiveSpecimensNotReturned()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/own");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<GetAllSpecimenDto>>();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetOwnSpecimen_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}/own");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 

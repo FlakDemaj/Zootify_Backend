@@ -22,4 +22,11 @@ public class GeographicLocationRepository : BaseRepository<GeographicLocationEnt
             .FirstOrDefaultAsync(gl => gl.Name  == locationName
             && gl.ParentGuid == parentGuid);
     }
+
+    public async Task<GeographicLocationEntity?> GetGeographicLocationByLocationByGuidAsync(Guid guid)
+    {
+        return await Context
+            .GetTrackingSet<GeographicLocationEntity>()
+            .FirstOrDefaultAsync(ge => ge.Guid == guid);
+    }
 }

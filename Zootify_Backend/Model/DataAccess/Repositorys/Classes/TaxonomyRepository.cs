@@ -16,18 +16,10 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
 
     public async Task<TaxonomyNodeEntity?> GetTaxonomyNodeByGuidAsync(Guid guid)
     {
-        try
-        {
-            return await Context
-                .GetTrackingSet<TaxonomyNodeEntity>()
-                .Where(t => t.Guid == guid)
-                .FirstOrDefaultAsync();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+        return await Context
+            .GetTrackingSet<TaxonomyNodeEntity>()
+            .Where(t => t.Guid == guid)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(

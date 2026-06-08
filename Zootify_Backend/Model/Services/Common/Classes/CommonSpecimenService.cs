@@ -1,13 +1,12 @@
 using AutoMapper;
-using Microsoft.AspNetCore.SignalR;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
+using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Providers.Nominatim;
-using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 using Zootify_Backend.Transaction;
 
@@ -28,6 +27,8 @@ public class CommonSpecimenService : ICommonSpecimenService
     private readonly INominatimProvider _nominatimProvider;
 
     private readonly IGeographicLocationRepository _geographicLocationRepository;
+    
+    private readonly ICommonTaxonomyNodeService _commonTaxonomyNodeService;
 
     private readonly IMapper _mapper;
 
@@ -39,7 +40,7 @@ public class CommonSpecimenService : ICommonSpecimenService
         IRelationSpecimensTagRepository specimenTagRepository,
         ISpecimenImageRepository specimenImageRepository,
         INominatimProvider nominatimProvider,
-        IGeographicLocationRepository geographicLocationRepository)
+        IGeographicLocationRepository geographicLocationRepository, ICommonTaxonomyNodeService commonTaxonomyNodeService)
     {
         _specimenRepository = specimenRepository;
         _tagRepository = tagRepository;
@@ -49,13 +50,15 @@ public class CommonSpecimenService : ICommonSpecimenService
         _specimenImageRepository = specimenImageRepository;
         _nominatimProvider = nominatimProvider;
         _geographicLocationRepository = geographicLocationRepository;
+        _commonTaxonomyNodeService = commonTaxonomyNodeService;
     }
 
     [Transaction(ReadOnly = false)]
     public async Task<CreatedObjectResponseDto> CreateSpecimenAsync(
+        IAuthentication authentication,
         CreateSpecimenRequestDto request)
     {
-        var specimen = await BuildSpecimen(request);
+        var specimen = await BuildSpecimen(authentication.UserGuid, request);
         var tagsToCreate = _mapper.Map<List<TagEntity>>(request.TagsToCreate);
         var existingTags = await GetExistingTagsAsync(request.Tags);
 
@@ -78,12 +81,39 @@ public class CommonSpecimenService : ICommonSpecimenService
         
         return mappedTags.OrderBy(t => t.TagName).ToList();
     }
-    
+
+    [Transaction(ReadOnly = true)]
+    public async Task<List<GetAllSpecimenDto>> GetAllSpecimensByStatusAsync(
+        IAuthentication authentication,
+        SpecimenStatus status)
+    {
+        var specimens = await
+            _specimenRepository.GetAllSpecimensByStatusAsync(
+                authentication,
+                status);
+
+        return _mapper.Map<List<GetAllSpecimenDto>>(specimens);
+    }
+
+    [Transaction(ReadOnly = true)]
+    public async Task<List<GetAllSpecimenDto>> GetOwnSpecimensAsync(IAuthentication authentication)
+    {
+        var specimens = await
+            _specimenRepository.GetOwnSpecimensAsync(
+                authentication.UserGuid);
+
+        return _mapper.Map<List<GetAllSpecimenDto>>(specimens);    }
+
     private async Task<SpecimenEntity> BuildSpecimen(
+        Guid userGuid,
         CreateSpecimenRequestDto request)
     {
-        await CheckSpeciesAsync(request.TaxonomySpeciesGuid);
+        var species = await CheckSpeciesAsync(request.TaxonomySpeciesGuid);
         var specimen = _mapper.Map<SpecimenEntity>(request);
+        specimen.SetCreatedBy(userGuid);
+        specimen.Status = await CheckIfApprovalIsNeeded(species) 
+            ? SpecimenStatus.Pending 
+            : SpecimenStatus.Active;
 
         specimen.SetLocation(
             request.Location.Latitude,
@@ -92,7 +122,17 @@ public class CommonSpecimenService : ICommonSpecimenService
         return specimen;
     }
 
-    private async Task CheckSpeciesAsync(Guid specimenGuid)
+    private async Task<bool> CheckIfApprovalIsNeeded(
+        TaxonomyNodeEntity taxonomyNode)
+    {
+        var taxonomyTreeList = new List<TaxonomyNodeEntity>();
+        
+        await _commonTaxonomyNodeService.GetTaxonomyTreeAsync(taxonomyNode, taxonomyTreeList);
+        
+        return taxonomyTreeList.Any(tn => tn.ApprovalStatus == ApprovalStatus.Pending);
+    }
+
+    private async Task<TaxonomyNodeEntity> CheckSpeciesAsync(Guid specimenGuid)
     {
         var species = await _taxonomyRepository
             .GetTaxonomyNodeByGuidAsync(specimenGuid);
@@ -106,6 +146,8 @@ public class CommonSpecimenService : ICommonSpecimenService
         {
             throw new ZootifyException(ErrorCode.TaxonomyRankIsNoSpecies);
         }
+        
+        return species;
     }
 
     private async Task<CreatedObjectResponseDto> PersistSpecimenAsync(

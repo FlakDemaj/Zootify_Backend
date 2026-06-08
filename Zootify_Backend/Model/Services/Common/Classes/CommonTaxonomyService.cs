@@ -4,6 +4,7 @@ using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
+using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Providers.SignalR;
@@ -12,7 +13,7 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Common.Classes;
 
-public class CommonTaxonomyService : ICommonTaxonomyNode
+public class CommonTaxonomyService : ICommonTaxonomyNodeService
 {
     private readonly ITaxonomyRepository  _taxonomyRepository;
     
@@ -35,9 +36,11 @@ public class CommonTaxonomyService : ICommonTaxonomyNode
 
     [Transaction(ReadOnly = false)]
     public async Task<CreatedObjectResponseDto> CreateTaxonomyNodeAsync(
+        IAuthentication authentication,
         CreateTaxonomyNodeRequestDto requestDto)
     {
         var mappedTaxonomy = _mapper.Map<TaxonomyNodeEntity>(requestDto);
+        mappedTaxonomy.SetCreatedBy(authentication.UserGuid);
         
         mappedTaxonomy.Rank = await GetTaxonomyRank(requestDto.ParentGuid);
         
@@ -80,6 +83,28 @@ public class CommonTaxonomyService : ICommonTaxonomyNode
 
         return taxonomyTrees;
     }
+    
+    public async Task<List<TaxonomyNodeEntity>> GetTaxonomyTreeAsync(
+        TaxonomyNodeEntity taxonomyNode,
+        List<TaxonomyNodeEntity> taxonomyNodes)
+    {
+        taxonomyNodes.Add(taxonomyNode);
+
+        if (taxonomyNode.ParentGuid == null)
+        {
+            return taxonomyNodes;
+        }
+
+        var parentTaxonomy = await _taxonomyRepository
+            .GetTaxonomyNodeByGuidAsync((Guid)taxonomyNode.ParentGuid);
+
+        if (parentTaxonomy == null)
+        {
+            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+        }
+
+        return await GetTaxonomyTreeAsync(parentTaxonomy, taxonomyNodes);
+    }
 
     private async Task<TaxonomyRank> GetTaxonomyRank(Guid? parentGuid)
     {
@@ -101,28 +126,6 @@ public class CommonTaxonomyService : ICommonTaxonomyNode
         }
         
         return parentNode.Rank + 1;
-    }
-
-    private async Task<List<TaxonomyNodeEntity>> GetTaxonomyTreeAsync(
-        TaxonomyNodeEntity taxonomyNode,
-        List<TaxonomyNodeEntity> taxonomyNodes)
-    {
-        taxonomyNodes.Add(taxonomyNode);
-
-        if (taxonomyNode.ParentGuid == null)
-        {
-            return taxonomyNodes;
-        }
-
-        var parentTaxonomy = await _taxonomyRepository
-            .GetTaxonomyNodeByGuidAsync((Guid)taxonomyNode.ParentGuid);
-
-        if (parentTaxonomy == null)
-        {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
-        }
-
-        return await GetTaxonomyTreeAsync(parentTaxonomy, taxonomyNodes);
     }
     
     private async Task SendNotificationAsync()
