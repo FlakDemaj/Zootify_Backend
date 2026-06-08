@@ -110,4 +110,16 @@
   <data name="TaxonomyRankIsNoSpecies" xml:space="preserve">
     <value>This is not a species you selected.</value>
   </data>
+  <data name="CollectionNotFound" xml:space="preserve">
+    <value>The specified collection was not found.</value>
+  </data>
+  <data name="NoSpecimenWithThisGuid" xml:space="preserve">
+    <value>No specimen was found with the given ID.</value>
+  </data>
+  <data name="SpecimenAlreadyInCollection" xml:space="preserve">
+    <value>The specimen is already part of this collection.</value>
+  </data>
+  <data name="SpecimenNotInCollection" xml:space="preserve">
+    <value>The specimen is not part of this collection.</value>
+  </data>
 </root>
