@@ -137,16 +137,20 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var request = new CreateTaxonomyNodeRequestDto { TaxonomyName = "Chordata" };
+        var request = new CreateTaxonomyNodeRequestDto
+        {
+            TaxonomyNodes = new Dictionary<TaxonomyRank, string> { { TaxonomyRank.Phylum, "Chordata" } }
+        };
 
         var response = await Client.PostAsJsonAsync(Routings.CommonTaxonomyRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
+        var result = await response.Content.ReadFromJsonAsync<List<CreatedObjectResponseDto>>();
         result.Should().NotBeNull();
+        result!.Should().HaveCount(1);
 
-        var node = await GetTaxonomyNodeFromDbAsync(result!.CreatedObjectGuid);
+        var node = await GetTaxonomyNodeFromDbAsync(result[0].CreatedObjectGuid);
         node.Should().NotBeNull();
         node!.Name.Should().Be("Chordata");
         node.Rank.Should().Be(TaxonomyRank.Phylum);
@@ -164,7 +168,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
         var request = new CreateTaxonomyNodeRequestDto
         {
-            TaxonomyName = "Mammalia",
+            TaxonomyNodes = new Dictionary<TaxonomyRank, string> { { TaxonomyRank.Class, "Mammalia" } },
             ParentGuid = phylum.Guid
         };
 
@@ -172,8 +176,11 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
-        var node = await GetTaxonomyNodeFromDbAsync(result!.CreatedObjectGuid);
+        var result = await response.Content.ReadFromJsonAsync<List<CreatedObjectResponseDto>>();
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(1);
+
+        var node = await GetTaxonomyNodeFromDbAsync(result[0].CreatedObjectGuid);
 
         node.Should().NotBeNull();
         node!.Rank.Should().Be(TaxonomyRank.Class);
@@ -182,44 +189,55 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateTaxonomyNode_EachRankFollowsFromParent()
+    public async Task CreateTaxonomyNode_MultipleNodesInSingleRequest_CreatesChainedNodes()
     {
-        var user = await UserRepo.CreateUserAsync("test@test.de");
-        AuthenticateAs(user);
-
-        var phylum = await CreateNodeViaApiAsync(null, "Chordata");
-        var @class = await CreateNodeViaApiAsync(phylum, "Mammalia");
-        var order = await CreateNodeViaApiAsync(@class, "Carnivora");
-        var family = await CreateNodeViaApiAsync(order, "Felidae");
-        var genus = await CreateNodeViaApiAsync(family, "Panthera");
-        var species = await CreateNodeViaApiAsync(genus, "leo");
-
-        (await GetTaxonomyNodeFromDbAsync(phylum))!.Rank.Should().Be(TaxonomyRank.Phylum);
-        (await GetTaxonomyNodeFromDbAsync(@class))!.Rank.Should().Be(TaxonomyRank.Class);
-        (await GetTaxonomyNodeFromDbAsync(order))!.Rank.Should().Be(TaxonomyRank.Order);
-        (await GetTaxonomyNodeFromDbAsync(family))!.Rank.Should().Be(TaxonomyRank.Family);
-        (await GetTaxonomyNodeFromDbAsync(genus))!.Rank.Should().Be(TaxonomyRank.Genus);
-        (await GetTaxonomyNodeFromDbAsync(species))!.Rank.Should().Be(TaxonomyRank.Species);
-    }
-
-    [Fact]
-    public async Task CreateTaxonomyNode_WithSpeciesParent_ReturnsTaxonomyRankAtDeepestLevel()
-    {
-        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
-
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
         var request = new CreateTaxonomyNodeRequestDto
         {
-            TaxonomyName = "sub-leo",
-            ParentGuid = species.Guid
+            TaxonomyNodes = new Dictionary<TaxonomyRank, string>
+            {
+                { TaxonomyRank.Phylum, "Chordata" },
+                { TaxonomyRank.Class, "Mammalia" },
+                { TaxonomyRank.Order, "Carnivora" },
+                { TaxonomyRank.Family, "Felidae" },
+                { TaxonomyRank.Genus, "Panthera" },
+                { TaxonomyRank.Species, "leo" }
+            }
         };
 
         var response = await Client.PostAsJsonAsync(Routings.CommonTaxonomyRouting, request);
 
-        var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.TaxonomyRankIsAtTheDeepestLevel);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<CreatedObjectResponseDto>>();
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(6);
+
+        var phylum = await GetTaxonomyNodeFromDbAsync(result[0].CreatedObjectGuid);
+        var @class = await GetTaxonomyNodeFromDbAsync(result[1].CreatedObjectGuid);
+        var order = await GetTaxonomyNodeFromDbAsync(result[2].CreatedObjectGuid);
+        var family = await GetTaxonomyNodeFromDbAsync(result[3].CreatedObjectGuid);
+        var genus = await GetTaxonomyNodeFromDbAsync(result[4].CreatedObjectGuid);
+        var species = await GetTaxonomyNodeFromDbAsync(result[5].CreatedObjectGuid);
+
+        phylum!.Rank.Should().Be(TaxonomyRank.Phylum);
+        phylum.ParentGuid.Should().BeNull();
+
+        @class!.Rank.Should().Be(TaxonomyRank.Class);
+        @class.ParentGuid.Should().Be(result[0].CreatedObjectGuid);
+
+        order!.Rank.Should().Be(TaxonomyRank.Order);
+        order.ParentGuid.Should().Be(result[1].CreatedObjectGuid);
+
+        family!.Rank.Should().Be(TaxonomyRank.Family);
+        family.ParentGuid.Should().Be(result[2].CreatedObjectGuid);
+
+        genus!.Rank.Should().Be(TaxonomyRank.Genus);
+        genus.ParentGuid.Should().Be(result[3].CreatedObjectGuid);
+
+        species!.Rank.Should().Be(TaxonomyRank.Species);
+        species.ParentGuid.Should().Be(result[4].CreatedObjectGuid);
     }
 
     [Fact]
@@ -230,7 +248,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
         var request = new CreateTaxonomyNodeRequestDto
         {
-            TaxonomyName = "Mammalia",
+            TaxonomyNodes = new Dictionary<TaxonomyRank, string> { { TaxonomyRank.Class, "Mammalia" } },
             ParentGuid = Guid.CreateVersion7()
         };
 
@@ -243,7 +261,10 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
     [Fact]
     public async Task CreateTaxonomyNode_NotAuthenticated_ReturnsUnauthorized()
     {
-        var request = new CreateTaxonomyNodeRequestDto { TaxonomyName = "Chordata" };
+        var request = new CreateTaxonomyNodeRequestDto
+        {
+            TaxonomyNodes = new Dictionary<TaxonomyRank, string> { { TaxonomyRank.Phylum, "Chordata" } }
+        };
 
         var response = await Client.PostAsJsonAsync(Routings.CommonTaxonomyRouting, request);
 
@@ -253,18 +274,6 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
     #endregion
 
     #region Helpers
-
-    private async Task<Guid> CreateNodeViaApiAsync(Guid? parentGuid, string name)
-    {
-        var request = new CreateTaxonomyNodeRequestDto
-        {
-            TaxonomyName = name,
-            ParentGuid = parentGuid
-        };
-        var response = await Client.PostAsJsonAsync(Routings.CommonTaxonomyRouting, request);
-        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
-        return result!.CreatedObjectGuid;
-    }
 
     #endregion
 }

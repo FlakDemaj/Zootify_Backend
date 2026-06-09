@@ -26,11 +26,10 @@ public class CommonCollectionController : BaseRestController
         return Ok(await _commonCollectionService.CreateCollectionAsync(Authentication, request));
     }
 
-    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<List<GetCollectionResponseDto>>> GetPublicCollectionsAsync()
     {
-        return Ok(await _commonCollectionService.GetPublicCollectionsAsync(TryGetAuthentication()));
+        return Ok(await _commonCollectionService.GetPublicCollectionsAsync(Authentication));
     }
 
     [HttpPatch("{collectionGuid:guid}")]

@@ -67,4 +67,42 @@ public class SpecimenTestRepository
         await _dbContext.SaveChangesAsync();
         return specimen;
     }
+
+    public async Task<SpecimenEntity> CreateSpecimenWithImageAsync(
+        Guid speciesGuid,
+        Guid geoLocationGuid,
+        string imageBase64 = "base64data",
+        SpecimenStatus status = SpecimenStatus.Active,
+        Guid? createdByUserGuid = null)
+    {
+        var specimen = await CreateSpecimenAsync(speciesGuid, geoLocationGuid, status, createdByUserGuid: createdByUserGuid);
+        var image = new SpecimenImageEntity
+        {
+            SpecimenGuid = specimen.Guid,
+            ImageBase64 = imageBase64
+        };
+        _dbContext.Add(image);
+        await _dbContext.SaveChangesAsync();
+        return specimen;
+    }
+
+    public async Task<SpecimenEntity> CreateSpecimenWithTagsAsync(
+        Guid speciesGuid,
+        Guid geoLocationGuid,
+        List<TagEntity> tags,
+        SpecimenStatus status = SpecimenStatus.Active,
+        Guid? createdByUserGuid = null)
+    {
+        var specimen = await CreateSpecimenAsync(speciesGuid, geoLocationGuid, status, createdByUserGuid: createdByUserGuid);
+        foreach (var tag in tags)
+        {
+            _dbContext.Add(new RelationSpecimensTagEntity
+            {
+                SpecimenGuid = specimen.Guid,
+                TagGuid = tag.Guid
+            });
+        }
+        await _dbContext.SaveChangesAsync();
+        return specimen;
+    }
 }

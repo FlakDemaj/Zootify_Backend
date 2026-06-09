@@ -215,8 +215,8 @@ BEGIN
         latin_name              NVARCHAR(255)       NOT NULL,
         date_of_discovery       DATETIME2           NOT NULL,
 
-        latitude                FLOAT               NULL,
-        longitude               FLOAT               NULL,
+        latitude                FLOAT               NOT NULL,
+        longitude               FLOAT               NOT NULL,
 
         storage_building        NVARCHAR(100)       NULL,
         storage_cabinet         NVARCHAR(50)        NULL,
@@ -376,6 +376,7 @@ BEGIN
         name                    VARCHAR(200)        NOT NULL,
         description             VARCHAR(400)        NULL,
         private                 BIT                 NOT NULL,
+        status                  INT                 NOT NULL DEFAULT 1,
 
         created_at              DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
         created_by_user_guid    UNIQUEIDENTIFIER    NULL,

@@ -9,7 +9,7 @@ namespace Zootify_Backend.Model.Services.Common.Interfaces;
 
 public interface ICommonTaxonomyNodeService
 {
-    Task<CreatedObjectResponseDto> CreateTaxonomyNodeAsync(
+    Task<List<CreatedObjectResponseDto>> CreateTaxonomyNodeAsync(
         IAuthentication authentication,
         CreateTaxonomyNodeRequestDto requestDto);
 

@@ -36,6 +36,11 @@ public class CollectionEntityConfiguration : BaseDeletionEntityConfiguration<Col
             .Property(e => e.IsPrivate)
             .HasColumnName("private")
             .IsRequired();
+
+        builder
+            .Property(e => e.Status)
+            .HasColumnName("status")
+            .IsRequired();
     }
-    
+
 }

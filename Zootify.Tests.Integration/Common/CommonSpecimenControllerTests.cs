@@ -116,7 +116,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     #region CreateSpecimen – Images
 
     [Fact]
-    public async Task CreateSpecimen_WithBase64Images_ImagesStoredForSpecimen()
+    public async Task CreateSpecimen_WithBase64Image_ImageStoredForSpecimen()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
@@ -124,7 +124,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         SetupNominatimMock();
         AuthenticateAs(user);
 
-        var request = BuildRequest(species.Guid, base64Images: ["base64image1", "base64image2", "base64image3"]);
+        var request = BuildRequest(species.Guid, base64Image: "base64image1");
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -133,8 +133,8 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
         var images = await GetImagesForSpecimenFromDbAsync(result!.CreatedObjectGuid);
 
-        images.Should().HaveCount(3);
-        images.Select(i => i.ImageUrl).Should().BeEquivalentTo(["base64image1", "base64image2", "base64image3"]);
+        images.Should().HaveCount(1);
+        images.Single().ImageBase64.Should().Be("base64image1");
     }
 
     #endregion
@@ -560,6 +560,442 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #endregion
 
+    #region UpdateSpecimen
+
+    [Fact]
+    public async Task UpdateSpecimen_ValidData_ReturnsOkAndUpdatesSpecimen()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "Updated Name",
+            LatinName = "Updated latinname",
+            DateOfDiscovery = new DateTime(2020, 5, 1),
+            Comment = "New comment",
+            IsPublic = false,
+            Status = SpecimenStatus.Active
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await GetSpecimenFromDbAsync(specimen.Guid);
+        updated!.Name.Should().Be("Updated Name");
+        updated.LatinName.Should().Be("Updated latinname");
+        updated.Comment.Should().Be("New comment");
+        updated.IsPublic.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateSpecimen_NoChanges_ReturnsNoUpdatedData()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = specimen.Name,
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = specimen.Comment,
+            IsPublic = specimen.IsPublic,
+            Status = specimen.Status
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimen_InvalidSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "X",
+            LatinName = "X",
+            DateOfDiscovery = DateTime.UtcNow,
+            Comment = null,
+            IsPublic = true,
+            Status = SpecimenStatus.Active
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimen_AsUserNotOwner_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var other = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(other);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "Hacked",
+            LatinName = "X",
+            DateOfDiscovery = DateTime.UtcNow,
+            Comment = null,
+            IsPublic = true,
+            Status = SpecimenStatus.Active
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimen_AsAdmin_CanUpdateOtherUsersSpecimen()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(admin);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "Admin Updated",
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = "admin fix",
+            IsPublic = specimen.IsPublic,
+            Status = specimen.Status
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimen_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}",
+            new UpdateSpecimenRequestDto
+            {
+                Name = "X", LatinName = "X", DateOfDiscovery = DateTime.UtcNow,
+                Comment = null, IsPublic = true, Status = SpecimenStatus.Active
+            });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region UpdateSpecimenImage
+
+    [Fact]
+    public async Task UpdateSpecimenImage_WithNewImage_ReplacesExistingImage()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithImageAsync(
+            species.Guid, location.Guid, imageBase64: "oldImage", createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = "newImage" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
+        images.Should().HaveCount(1);
+        images.Single().ImageBase64.Should().Be("newImage");
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_WithNullImage_DeletesExistingImage()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithImageAsync(
+            species.Guid, location.Guid, imageBase64: "someImage", createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = null });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
+        images.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_SpecimenHasNoImage_AddsNewImage()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = "brandNew" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
+        images.Should().HaveCount(1);
+        images.Single().ImageBase64.Should().Be("brandNew");
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_SameImageData_ReturnsNoUpdatedData()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithImageAsync(
+            species.Guid, location.Guid, imageBase64: "same", createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = "same" });
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_InvalidSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = "data" });
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_AsUserNotOwner_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var other = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithImageAsync(
+            species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(other);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = "hacked" });
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}",
+            new UpdateSpecimenImageRequestDto { ImageBase64 = "data" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region UpdateSpecimenTags
+
+    [Fact]
+    public async Task UpdateSpecimenTags_ReplaceWithExistingTags_UpdatesTagLinks()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var tag1 = await TagRepo.CreateTagAsync("mammal");
+        var tag2 = await TagRepo.CreateTagAsync("endangered");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [tag1], createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenTagsRequestDto
+        {
+            SpecimenTags =
+            [
+                new UpdateTagsDto { TagGuid = tag2.Guid, TagName = tag2.Tag }
+            ]
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
+        relations.Should().HaveCount(1);
+        relations.Single().TagGuid.Should().Be(tag2.Guid);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_WithNewTagsToCreate_CreatesAndLinksNewTags()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var existingTag = await TagRepo.CreateTagAsync("mammal");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [existingTag], createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenTagsRequestDto
+        {
+            SpecimenTags =
+            [
+                new UpdateTagsDto { TagGuid = existingTag.Guid, TagName = existingTag.Tag },
+                new UpdateTagsDto { TagGuid = null, TagName = "newTag" }
+            ]
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
+        relations.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_SameTags_ReturnsNoUpdatedData()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var tag = await TagRepo.CreateTagAsync("mammal");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [tag], createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenTagsRequestDto
+        {
+            SpecimenTags = [new UpdateTagsDto { TagGuid = tag.Guid, TagName = tag.Tag }]
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_RemoveAllTags_RemovesAllTagLinks()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var tag = await TagRepo.CreateTagAsync("mammal");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [tag], createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
+        relations.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_InvalidSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}",
+            new UpdateSpecimenTagsRequestDto { SpecimenTags = [] });
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_AsUserNotOwner_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var other = await UserRepo.CreateUserAsync("other@test.de");
+        var tag = await TagRepo.CreateTagAsync("mammal");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [tag], createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(other);
+
+        var request = new UpdateSpecimenTagsRequestDto
+        {
+            SpecimenTags = [new UpdateTagsDto { TagGuid = null, TagName = "hacked" }]
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}",
+            new UpdateSpecimenTagsRequestDto { SpecimenTags = [] });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
     #region Helpers
 
     private void SetupNominatimMock(
@@ -590,7 +1026,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         Guid taxonomySpeciesGuid,
         List<Guid>? tags = null,
         List<string>? tagsToCreate = null,
-        List<string>? base64Images = null) => new()
+        string? base64Image = null) => new()
     {
         Name = "Test Specimen",
         LatinName = "Testus specienus",
@@ -599,7 +1035,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         TaxonomySpeciesGuid = taxonomySpeciesGuid,
         Tags = tags ?? [],
         TagsToCreate = tagsToCreate ?? [],
-        Base64Images = base64Images ?? []
+        Base64Image = base64Image ?? string.Empty
     };
 
     #endregion

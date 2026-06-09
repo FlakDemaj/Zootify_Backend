@@ -19,9 +19,9 @@ public class SpecimenEntity : BaseDeletionEntity
     
     public GeographicLocationEntity GeographicLocation { get; set; }
 
-    public double? Latitude { get; set; }
+    public double Latitude { get; set; }
     
-    public double? Longitude { get; set; }
+    public double Longitude { get; set; }
     
     public DateTime? OnLoanUntil { get; set; }
 
@@ -39,7 +39,7 @@ public class SpecimenEntity : BaseDeletionEntity
     
     public SpecimenStatus Status { get; set; } =  SpecimenStatus.Active;
     
-    public ICollection<SpecimenImageEntity> Images { get; set; } = new List<SpecimenImageEntity>();
+    public SpecimenImageEntity? Image { get; set; }
     
     public ICollection<LoanEntity> Loans { get; set; } = new List<LoanEntity>();
     
@@ -66,5 +66,42 @@ public class SpecimenEntity : BaseDeletionEntity
     {
         Latitude = latitude;
         Longitude = longitude;
+    }
+
+    public bool CheckChanges(SpecimenEntity newSpecimenData)
+    {
+        return Name != newSpecimenData.Name
+               || DateOfDiscovery != newSpecimenData.DateOfDiscovery
+               || LatinName != newSpecimenData.LatinName
+               || Comment != newSpecimenData.Comment
+               || IsPublic != newSpecimenData.IsPublic
+               || Status != newSpecimenData.Status;
+
+    }
+    
+    public void UpdateData(
+        Guid requester,
+        SpecimenEntity newSpecimenData)
+    {
+        Name = newSpecimenData.Name;
+        DateOfDiscovery = newSpecimenData.DateOfDiscovery;
+        Latitude = newSpecimenData.Latitude; 
+        LatinName = newSpecimenData.LatinName;
+        Comment = newSpecimenData.Comment;
+        IsPublic = newSpecimenData.IsPublic;
+        Status = newSpecimenData.Status;
+        SetUpdatedBy(requester);
+
+    }
+
+    public void CreateImage(string newImage, Guid requester)
+    {
+        Image = new SpecimenImageEntity
+        {
+            SpecimenGuid = Guid,
+            ImageBase64 = newImage,
+        };
+
+        SetUpdatedBy(requester);
     }
 }

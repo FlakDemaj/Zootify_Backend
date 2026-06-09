@@ -24,7 +24,8 @@ public class CommonCollectionService : ICommonCollectionService
     private static readonly Guid MyActiveGuid       = new("00000000-0000-0000-0000-000000000003");
     private static readonly Guid MyPendingGuid      = new("00000000-0000-0000-0000-000000000004");
     private static readonly Guid MyDeletedGuid      = new("00000000-0000-0000-0000-000000000005");
-
+    private static readonly Guid MyRejectedGuid    = new("00000000-0000-0000-0000-000000000006");
+    
     private readonly ICollectionRepository _collectionRepository;
     private readonly ISpecimenCollectionRepository _specimenCollectionRepository;
     private readonly ISpecimenRepository _specimenRepository;
@@ -77,6 +78,7 @@ public class CommonCollectionService : ICommonCollectionService
         var activeCount    = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Active,  authentication);
         var pendingCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Pending, authentication);
         var deletedCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Deleted, authentication);
+        var rejectedCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Rejected, authentication);
 
         return
         [
@@ -84,7 +86,8 @@ public class CommonCollectionService : ICommonCollectionService
             StaticCollection(MyCollectionGuid,  "MyCollection", culture, myCount),
             StaticCollection(MyActiveGuid,      "MyActive",     culture, activeCount),
             StaticCollection(MyPendingGuid,     "MyPending",    culture, pendingCount),
-            StaticCollection(MyDeletedGuid,     "MyDeleted",    culture, deletedCount)
+            StaticCollection(MyDeletedGuid,     "MyDeleted",    culture, deletedCount),
+            StaticCollection(MyRejectedGuid,     "MyRejected",    culture, rejectedCount),
         ];
     }
 
@@ -176,7 +179,7 @@ public class CommonCollectionService : ICommonCollectionService
 
         CheckCollectionOwnership(authentication, collection);
 
-        collection.SetDeletedBy(authentication.UserGuid);
+        collection.DeleteCollection(authentication.UserGuid);
         await _collectionRepository.UpdateAsync(collection);
     }
     
@@ -194,8 +197,7 @@ public class CommonCollectionService : ICommonCollectionService
 
         CheckCollectionOwnership(authentication, collection);
 
-        collection.RemoveDeletion();
-        collection.SetUpdatedBy(authentication.UserGuid);
+        collection.ActivateCollection(authentication.UserGuid);
         await _collectionRepository.UpdateAsync(collection);
     }
 
@@ -227,8 +229,7 @@ public class CommonCollectionService : ICommonCollectionService
 
     private static void CheckCollectionOwnership(IAuthentication authentication, CollectionEntity collection)
     {
-        if (authentication.Role != UserRole.Admin
-            && authentication.Role != UserRole.Moderator
+        if (authentication.Role == UserRole.User
             && authentication.UserGuid != collection.CreatedByUserGuid)
         {
             throw new ZootifyException(ErrorCode.Forbidden);

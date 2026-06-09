@@ -52,7 +52,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     #region GetPublicCollections
 
     [Fact]
-    public async Task GetPublicCollections_Authenticated_ContainsFiveStaticCollections()
+    public async Task GetPublicCollections_Authenticated_ContainsSixStaticCollections()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
@@ -61,24 +61,15 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(5);
+        result.Should().HaveCount(6);
         result!.Should().Contain(c => c.Name == "Alle Exemplare");
         result.Should().Contain(c => c.Name == "Meine Sammlung");
         result.Should().Contain(c => c.Name == "Meine Aktiven");
         result.Should().Contain(c => c.Name == "Meine Ausstehenden");
         result.Should().Contain(c => c.Name == "Meine Gelöschten");
+        result.Should().Contain(c => c.Name == "Meine Abgelehnten");
     }
-
-    [Fact]
-    public async Task GetPublicCollections_Unauthenticated_ContainsNoStaticCollections()
-    {
-        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().BeEmpty();
-    }
-
+    
     [Fact]
     public async Task GetPublicCollections_Authenticated_ReturnsStaticPlusDbCollections()
     {
@@ -92,7 +83,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(7);
+        result.Should().HaveCount(8);
     }
 
     [Fact]
@@ -108,22 +99,11 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(6);
+        result.Should().HaveCount(7);
         result!.Should().Contain(c => c.Name == "Public");
         result.Should().NotContain(c => c.Name == "Private");
     }
 
-    [Fact]
-    public async Task GetPublicCollections_AllowsUnauthenticatedAccess()
-    {
-        await CollectionRepo.CreateCollectionAsync(name: "Public", isPrivate: false);
-
-        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(1);
-    }
 
     [Fact]
     public async Task GetPublicCollections_SoftDeletedCollectionsNotReturned()
@@ -139,7 +119,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(6);
+        result.Should().HaveCount(7);
         result!.Should().Contain(c => c.Name == "ActiveColl");
         result.Should().NotContain(c => c.Name == "DeletedColl");
     }
@@ -162,16 +142,17 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
         var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-
-        result!.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(3);
+        
+        result.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(3);
         result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(3);
         result.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
         result.Single(c => c.Name == "Meine Ausstehenden").SpecimenCount.Should().Be(1);
         result.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(0);
+        result.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
     }
 
     [Fact]
-    public async Task GetPublicCollections_StaticCollections_UserOnlySeesOwnSpecimenCounts()
+    public async Task GetPublicCollections_StaticCollections_OnlyOwnSpecimenCountsShown()
     {
         var user1 = await UserRepo.CreateUserAsync("user1@test.de");
         var user2 = await UserRepo.CreateUserAsync("user2@test.de");
@@ -196,6 +177,51 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
         result.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(1);
         result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(2);
+        result.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_StaticCollections_AdminOnlySeesOwnSpecimenCounts()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var otherUser = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: admin.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: otherUser.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: otherUser.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+
+        result!.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
+        result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_StaticCollections_PrivateSpecimensAreCounted()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user.Guid, isPublic: false);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Active,
+            createdByUserGuid: user.Guid, isPublic: true);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+
+        result!.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
     }
 
     #endregion
@@ -390,6 +416,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         deleted.Should().NotBeNull();
         deleted!.DeletedByUserGuid.Should().Be(user.Guid);
         deleted.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
+        deleted.Status.Should().Be(CollectionStatus.Deleted);
     }
 
     [Fact]
@@ -410,6 +437,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         deleted.Should().NotBeNull();
         deleted!.DeletedByUserGuid.Should().Be(admin.Guid);
         deleted.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
+        deleted.Status.Should().Be(CollectionStatus.Deleted);
     }
 
     [Fact]
@@ -473,6 +501,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         activated!.DeletionDate.Should().BeNull();
         activated.DeletedByUserGuid.Should().BeNull();
         activated.UpdatedByUserGuid.Should().Be(user.Guid);
+        activated.Status.Should().Be(CollectionStatus.Active);
     }
 
     [Fact]
@@ -495,6 +524,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         activated!.DeletionDate.Should().BeNull();
         activated.DeletedByUserGuid.Should().BeNull();
         activated.UpdatedByUserGuid.Should().Be(admin.Guid);
+        activated.Status.Should().Be(CollectionStatus.Active);
     }
 
     [Fact]

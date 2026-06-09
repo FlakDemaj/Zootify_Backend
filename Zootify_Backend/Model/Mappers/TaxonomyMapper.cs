@@ -1,6 +1,7 @@
 using AutoMapper;
-using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
@@ -23,12 +24,17 @@ public class TaxonomyMapper : Profile
                 opt =>
                     opt.MapFrom(src => src.ApprovalStatus));
 
-        CreateMap<CreateTaxonomyNodeRequestDto, TaxonomyNodeEntity>(MemberList.None)
+        CreateMap<KeyValuePair<TaxonomyRank, string>, TaxonomyNodeEntity>(MemberList.None)
+            .ForMember(dest => dest.Rank,
+                opt =>
+                    opt.MapFrom(src => src.Key))
             .ForMember(dest => dest.Name,
                 opt =>
-                    opt.MapFrom(src => src.TaxonomyName))
-            .ForMember(dest => dest.ParentGuid,
+                    opt.MapFrom(src => src.Value));
+
+        CreateMap<TaxonomyNodeEntity, CreatedObjectResponseDto>()
+            .ForMember(dest => dest.CreatedObjectGuid,
                 opt =>
-                    opt.MapFrom(src => src.ParentGuid));
+                    opt.MapFrom(src => src.Guid));
     }
 }

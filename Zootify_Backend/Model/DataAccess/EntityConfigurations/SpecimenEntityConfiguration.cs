@@ -47,11 +47,13 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
 
         builder
             .Property(p => p.Latitude)
-            .HasColumnName("latitude");
+            .HasColumnName("latitude")
+            .IsRequired();
 
         builder
             .Property(p => p.Longitude)
-            .HasColumnName("longitude");
+            .HasColumnName("longitude")
+            .IsRequired();
 
         builder
             .Property(p => p.StorageBuilding)

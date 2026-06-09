@@ -16,5 +16,13 @@ public class TagMapper : Profile
             .ForMember(dest => dest.TagName,
                 opt =>
                     opt.MapFrom(src => src.Tag));
+        
+        CreateMap<UpdateTagsDto, TagEntity>(MemberList.None)
+            .ForMember(dest => dest.Guid,
+                opt =>
+                    opt.MapFrom(src => src.TagGuid))
+            .ForMember(dest => dest.Tag,
+                opt =>
+                    opt.MapFrom(src => src.TagName));
     }
 }

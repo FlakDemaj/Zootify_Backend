@@ -7,7 +7,10 @@ namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
 {
-    Task<SpecimenEntity?> GetSpecimenByGuidAsync(Guid guid);
+    Task<SpecimenEntity?> GetSpecimenByGuidAsync(
+        Guid guid,
+        bool includeImage = false,
+        bool includeTags = false);
 
     Task<List<SpecimenEntity>> GetAllSpecimensByStatusAsync(
         IAuthentication authentication,
@@ -15,9 +18,9 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
 
     Task<List<SpecimenEntity>> GetOwnSpecimensAsync(Guid userGuid);
 
-    Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication? authentication);
+    Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication authentication);
 
     Task<int> CountOwnAsync(Guid userGuid);
-
+    
     Task<int> CountPublicAsync();
 }

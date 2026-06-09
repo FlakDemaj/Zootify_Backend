@@ -1,4 +1,5 @@
 using Zootify_Backend.Extensions;
+using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 using Zootify_Backend.Models.DataAccess.DBContext;
@@ -28,9 +29,9 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     {
         return await Context.CreateAsync(objectToCreate);
     }
-    
+
     /// <summary>
-    /// Persists a Set of new entity to the database and returns the saved instance.
+    /// Persists a Set of new entitys to the database and returns the saved instance.
     /// </summary>
     public async Task<List<T>> MassCreateAsync(List<T> objectsToCreate)
     {
@@ -43,6 +44,15 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     public async Task DeleteAsync(T objectToDelete)
     {
         await Context.DeleteAsync(objectToDelete);
+    }
+
+    /// <summary>
+    /// Removes the a set of entitys from the database.
+    /// </summary>
+    public async Task MassDeleteAsync(List<T> objectsToDelete)
+    {
+        Context.Set<T>().RemoveRange(objectsToDelete);
+        await Context.SaveChangesAsync(); 
     }
 
     /// <summary>

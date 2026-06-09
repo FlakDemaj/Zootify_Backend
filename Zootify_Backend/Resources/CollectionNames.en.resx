@@ -28,4 +28,7 @@
   <data name="MyDeleted" xml:space="preserve">
     <value>My Deleted</value>
   </data>
+  <data name="MyRejected" xml:space="preserve">
+    <value>My Rejected</value>
+  </data>
 </root>

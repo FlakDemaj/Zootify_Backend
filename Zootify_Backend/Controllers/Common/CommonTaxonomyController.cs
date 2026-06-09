@@ -30,7 +30,7 @@ public class CommonTaxonomyController : BaseRestController
     }
     
     [HttpPost]
-    public async Task<ActionResult<CreatedObjectResponseDto>> CreateTaxonomyNode(
+    public async Task<ActionResult<List<CreatedObjectResponseDto>>> CreateTaxonomyNode(
         [FromBody] CreateTaxonomyNodeRequestDto requestDto)
     {
         return Ok(await _commonTaxonomyNodeService.CreateTaxonomyNodeAsync(Authentication, requestDto));

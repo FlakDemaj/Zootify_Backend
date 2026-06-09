@@ -59,4 +59,31 @@ public class CommonSpecimenController : BaseRestController
             Authentication,
             SpecimenStatus.Deleted));
     }
+
+    [HttpPatch("{specimenGuid:guid}")]
+    public async Task<IActionResult> UpdateSpecimenAsync(
+        Guid specimenGuid,
+        [FromBody] UpdateSpecimenRequestDto request)
+    {
+        await _commonSpecimenService.UpdateSpecimenAsync(Authentication, specimenGuid, request);
+        return Ok();
+    }
+    
+    [HttpPatch("image/{specimenGuid:guid}")]
+    public async Task<IActionResult> UpdateSpecimenImageAsync(
+        Guid specimenGuid,
+        [FromBody] UpdateSpecimenImageRequestDto request)
+    {
+        await _commonSpecimenService.UpdateSpecimenImageAsync(Authentication, specimenGuid, request);
+        return Ok();
+    }
+    
+    [HttpPatch("tags/{specimenGuid:guid}")]
+    public async Task<IActionResult> UpdateSpecimenTagsAsync(
+        Guid specimenGuid,
+        [FromBody] UpdateSpecimenTagsRequestDto request)
+    {
+        await _commonSpecimenService.UpdateSpecimenTagsAsync(Authentication, specimenGuid, request);
+        return Ok();
+    }
 }
