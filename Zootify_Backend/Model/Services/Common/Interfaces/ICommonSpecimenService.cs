@@ -21,4 +21,20 @@ public interface ICommonSpecimenService
     Task<List<GetAllSpecimenDto>> GetOwnSpecimensAsync(
         IAuthentication authentication);
 
+    Task UpdateSpecimenAsync(
+        IAuthentication authentication,
+        Guid specimenGuid,
+        UpdateSpecimenRequestDto request);
+
+    Task UpdateSpecimenImageAsync(
+        IAuthentication authentication,
+        Guid specimenGuid,
+        UpdateSpecimenImageRequestDto request);
+
+    Task UpdateSpecimenTagsAsync(
+        IAuthentication authentication,
+        Guid specimenGuid,
+        UpdateSpecimenTagsRequestDto request
+    );
+
 }

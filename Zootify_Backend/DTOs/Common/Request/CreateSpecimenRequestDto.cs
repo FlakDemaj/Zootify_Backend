@@ -28,5 +28,5 @@ public class CreateSpecimenRequestDto
 
     public List<string> TagsToCreate { get; set; }
 
-    public List<string> Base64Images { get; set; }
+    public string Base64Image { get; set; }
 }

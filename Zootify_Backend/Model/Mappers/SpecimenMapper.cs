@@ -57,8 +57,8 @@ public class SpecimenMapper : Profile
                 d => d.Geo,
                 o => o.MapFrom(s => new GeoDto
                 {
-                    Latitude = s.Latitude ?? 0,
-                    Longitude = s.Longitude ?? 0
+                    Latitude = s.Latitude,
+                    Longitude = s.Longitude
                 }))
             .ForMember(
                 d => d.GeographicLevels,
@@ -69,6 +69,25 @@ public class SpecimenMapper : Profile
             .ForMember(
                 d => d.Comment,
                 o => o.MapFrom(s => s.Comment));
-        
+
+        CreateMap<UpdateSpecimenRequestDto, SpecimenEntity>(MemberList.None)
+            .ForMember(d => d.Comment,
+                opt =>
+                    opt.MapFrom(src => src.Comment))
+            .ForMember(d => d.Name,
+                opt =>
+                    opt.MapFrom(src => src.Name))
+            .ForMember(d => d.LatinName,
+                opt =>
+                    opt.MapFrom(src => src.LatinName))
+            .ForMember(d => d.DateOfDiscovery,
+                opt =>
+                    opt.MapFrom(src => src.DateOfDiscovery))
+            .ForMember(d => d.IsPublic,
+                opt =>
+                    opt.MapFrom(src => src.IsPublic))
+            .ForMember(d => d.Status,
+                opt =>
+                    opt.MapFrom(src => src.Status));
     }
 }

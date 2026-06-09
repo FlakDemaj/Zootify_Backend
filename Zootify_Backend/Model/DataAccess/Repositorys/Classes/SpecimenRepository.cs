@@ -15,10 +15,25 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
     {
     }
 
-    public async Task<SpecimenEntity?> GetSpecimenByGuidAsync(Guid guid)
+    public async Task<SpecimenEntity?> GetSpecimenByGuidAsync(
+        Guid guid,
+        bool includeImage = false,
+        bool includeTags = false)
     {
-        return await Context.GetTrackingSet<SpecimenEntity>(true)
-            .FirstOrDefaultAsync(s => s.Guid == guid);
+        var query = Context.GetTrackingSet<SpecimenEntity>(true);
+
+        if (includeTags)
+        {
+            query = query.Include(sp => sp.SpecimensTags);
+        }
+        
+        if(includeImage)
+        {
+            query = query.Include(sp => sp.Image);
+        }
+        
+        return await query.FirstOrDefaultAsync(sp => sp.Guid == guid);
+        
     }
 
     public async Task<List<SpecimenEntity>> GetAllSpecimensByStatusAsync(
@@ -49,18 +64,12 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .ToListAsync();
     }
 
-    public async Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication? authentication)
+    public async Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication authentication)
     {
-        var query = Context.GetTrackingSet<SpecimenEntity>()
-            .Where(sp => sp.Status == status);
-
-        if (authentication == null || authentication.Role == UserRole.User)
-            query = query.Where(sp => sp.IsPublic);
-
-        if (authentication?.Role == UserRole.User)
-            query = query.Where(sp => sp.CreatedByUserGuid == authentication.UserGuid);
-
-        return await query.CountAsync();
+        return await Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.CreatedByUserGuid == authentication.UserGuid)
+            .Where(sp => sp.Status == status)
+            .CountAsync();
     }
 
     public async Task<int> CountOwnAsync(Guid userGuid)

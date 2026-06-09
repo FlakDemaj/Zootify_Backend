@@ -17,7 +17,7 @@ public class TagRepository : BaseRepository<TagEntity>, ITagRepository
     {
         return Context
             .GetTrackingSet<TagEntity>()
-            .Where(gl => guids.Contains(gl.Guid))
+            .Where(t => guids.Contains(t.Guid))
             .ToListAsync();
     }
 
@@ -33,5 +33,12 @@ public class TagRepository : BaseRepository<TagEntity>, ITagRepository
         }
         
         return getAllTagsQuery.ToListAsync();
+    }
+
+    public async Task<List<TagEntity>> GetTagsByNameAsync(List<string> names)
+    {
+        return await Context.GetTrackingSet<TagEntity>()
+            .Where(t => names.Contains(t.Tag))
+            .ToListAsync();
     }
 }

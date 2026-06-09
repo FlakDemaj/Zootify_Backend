@@ -27,7 +27,7 @@ public class CollectionTestRepository
             collection.SetCreatedBy(createdByUserGuid.Value);
 
         if (deletedByUserGuid.HasValue)
-            collection.SetDeletedBy(deletedByUserGuid.Value);
+            collection.DeleteCollection(deletedByUserGuid.Value);
 
         _dbContext.Add(collection);
         await _dbContext.SaveChangesAsync();

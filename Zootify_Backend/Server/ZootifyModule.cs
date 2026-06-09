@@ -5,6 +5,7 @@ using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Providers.Nominatim;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Server;
@@ -24,14 +25,14 @@ public class ZootifyModule : Module
 
         builder.LoadServicesAndRepositories(ThisAssembly);
 
-        LoadEmailProvider(builder);
+        LoadProviders(builder);
     }
 
     /// <summary>
     /// Registers the <see cref="BrevoClient"/> singleton and the <see cref="BrevoProvider"/>
     /// scoped to a per-lifetime-scope instance.
     /// </summary>
-    private void LoadEmailProvider(ContainerBuilder builder)
+    private void LoadProviders(ContainerBuilder builder)
     {
         builder.RegisterInstance(new BrevoClient(ZootifyConfiguration.BrevoApiKey))
             .SingleInstance();
@@ -42,6 +43,10 @@ public class ZootifyModule : Module
         
         builder.RegisterType<NominatimProvider>()
             .As<INominatimProvider>()
+            .InstancePerLifetimeScope();
+        
+        builder.RegisterType<NotificationProvider>()
+            .As<INotificationProvider>()
             .InstancePerLifetimeScope();
     }
 }

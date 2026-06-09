@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
@@ -17,7 +18,7 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
     {
         return await Context.GetTrackingSet<CollectionEntity>()
             .Include(c => c.Collection)
-            .Where(c => !c.IsPrivate && c.DeletionDate == null)
+            .Where(c => !c.IsPrivate && c.Status == CollectionStatus.Active)
             .ToListAsync();
     }
 

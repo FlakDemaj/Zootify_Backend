@@ -1,5 +1,4 @@
 using AutoMapper;
-using Microsoft.AspNetCore.SignalR;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
@@ -19,39 +18,77 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
     
     private readonly IUserRepository _userRepository;
     
-    private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly INotificationProvider _notificationProvider;
     
     private readonly IMapper _mapper;
 
     public CommonTaxonomyService(
             ITaxonomyRepository taxonomyRepository,
             IMapper mapper,
-            IUserRepository userRepository, IHubContext<NotificationHub> hubContext)
+            IUserRepository userRepository, 
+            INotificationProvider notificationProvider)
     {
         _taxonomyRepository = taxonomyRepository;
         _mapper = mapper;
         _userRepository = userRepository;
-        _hubContext = hubContext;
+        _notificationProvider = notificationProvider;
     }
 
     [Transaction(ReadOnly = false)]
-    public async Task<CreatedObjectResponseDto> CreateTaxonomyNodeAsync(
+    public async Task<List<CreatedObjectResponseDto>> CreateTaxonomyNodeAsync(
         IAuthentication authentication,
         CreateTaxonomyNodeRequestDto requestDto)
     {
-        var mappedTaxonomy = _mapper.Map<TaxonomyNodeEntity>(requestDto);
-        mappedTaxonomy.SetCreatedBy(authentication.UserGuid);
-        
-        mappedTaxonomy.Rank = await GetTaxonomyRank(requestDto.ParentGuid);
-        
-        var createdTaxonomy = await _taxonomyRepository.CreateAsync(mappedTaxonomy);
+        var sortedTaxonomy = requestDto.TaxonomyNodes.OrderBy(tn => tn.Key).ToDictionary();
 
-        await SendNotificationAsync();
-        
-        return new CreatedObjectResponseDto
+        var parentGuid = requestDto.ParentGuid;
+
+        if (parentGuid != null)
         {
-            CreatedObjectGuid = createdTaxonomy.Guid,
-        };
+            var parent = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync(parentGuid.Value);
+
+            if (parent == null)
+            {
+                throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            }
+        }
+
+        var needsApproval = authentication.Role == UserRole.User;
+        
+        var nodesToCreate = new List<TaxonomyNodeEntity>();
+        
+        foreach (var taxonomyNode in sortedTaxonomy)
+        {
+            var node = _mapper.Map<TaxonomyNodeEntity>(taxonomyNode);
+            node.SetCreatedBy(authentication.UserGuid);
+            node.ParentGuid = parentGuid;
+            parentGuid = node.Guid;
+
+            if (!needsApproval)
+            {
+                node.ApprovalStatus = ApprovalStatus.Approved;
+            }
+            
+            nodesToCreate.Add(node);
+        }
+        
+        var createdNodes = await _taxonomyRepository.MassCreateAsync(nodesToCreate);
+
+        await SendNotificationAsync(needsApproval);
+        
+        return _mapper.Map<List<CreatedObjectResponseDto>>(createdNodes);
+    }
+
+    private async Task SendNotificationAsync(bool needsApproval)
+    {
+        if (!needsApproval)
+        {
+            return;
+        }
+        
+        var users = await _userRepository.GetAllAdminsAndModeratorUsersWithSettingsAsync();
+        
+        _ = _notificationProvider.SendNotificationAsync(users);
     }
 
     [Transaction(ReadOnly = true)]
@@ -104,49 +141,5 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         }
 
         return await GetTaxonomyTreeAsync(parentTaxonomy, taxonomyNodes);
-    }
-
-    private async Task<TaxonomyRank> GetTaxonomyRank(Guid? parentGuid)
-    {
-        if (parentGuid == null)
-        {
-            return TaxonomyRank.Phylum;
-        }
-        
-        var parentNode = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync((Guid)parentGuid);
-
-        if (parentNode == null)
-        {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
-        }
-
-        if (parentNode.Rank == TaxonomyRank.Species)
-        {
-            throw new ZootifyException(ErrorCode.TaxonomyRankIsAtTheDeepestLevel);
-        }
-        
-        return parentNode.Rank + 1;
-    }
-    
-    private async Task SendNotificationAsync()
-    {
-          
-        var users = await _userRepository.GetAllAdminsAndModeratorUsersWithSettingsAsync();
-        var message = "New Taxonomy was created. Please check the new Taxonomy.";
-        
-        foreach (var user in users)
-        {
-            
-            if (user.Settings != null)
-            {
-                message = user.Settings.Language == "de"
-                    ? "Eine neue Taxonomie wurde erstellt. Bitte überprüfen Sie die neue Taxonomie."
-                    : message;   
-            }
-            
-            await _hubContext.Clients
-                .User(user.Guid.ToString())
-                .SendAsync("ReceiveNotification", message);
-        }       
     }
 }

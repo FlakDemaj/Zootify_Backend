@@ -12,6 +12,7 @@ public interface IBaseRepository<T>
     /// Persists a new entity to the database and returns the saved instance.
     /// </summary>
     Task<T> CreateAsync(T objectToCreate);
+    
 
     /// <summary>
     /// Persists a set of new entitys to the database and returns the saved instance.
@@ -22,6 +23,11 @@ public interface IBaseRepository<T>
     /// Removes the given entity from the database.
     /// </summary>
     Task DeleteAsync(T objectToDelete);
+    
+    /// <summary>
+    /// Removes a set of entitys from the database.
+    /// </summary>
+    Task MassDeleteAsync(List<T> objectsToDelete);
 
     /// <summary>
     /// Saves changes made to the given tracked entity back to the database.

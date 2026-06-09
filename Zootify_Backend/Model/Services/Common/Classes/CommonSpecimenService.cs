@@ -67,7 +67,7 @@ public class CommonSpecimenService : ICommonSpecimenService
             tagsToCreate,
             existingTags,
             request.Location,
-            request.Base64Images);
+            request.Base64Image);
     }
 
     [Transaction(ReadOnly = true)]
@@ -102,7 +102,165 @@ public class CommonSpecimenService : ICommonSpecimenService
             _specimenRepository.GetOwnSpecimensAsync(
                 authentication.UserGuid);
 
-        return _mapper.Map<List<GetAllSpecimenDto>>(specimens);    }
+        return _mapper.Map<List<GetAllSpecimenDto>>(specimens);    
+    }
+
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateSpecimenImageAsync(
+        IAuthentication authentication,
+        Guid specimenGuid,
+        UpdateSpecimenImageRequestDto request)
+    {
+        var specimen = await CheckSpecimenWithOwnership(
+            specimenGuid,
+            authentication,
+            includeImage: true);
+
+        if (specimen.Image?.ImageBase64 == request.ImageBase64)
+        {
+            throw new ZootifyException(ErrorCode.NoUpdatedData);
+        }
+        
+        await UpdateSpecimenImageAsync(
+            request.ImageBase64,
+            specimen,
+            authentication.UserGuid);
+    }
+
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateSpecimenTagsAsync(
+        IAuthentication authentication,
+        Guid specimenGuid,
+        UpdateSpecimenTagsRequestDto request)
+    {
+        var specimen = await CheckSpecimenWithOwnership(
+            specimenGuid,
+            authentication,
+            includeTags: true);
+        
+        var existingTags = request
+            .SpecimenTags
+            .Where(t => t.TagGuid != null)
+            .ToList();
+        
+        var mappedExistingTags = _mapper.Map<List<TagEntity>>(existingTags);
+        
+        var notExistingTags = request
+            .SpecimenTags
+            .Except(existingTags)
+            .ToList();
+        
+        var mappedNotExistingTags = _mapper.Map<List<TagEntity>>(notExistingTags);
+        
+        await UpdateSpecimenTagsAsync(
+            authentication,
+            mappedExistingTags,
+            mappedNotExistingTags,
+            specimen);
+    }
+
+    [Transaction(ReadOnly = false)]
+    public async Task UpdateSpecimenAsync(
+        IAuthentication authentication,
+        Guid specimenGuid,
+        UpdateSpecimenRequestDto request)
+    {
+        var specimen = await CheckSpecimenWithOwnership(specimenGuid, authentication);
+        
+        var mappedSpecimen = _mapper.Map<SpecimenEntity>(request);
+        
+        var specimenChanges = specimen.CheckChanges(mappedSpecimen);
+
+        // If no data are updated, throw exception
+        if (!specimenChanges)
+        {
+            throw new ZootifyException(ErrorCode.NoUpdatedData);
+        }
+    
+        specimen.UpdateData(authentication.UserGuid, mappedSpecimen);
+        
+        await _specimenRepository.UpdateAsync(specimen);
+    }
+
+    private async Task UpdateSpecimenTagsAsync(
+        IAuthentication authentication,
+        List<TagEntity> existingTags,
+        List<TagEntity> notExistingTags,
+        SpecimenEntity specimen)
+    {
+        var specimenTagGuids = specimen.SpecimensTags
+            .Select(t => t.TagGuid)
+            .OrderBy(g => g)
+            .ToList();
+
+        var requestTagGuids = existingTags
+            .Select(t => t.Guid)
+            .OrderBy(g => g)
+            .ToList();
+
+        var tagsUnchanged = specimenTagGuids.SequenceEqual(requestTagGuids);
+
+        if (tagsUnchanged && notExistingTags.Count == 0)
+        {
+            throw new ZootifyException(ErrorCode.NoUpdatedData);
+        }
+
+        // Tags entfernen, die nicht mehr im Request sind
+        var tagsToRemove = specimen.SpecimensTags
+            .Where(st => !requestTagGuids.Contains(st.TagGuid))
+            .ToList();
+
+        await _specimenTagRepository.MassDeleteAsync(tagsToRemove);
+
+        // Neue Tags in DB anlegen
+        var createdTags = new List<TagEntity>();
+
+        foreach (var tag in notExistingTags)
+        {
+            var createdTag = await _tagRepository.CreateAsync(tag);
+            createdTags.Add(createdTag);
+        }
+
+        // Tags verknüpfen, die dem Specimen noch nicht zugeordnet sind
+        var tagsToLink = existingTags
+            .Where(t => !specimenTagGuids.Contains(t.Guid))
+            .Concat(createdTags)
+            .ToList();
+
+        await LinkTagsToSpecimenAsync(specimen, tagsToLink);
+        specimen.SetUpdatedBy(authentication.UserGuid);
+
+        await _specimenRepository.UpdateAsync(specimen);
+    }
+
+    private async Task UpdateSpecimenImageAsync(
+        string? newImage,
+        SpecimenEntity specimen,
+        Guid requester)
+    {
+        if (newImage == null && specimen.Image != null)
+        {
+            await _specimenImageRepository.DeleteAsync(specimen.Image);
+        }
+
+        if (newImage != null && specimen.Image != null)
+        {
+            await _specimenImageRepository.DeleteAsync(specimen.Image);
+
+            specimen.CreateImage(
+                newImage,
+                requester);
+        }
+        
+        if (newImage!= null && specimen.Image == null)
+        {
+            specimen.CreateImage(
+                newImage,
+                requester);
+        }
+
+        await _specimenRepository.UpdateAsync(specimen);
+    }
 
     private async Task<SpecimenEntity> BuildSpecimen(
         Guid userGuid,
@@ -155,7 +313,7 @@ public class CommonSpecimenService : ICommonSpecimenService
         List<TagEntity> tagsToCreate,
         List<TagEntity> existingTags,
         GeoDto geoDto,
-        List<string> imagesBase64)
+        string imagesBase64)
     {
         var locationGuid = await ResolveGeographicLocationAsync(geoDto);
         
@@ -211,24 +369,17 @@ public class CommonSpecimenService : ICommonSpecimenService
 
     private async Task PersistSpecimenImagesAsync(
         SpecimenEntity specimen,
-        List<string> imagesBase64)
+        string imagesBase64)
     {
         
-        var imagesToCreate = new List<SpecimenImageEntity>();
-        
-        foreach (var image in imagesBase64)
+        var imageEntity = new SpecimenImageEntity
         {
-            var imageEntity = new SpecimenImageEntity
-            {
-                ImageUrl = image,
-                SpecimenGuid = specimen.Guid,
-                UploadedAt = DateTime.UtcNow
-            };
-
-            imagesToCreate.Add(imageEntity);
-        }
+            ImageBase64 = imagesBase64,
+            SpecimenGuid = specimen.Guid,
+            UploadedAt = DateTime.UtcNow
+        };
         
-        await _specimenImageRepository.MassCreateAsync(imagesToCreate);
+        await _specimenImageRepository.CreateAsync(imageEntity);
     }
 
     private async Task<List<TagEntity>> GetExistingTagsAsync(List<Guid> guids)
@@ -318,5 +469,30 @@ public class CommonSpecimenService : ICommonSpecimenService
         };
 
         return await _geographicLocationRepository.CreateAsync(newLocation);
+    }
+
+    private async Task<SpecimenEntity> CheckSpecimenWithOwnership(
+        Guid specimenGuid,
+        IAuthentication authentication,
+        bool includeImage = false,
+        bool includeTags = false)
+    {
+        var specimen = await _specimenRepository.GetSpecimenByGuidAsync(
+            specimenGuid,
+            includeImage: includeImage,
+            includeTags: includeTags);
+
+        if (specimen == null)
+        {
+            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+        }
+        
+        if (authentication.Role == UserRole.User
+            && authentication.UserGuid != specimen.CreatedByUserGuid)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+        
+        return specimen;
     }
 }

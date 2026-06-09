@@ -26,7 +26,7 @@ public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<Spec
             .IsRequired();
 
         builder
-            .Property(p => p.ImageUrl)
+            .Property(p => p.ImageBase64)
             .HasColumnName("image_url")
             .HasMaxLength(1000)
             .IsRequired();
@@ -38,8 +38,9 @@ public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<Spec
 
         builder
             .HasOne(i => i.Specimen)
-            .WithMany(s => s.Images)
-            .HasForeignKey(i => i.SpecimenGuid)
+            .WithOne(s => s.Image)
+            .HasForeignKey<SpecimenImageEntity>(i => i.SpecimenGuid)
             .OnDelete(DeleteBehavior.Cascade);
+            
     }
 }
