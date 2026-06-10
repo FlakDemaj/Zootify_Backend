@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
-using Zootify_Backend.DTOs.Auth.Request;
-using Zootify_Backend.DTOs.Auth.Response;
+using Zootify_Backend.DTOs.System.Request;
+using Zootify_Backend.DTOs.System.Response;
 using Zootify_Backend.Model.Services.System.Interfaces;
 
 namespace Zootify_Backend.Controllers.System;

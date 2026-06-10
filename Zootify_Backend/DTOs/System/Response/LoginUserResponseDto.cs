@@ -1,6 +1,6 @@
 using Zootify_Backend.Model.Auth;
 
-namespace Zootify_Backend.DTOs.Auth.Response;
+namespace Zootify_Backend.DTOs.System.Response;
 
 public class LoginUserResponseDto
 {

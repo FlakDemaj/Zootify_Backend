@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Auth.Response;
+namespace Zootify_Backend.DTOs.System.Response;
 
 public class UserSettingsDto
 {

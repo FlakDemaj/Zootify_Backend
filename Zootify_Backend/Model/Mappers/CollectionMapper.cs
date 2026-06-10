@@ -23,6 +23,8 @@ public class CollectionMapper : Profile
             .ForMember(d => d.Guid, o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.Name, o => o.MapFrom(s => s.Name))
             .ForMember(d => d.IsPrivate, o => o.MapFrom(s => s.IsPrivate))
-            .ForMember(d => d.SpecimenCount, o => o.MapFrom(s => s.Collection.Count));
+            .ForMember(d => d.SpecimenCount, o => o.MapFrom(s => s.Collection.Count))
+            .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreationDate));
+
     }
 }

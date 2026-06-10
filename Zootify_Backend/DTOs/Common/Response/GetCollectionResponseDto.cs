@@ -9,4 +9,6 @@ public class GetCollectionResponseDto
     public required bool IsPrivate { get; set; }
 
     public required int SpecimenCount { get; set; }
+    
+    public DateTime? CreatedAt { get; set; }
 }

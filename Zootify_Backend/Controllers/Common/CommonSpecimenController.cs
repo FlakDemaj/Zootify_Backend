@@ -27,39 +27,6 @@ public class CommonSpecimenController : BaseRestController
         return Ok(await _commonSpecimenService.CreateSpecimenAsync(Authentication, specimen));
     }
 
-    [HttpGet("active")]
-    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllSpecimenAsync()
-    {
-        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
-            Authentication,
-            SpecimenStatus.Active));
-    }
-    
-    [HttpGet("pending")]
-    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllSpecimenAsync(
-        Guid collectionGuid)
-    {
-        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
-            Authentication,
-            SpecimenStatus.Pending));
-    }
-    
-    [HttpGet("deleted")]
-    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllDeletedSpecimenAsync()
-    {
-        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
-            Authentication,
-            SpecimenStatus.Deleted));
-    }
-    
-    [HttpGet("own")]
-    public async Task<ActionResult<List<GetAllSpecimenDto>>> GetAllOwnSpecimenAsync()
-    {
-        return Ok(await _commonSpecimenService.GetAllSpecimensByStatusAsync(
-            Authentication,
-            SpecimenStatus.Deleted));
-    }
-
     [HttpPatch("{specimenGuid:guid}")]
     public async Task<IActionResult> UpdateSpecimenAsync(
         Guid specimenGuid,

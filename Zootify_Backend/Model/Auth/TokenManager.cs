@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Zootify_Backend.Configuration;
-using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.Enums;
 
 namespace Zootify_Backend.Model.Auth;

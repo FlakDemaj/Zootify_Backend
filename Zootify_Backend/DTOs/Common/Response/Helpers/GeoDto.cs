@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Common.Response;
+namespace Zootify_Backend.DTOs.Common.Response.Helpers;
 
 public class GeoDto
 {

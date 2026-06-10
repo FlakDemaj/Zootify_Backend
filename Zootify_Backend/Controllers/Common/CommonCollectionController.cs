@@ -27,9 +27,27 @@ public class CommonCollectionController : BaseRestController
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<GetCollectionResponseDto>>> GetPublicCollectionsAsync()
+    public async Task<ActionResult<List<GetCollectionResponseDto>>> GetAllCollectionsAsync(
+        [FromQuery] string? filterByName,
+        [FromQuery] string? orderBy,
+        [FromQuery] string? orderDirection)
     {
-        return Ok(await _commonCollectionService.GetPublicCollectionsAsync(Authentication));
+        return Ok(await _commonCollectionService.GetAllCollectionsAsync(
+            Authentication,
+            filterByName,
+            orderBy,
+            orderDirection));
+    }
+
+    [HttpGet("{collectionGuid:guid}/specimens")]
+    public async Task<ActionResult<GetAllSpecimenInCollectionResponseDto>> GetAllSpecimensInCollectionAsync(
+        Guid collectionGuid,
+        [FromQuery] BaseSortAndPagingDto paging)
+    {
+        return Ok(await _commonCollectionService.GetAllSpecimensInCollectionAsync(
+            Authentication,
+            collectionGuid,
+            paging));
     }
 
     [HttpPatch("{collectionGuid:guid}")]

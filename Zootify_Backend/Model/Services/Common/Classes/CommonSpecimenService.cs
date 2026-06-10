@@ -2,6 +2,7 @@ using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -81,30 +82,7 @@ public class CommonSpecimenService : ICommonSpecimenService
         
         return mappedTags.OrderBy(t => t.TagName).ToList();
     }
-
-    [Transaction(ReadOnly = true)]
-    public async Task<List<GetAllSpecimenDto>> GetAllSpecimensByStatusAsync(
-        IAuthentication authentication,
-        SpecimenStatus status)
-    {
-        var specimens = await
-            _specimenRepository.GetAllSpecimensByStatusAsync(
-                authentication,
-                status);
-
-        return _mapper.Map<List<GetAllSpecimenDto>>(specimens);
-    }
-
-    [Transaction(ReadOnly = true)]
-    public async Task<List<GetAllSpecimenDto>> GetOwnSpecimensAsync(IAuthentication authentication)
-    {
-        var specimens = await
-            _specimenRepository.GetOwnSpecimensAsync(
-                authentication.UserGuid);
-
-        return _mapper.Map<List<GetAllSpecimenDto>>(specimens);    
-    }
-
+    
     [Transaction(ReadOnly = false)]
     public async Task UpdateSpecimenImageAsync(
         IAuthentication authentication,

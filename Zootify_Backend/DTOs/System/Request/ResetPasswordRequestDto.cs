@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Auth.Request;
+namespace Zootify_Backend.DTOs.System.Request;
 
 public class ResetPasswordRequestDto 
 {

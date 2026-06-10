@@ -1,6 +1,8 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
@@ -42,33 +44,15 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.Tag,
                 opt =>
                     opt.MapFrom(src => src));
-        
-        CreateMap<SpecimenEntity, GetAllSpecimenDto>()
-            .ForMember(
-                d => d.Guid,
-                o => o.MapFrom(s => s.Guid))
-            .ForMember(
-                d => d.Name,
-                o => o.MapFrom(s => s.Name))
-            .ForMember(
-                d => d.LatinName,
-                o => o.MapFrom(s => s.LatinName))
-            .ForMember(
-                d => d.Geo,
-                o => o.MapFrom(s => new GeoDto
-                {
-                    Latitude = s.Latitude,
-                    Longitude = s.Longitude
-                }))
-            .ForMember(
-                d => d.GeographicLevels,
-                o => o.MapFrom<GeographicLevelsResolver>())
-            .ForMember(
-                d => d.DateOfDiscovery,
-                o => o.MapFrom(s => s.DateOfDiscovery))
-            .ForMember(
-                d => d.Comment,
-                o => o.MapFrom(s => s.Comment));
+
+        CreateMap<SpecimenEntity, SpecimenDto>()
+            .ForMember(d => d.SpecimenGuid,  o => o.MapFrom(s => s.Guid))
+            .ForMember(d => d.Name,          o => o.MapFrom(s => s.Name))
+            .ForMember(d => d.LatinName,     o => o.MapFrom(s => s.LatinName))
+            .ForMember(d => d.Latitude,      o => o.MapFrom(s => s.Latitude))
+            .ForMember(d => d.Longitude,     o => o.MapFrom(s => s.Longitude))
+            .ForMember(d => d.IsPublic,      o => o.MapFrom(s => s.IsPublic))
+            .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status));
 
         CreateMap<UpdateSpecimenRequestDto, SpecimenEntity>(MemberList.None)
             .ForMember(d => d.Comment,

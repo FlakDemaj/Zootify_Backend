@@ -86,7 +86,7 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
 
         builder
             .Property(p => p.IsPublic)
-            .HasColumnName("staus");
+            .HasColumnName("is_public");
         
         builder
             .HasOne(s => s.Species)

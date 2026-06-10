@@ -1,4 +1,3 @@
-using Zootify_Backend.DTOs.Auth.Response;
 using Zootify_Backend.Enums;
 
 namespace Zootify_Backend.Model.Auth;

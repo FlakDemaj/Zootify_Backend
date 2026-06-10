@@ -1,3 +1,4 @@
+using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -21,6 +22,16 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication authentication);
 
     Task<int> CountOwnAsync(Guid userGuid);
-    
+
     Task<int> CountPublicAsync();
+
+    Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensInCollectionPagedAsync(
+        Guid collectionGuid,
+        IAuthentication? authentication,
+        BaseSortAndPagingDto paging);
+
+    Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensPagedAsync(
+        Guid? userGuid,
+        SpecimenStatus? status,
+        BaseSortAndPagingDto paging);
 }

@@ -23,8 +23,6 @@ public class SpecimenEntity : BaseDeletionEntity
     
     public double Longitude { get; set; }
     
-    public DateTime? OnLoanUntil { get; set; }
-
     public string? StorageBuilding { get; set; }
     
     public string? StorageCabinet { get; set; }
