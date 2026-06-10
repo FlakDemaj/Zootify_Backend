@@ -65,8 +65,9 @@ public class AnonymCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync($"{Routings.AnonymCollectionRouting}/{collection.Guid}/specimens");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
+        var error = await ReadErrorAsync(response);
+        
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);    }
 
     [Fact]
     public async Task GetAllSpecimensInCollection_StaticCollection_ReturnsForbidden()
@@ -74,8 +75,9 @@ public class AnonymCollectionControllerTests : IntegrationTestBase
         var response = await Client.GetAsync(
             $"{Routings.AnonymCollectionRouting}/00000000-0000-0000-0000-000000000001/specimens");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
+        var error = await ReadErrorAsync(response);
+        
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);    }
 
     [Fact]
     public async Task GetAllSpecimensInCollection_DeletedPublicCollection_ReturnsForbidden()
@@ -88,8 +90,9 @@ public class AnonymCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync($"{Routings.AnonymCollectionRouting}/{collection.Guid}/specimens");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
+        var error = await ReadErrorAsync(response);
+        
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);    }
 
     #endregion
 }
