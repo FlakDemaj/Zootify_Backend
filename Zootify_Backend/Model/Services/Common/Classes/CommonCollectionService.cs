@@ -3,6 +3,7 @@ using System.Resources;
 using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
@@ -56,17 +57,145 @@ public class CommonCollectionService : ICommonCollectionService
     }
 
     [Transaction(ReadOnly = true)]
-    public async Task<List<GetCollectionResponseDto>> GetPublicCollectionsAsync(IAuthentication? authentication)
+    public async Task<List<GetCollectionResponseDto>> GetAllCollectionsAsync(
+        IAuthentication? authentication,
+        string? filterByName,
+        string? orderBy,
+        string? orderDirection)
     {
-        var collections = await _collectionRepository.GetPublicCollectionsAsync();
-        var result = _mapper.Map<List<GetCollectionResponseDto>>(collections);
+        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
+            await _collectionRepository.GetAllCollectionsByNameFilterAsync(
+                authentication, filterByName, orderBy, orderDirection));
 
-        result.InsertRange(0, await BuildStaticCollectionsAsync(authentication));
+        var statics = await BuildStaticCollectionsAsync(authentication);
 
-        return result;
+        if (!string.IsNullOrWhiteSpace(filterByName))
+            statics = statics
+                .Where(c => c.Name.Contains(filterByName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+        var combined = statics.Concat(dynamic).ToList();
+
+        if (!string.IsNullOrWhiteSpace(orderBy) && orderBy == "specimenCount")
+        {
+            var desc = string.Equals(orderDirection, "desc", StringComparison.OrdinalIgnoreCase);
+            combined = desc
+                ? combined.OrderByDescending(c => c.SpecimenCount).ToList()
+                : combined.OrderBy(c => c.SpecimenCount).ToList();
+        }
+
+        return combined;
     }
 
-    private async Task<List<GetCollectionResponseDto>> BuildStaticCollectionsAsync(IAuthentication? authentication)
+    [Transaction(ReadOnly = true)]
+    public async Task<GetAllSpecimenInCollectionResponseDto> GetAllSpecimensInCollectionAsync(
+        IAuthentication? authentication,
+        Guid collectionGuid,
+        BaseSortAndPagingDto paging)
+    {
+        if (IsStaticCollection(collectionGuid))
+            return await GetSpecimensFromStaticCollectionAsync(authentication, collectionGuid, paging);
+
+        var collection = await _collectionRepository.GetCollectionWithAuditAsync(collectionGuid);
+
+        if (collection == null)
+        {
+            throw new ZootifyException(ErrorCode.CollectionNotFound);
+        }
+        
+        CheckCollectionVisibility(authentication, collection);
+
+        var (items, total) = await _specimenRepository.GetSpecimensInCollectionPagedAsync(collectionGuid, authentication, paging);
+
+        return new GetAllSpecimenInCollectionResponseDto
+        {
+            CollectionGuid  = collection.Guid,
+            CollectionName  = collection.Name,
+            CreatedByName   = FormatUserName(collection.CreatedByUser),
+            CreatedAt       = collection.CreationDate,
+            UpdatedByName   = FormatUserName(collection.UpdatedByUser),
+            UpdatedAt       = collection.UpdatedDate,
+            DeletedByName   = FormatUserName(collection.DeletedByUser),
+            DeletedAt       = collection.DeletionDate,
+            Status          = collection.Status,
+            TotalCount      = total,
+            Specimens       = _mapper.Map<List<SpecimenDto>>(items),
+        };
+    }
+
+    private async Task<GetAllSpecimenInCollectionResponseDto> GetSpecimensFromStaticCollectionAsync(
+        IAuthentication? authentication,
+        Guid collectionGuid,
+        BaseSortAndPagingDto paging)
+    {
+        if (authentication == null)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+
+        var culture = CultureInfo.CurrentUICulture;
+        var key = StaticCollectionKey(collectionGuid);
+        var name = CollectionNamesManager.GetString(key, culture) ?? key;
+
+        (Guid? userGuid, SpecimenStatus? status) = collectionGuid switch
+        {
+            _ when collectionGuid == AllSpecimensGuid  => ((Guid?)null,                     (SpecimenStatus?)null),
+            _ when collectionGuid == MyCollectionGuid  => (authentication.UserGuid,          (SpecimenStatus?)null),
+            _ when collectionGuid == MyActiveGuid      => (authentication.UserGuid,          SpecimenStatus.Active),
+            _ when collectionGuid == MyPendingGuid     => (authentication.UserGuid,          SpecimenStatus.Pending),
+            _ when collectionGuid == MyDeletedGuid     => (authentication.UserGuid,          SpecimenStatus.Deleted),
+            _                                          => (authentication.UserGuid,          SpecimenStatus.Rejected),
+        };
+
+        var (items, total) = await _specimenRepository.GetSpecimensPagedAsync(userGuid, status, paging);
+
+        return new GetAllSpecimenInCollectionResponseDto
+        {
+            CollectionGuid = collectionGuid,
+            CollectionName = name,
+            Status         = CollectionStatus.Active,
+            TotalCount     = total,
+            Specimens      = _mapper.Map<List<SpecimenDto>>(items),
+        };
+    }
+
+    private static bool IsStaticCollection(Guid guid) =>
+        guid == AllSpecimensGuid  || guid == MyCollectionGuid ||
+        guid == MyActiveGuid      || guid == MyPendingGuid    ||
+        guid == MyDeletedGuid     || guid == MyRejectedGuid;
+
+    private static string StaticCollectionKey(Guid guid)
+    {
+        if (guid == AllSpecimensGuid)
+            return "AllSpecimens";
+        if (guid == MyCollectionGuid)  
+            return "MyCollection";
+        if (guid == MyActiveGuid)      
+            return "MyActive";
+        if (guid == MyPendingGuid)     
+            return "MyPending";
+        if (guid == MyDeletedGuid)     
+            return "MyDeleted";
+        return "MyRejected";
+    }
+
+    private static void CheckCollectionVisibility(IAuthentication? authentication, CollectionEntity collection)
+    {
+        var isPublicActive = !collection.IsPrivate && collection.Status == CollectionStatus.Active;
+        if (isPublicActive) return;
+
+        if (authentication == null)
+            throw new ZootifyException(ErrorCode.Forbidden);
+
+        if (authentication.Role == UserRole.User && authentication.UserGuid != collection.CreatedByUserGuid)
+            throw new ZootifyException(ErrorCode.Forbidden);
+    }
+
+    private static string? FormatUserName(UserEntity? user) =>
+        user == null ? null : $"{user.FirstName} {user.LastName}".Trim();
+
+    private async Task<List<GetCollectionResponseDto>> BuildStaticCollectionsAsync(
+        IAuthentication? authentication)
     {
         if (authentication == null)
             return [];
@@ -97,7 +226,8 @@ public class CommonCollectionService : ICommonCollectionService
         Guid          = guid,
         Name          = CollectionNamesManager.GetString(key, culture) ?? key,
         IsPrivate     = true,
-        SpecimenCount = specimenCount
+        SpecimenCount = specimenCount,
+        CreatedAt = null
     };
 
     [Transaction(ReadOnly = false)]

@@ -1,5 +1,5 @@
-using Zootify_Backend.DTOs.Auth.Request;
-using Zootify_Backend.DTOs.Auth.Response;
+using Zootify_Backend.DTOs.System.Request;
+using Zootify_Backend.DTOs.System.Response;
 using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Auth;

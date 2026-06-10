@@ -1,7 +1,7 @@
 using AutoMapper;
 using Zootify_Backend.Configuration;
-using Zootify_Backend.DTOs.Auth.Request;
-using Zootify_Backend.DTOs.Auth.Response;
+using Zootify_Backend.DTOs.System.Request;
+using Zootify_Backend.DTOs.System.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;

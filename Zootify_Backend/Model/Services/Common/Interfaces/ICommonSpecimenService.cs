@@ -13,14 +13,7 @@ public interface ICommonSpecimenService
         CreateSpecimenRequestDto request);
 
     Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(string startsWith);
-
-    Task<List<GetAllSpecimenDto>> GetAllSpecimensByStatusAsync(
-        IAuthentication authentication,
-        SpecimenStatus status);
     
-    Task<List<GetAllSpecimenDto>> GetOwnSpecimensAsync(
-        IAuthentication authentication);
-
     Task UpdateSpecimenAsync(
         IAuthentication authentication,
         Guid specimenGuid,

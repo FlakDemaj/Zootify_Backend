@@ -1,6 +1,6 @@
 using Zootify_Backend.Enums;
 
-namespace Zootify_Backend.DTOs.Common.Request;
+namespace Zootify_Backend.DTOs.Common.Request.Helpers;
 
 public class TaxonomyDto
 {
