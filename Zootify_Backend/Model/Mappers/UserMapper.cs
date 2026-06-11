@@ -1,5 +1,6 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Admin.Request;
+using Zootify_Backend.DTOs.Admin.Response;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.System.Request;
@@ -124,5 +125,11 @@ public class UserMapper : Profile
                 o => o.MapFrom(s => s.Role))
             .ForMember(d => d.Status,
                 o => o.MapFrom(s => s.Status));
+        
+        CreateMap<UserEntity, BorrowerPickerDto>()
+            .ForMember(d => d.UserGuid,
+                o => o.MapFrom(s => s.Guid))
+            .ForMember(d => d.FullName,
+                o => o.MapFrom(s => $"{s.FirstName} {s.LastName}"));
     }
 }

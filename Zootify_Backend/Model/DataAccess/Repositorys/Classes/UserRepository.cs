@@ -79,7 +79,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
             .ToListAsync();
     }
 
-    public async Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith, int limit = 20)
+    public async Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith)
     {
         return await Context.GetTrackingSet<UserEntity>()
             .Where(u => u.Status == UserStatus.Active
@@ -88,7 +88,6 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
                     || u.LastName.StartsWith(startsWith)))
             .OrderBy(u => u.FirstName)
             .ThenBy(u => u.LastName)
-            .Take(limit)
             .ToListAsync();
     }
 
