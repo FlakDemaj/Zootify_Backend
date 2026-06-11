@@ -17,13 +17,14 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
-    private readonly Mapper _mapper;
+    private readonly IMapper _mapper;
 
     public AdminTaxonomyService(
         ITaxonomyRepository taxonomyRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider, Mapper mapper)
+        IBrevoProvider brevoProvider, 
+        IMapper mapper)
     {
         _taxonomyRepository = taxonomyRepository;
         _specimenRepository = specimenRepository;

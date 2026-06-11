@@ -1,5 +1,4 @@
 using AutoMapper;
-using Zootify_Backend;
 using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Admin.Response;
 using Zootify_Backend.DTOs.Base;
@@ -19,13 +18,14 @@ public class AdminLoanService : IAdminLoanService
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
-    private readonly Mapper _mapper;
+    private readonly IMapper _mapper;
 
     public AdminLoanService(
         ILoanRepository loanRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider, Mapper mapper)
+        IBrevoProvider brevoProvider, 
+        IMapper mapper)
     {
         _loanRepository = loanRepository;
         _specimenRepository = specimenRepository;
