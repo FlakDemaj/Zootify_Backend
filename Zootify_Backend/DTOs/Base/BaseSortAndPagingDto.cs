@@ -4,7 +4,7 @@ public class BaseSortAndPagingDto
 {
     public string? SortBy { get; set; }
 
-    public SortDirection SortDirection { get; set; } = SortDirection.ASC;
+    public SortDirection SortDirection { get; set; } = SortDirection.Asc;
 
     public int Page { get; set; } = 1;
 

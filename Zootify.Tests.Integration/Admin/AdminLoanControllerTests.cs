@@ -96,13 +96,14 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, geo.Guid);
 
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = specimen.Guid,
             BorrowerGuid = borrower.Guid,
             DueDate      = DateTime.UtcNow.AddDays(30),
             Notes        = "Handle with care.",
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
@@ -123,13 +124,14 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var dueDate = DateTime.UtcNow.AddDays(14);
         var before = DateTime.UtcNow;
 
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = specimen.Guid,
             BorrowerGuid = borrower.Guid,
             DueDate      = dueDate,
             Notes        = "Fragile – do not stack.",
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
@@ -155,12 +157,13 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, geo.Guid);
 
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = specimen.Guid,
             BorrowerGuid = borrower.Guid,
             DueDate      = DateTime.UtcNow.AddDays(10),
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -172,12 +175,13 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var borrower = await UserRepo.CreateUserAsync("borrower@test.de");
         AuthenticateAs(admin);
 
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = Guid.NewGuid(),
             BorrowerGuid = borrower.Guid,
             DueDate      = DateTime.UtcNow.AddDays(10),
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -194,12 +198,13 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, geo.Guid);
 
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = specimen.Guid,
             BorrowerGuid = Guid.NewGuid(),
             DueDate      = DateTime.UtcNow.AddDays(10),
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -212,12 +217,13 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = Guid.NewGuid(),
             BorrowerGuid = Guid.NewGuid(),
             DueDate      = DateTime.UtcNow.AddDays(10),
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -225,12 +231,13 @@ public class AdminLoanControllerTests : IntegrationTestBase
     [Fact]
     public async Task CreateLoan_Unauthenticated_ReturnsUnauthorized()
     {
-        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var request = new CreateLoanRequestDto
         {
             SpecimenGuid = Guid.NewGuid(),
             BorrowerGuid = Guid.NewGuid(),
             DueDate      = DateTime.UtcNow.AddDays(10),
-        });
+        };
+        var response = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -249,13 +256,14 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var species  = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, geo.Guid);
 
-        var create = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, new CreateLoanRequestDto
+        var createRequest = new CreateLoanRequestDto
         {
             SpecimenGuid = specimen.Guid,
             BorrowerGuid = borrower.Guid,
             DueDate      = DateTime.UtcNow.AddDays(14),
             Notes        = "Original notes.",
-        });
+        };
+        var create = await Client.PostAsJsonAsync(Routings.AdminLoanRouting, createRequest);
         create.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await create.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
 
@@ -268,9 +276,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var (loanGuid, _, _) = await CreateLoanInDb();
         var before = DateTime.UtcNow;
 
+        var request = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -284,9 +292,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
     {
         var (loanGuid, _, _) = await CreateLoanInDb();
 
+        var request = new ReturnLoanRequestDto { AppendedNotes = "Returned in good condition." };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto { AppendedNotes = "Returned in good condition." });
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -299,9 +307,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
     {
         var (loanGuid, _, _) = await CreateLoanInDb();
 
+        var request = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -317,9 +325,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var mod = await UserRepo.CreateUserAsync("mod@test.de", role: UserRole.Moderator);
         AuthenticateAs(mod);
 
+        var request = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -329,13 +337,13 @@ public class AdminLoanControllerTests : IntegrationTestBase
     {
         var (loanGuid, _, _) = await CreateLoanInDb();
 
+        var firstRequest = new ReturnLoanRequestDto();
         await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", firstRequest);
 
+        var secondRequest = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", secondRequest);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -348,9 +356,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
         AuthenticateAs(admin);
 
+        var request = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{Guid.NewGuid()}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{Guid.NewGuid()}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -365,9 +373,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
 
+        var request = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{loanGuid}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{loanGuid}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -377,9 +385,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
     {
         Client.DefaultRequestHeaders.Clear();
 
+        var request = new ReturnLoanRequestDto();
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminLoanRouting}/{Guid.NewGuid()}/return",
-            new ReturnLoanRequestDto());
+            $"{Routings.AdminLoanRouting}/{Guid.NewGuid()}/return", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

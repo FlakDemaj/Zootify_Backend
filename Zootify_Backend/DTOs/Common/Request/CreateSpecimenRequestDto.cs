@@ -1,33 +1,32 @@
-using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
 
 namespace Zootify_Backend.DTOs.Common.Request;
 
 public class CreateSpecimenRequestDto
 {
-    public string? Comment { get; set; }
+    public string? Comment { get; init; }
 
-    public required string Name { get; set; }
+    public required string Name { get; init; }
 
-    public string? LatinName { get; set; }
+    public string? LatinName { get; init; }
     
-    public required GeoDto Location { get; set; }
+    public required GeoDto Location { get; init; }
 
-    public required DateTime DateOfDiscovery { get; set; }
+    public required DateTime DateOfDiscovery { get; init; }
 
-    public required Guid TaxonomySpeciesGuid { get; set; }
+    public required Guid TaxonomySpeciesGuid { get; init; }
     
-    public string? StorageBuilding { get; set; }
+    public string? StorageBuilding { get; init; }
     
-    public string? StorageCabinet { get; set; }
+    public string? StorageCabinet { get; init; }
     
-    public string? StorageShelf { get; set; }
+    public string? StorageShelf { get; init; }
     
-    public string? StorageCompartment { get; set; }
-    
-    public List<Guid> Tags { get; set; }
+    public string? StorageCompartment { get; init; }
 
-    public List<string> TagsToCreate { get; set; }
+    public List<Guid> Tags { get; init; } = [];
 
-    public string Base64Image { get; set; }
+    public List<string> TagsToCreate { get; init; } = [];
+
+    public string? Base64Image { get; init; }
 }

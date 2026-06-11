@@ -4,17 +4,17 @@ namespace Zootify_Backend.DTOs.Common.Request.Helpers;
 
 public class SpecimenDto
 {
-    public Guid SpecimenGuid { get; set; }
+    public Guid SpecimenGuid { get; init; }
     
-    public required string Name { get; set; }
+    public required string Name { get; init; }
     
-    public required string LatinName  { get; set; }
+    public required string LatinName  { get; init; }
     
-    public required double Latitude { get; set; }
+    public required double Latitude { get; init; }
     
-    public required double Longitude { get; set; }
+    public required double Longitude { get; init; }
     
-    public bool IsPublic { get; set; } = true;
+    public bool IsPublic { get; init; } = true;
     
-    public SpecimenStatus Status { get; set; } =  SpecimenStatus.Active;
+    public SpecimenStatus Status { get; init; } =  SpecimenStatus.Active;
 }

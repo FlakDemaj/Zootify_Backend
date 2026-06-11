@@ -1,3 +1,5 @@
+using Zootify_Backend.Model.DataAccess.DBContext;
+
 namespace Zootify.Tests.Integration.Utils.Helpers;
 
 public class CollectionTestRepository
@@ -24,10 +26,14 @@ public class CollectionTestRepository
         };
 
         if (createdByUserGuid.HasValue)
+        {
             collection.SetCreatedBy(createdByUserGuid.Value);
+        }
 
         if (deletedByUserGuid.HasValue)
+        {
             collection.DeleteCollection(deletedByUserGuid.Value);
+        }
 
         _dbContext.Add(collection);
         await _dbContext.SaveChangesAsync();

@@ -22,8 +22,11 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
 
         builder
             .Property(p => p.TaxonomySpeciesGuid)
-            .HasColumnName("species_guid")
-            .IsRequired();
+            .HasColumnName("species_guid");
+
+        builder
+            .Property(p => p.RejectedAt)
+            .HasColumnName("rejected_at");
         
         builder
             .Property(p => p.Name)
@@ -92,7 +95,8 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasOne(s => s.Species)
             .WithMany(t => t.Specimens)
             .HasForeignKey(s => s.TaxonomySpeciesGuid)
-            .OnDelete(DeleteBehavior.Restrict);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder
             .HasOne(s => s.GeographicLocation)

@@ -42,5 +42,10 @@
     "Stage1Days": 7,
     "Stage2Days": 4,
     "Stage3Days": 1
+  },
+  "RejectedSpecimenPurgeJob": {
+    "IntervalInHours": 12,
+    "RetentionDays": 14,
+    "BatchSize": 100
   }
 }

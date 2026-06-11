@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
@@ -26,14 +25,5 @@ public class BaseRestController : ControllerBase
 
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
-    }
-
-    protected IAuthentication? TryGetAuthentication()
-    {
-        HttpContext.Items.TryGetValue(nameof(IAuthentication), out var value);
-        if (value is IAuthentication authentication)
-            return authentication;
-        
-        return null;
     }
 }

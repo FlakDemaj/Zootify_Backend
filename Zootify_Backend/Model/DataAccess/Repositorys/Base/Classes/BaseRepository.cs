@@ -1,8 +1,7 @@
 using Zootify_Backend.Extensions;
-using Zootify_Backend.Model.DataAccess.Entitys;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
-using Zootify_Backend.Models.DataAccess.DBContext;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 
@@ -68,7 +67,15 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// </summary>
     public async Task MassUpdateAsync(List<T> objectsToUpdate)
     {
-        Context.Set<T>().UpdateRange(objectsToUpdate);
-        await Context.SaveChangesAsync();
+        try
+        {
+            Context.Set<T>().UpdateRange(objectsToUpdate);
+            await Context.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

@@ -1,5 +1,4 @@
 using AutoMapper;
-using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
@@ -23,41 +22,6 @@ public class CommonUserService : ICommonUserService
         _mapper = mapper;
     }
 
-    [Transaction(ReadOnly = false)]
-    public async Task<GetUserResponseDto> GetUserByGuidAsync(
-        IAuthentication authentication,
-        Guid guid)
-    {
-        if (authentication.Role == UserRole.User)
-        {
-            throw new ZootifyException(ErrorCode.Forbidden);
-        }
-        
-        var user = await _userRepository.GetUserByGuidWithAuditInformationAsync(guid);
-
-        if (user == null)
-        {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
-        }
-        
-        return _mapper.Map<GetUserResponseDto>(user);
-    }
-    
-    [Transaction(ReadOnly = true)]
-    public async Task<List<GetAllUserResponseDto>> GetAllUsersAsync(
-        IAuthentication authentication,
-        GetAllUsersFilterDto query)
-    {
-        if (authentication.Role == UserRole.User)
-        {
-            throw new ZootifyException(ErrorCode.Forbidden);
-        }
-
-        var users = await _userRepository.GetAllUsersAsync(
-            query);
-        return _mapper.Map<List<GetAllUserResponseDto>>(users);
-    }
-    
     [Transaction(ReadOnly = false)]
     public async Task DeleteUserAsync(
         IAuthentication authentication,
@@ -97,33 +61,19 @@ public class CommonUserService : ICommonUserService
         }
         
         HelperMethods.CheckEmail(updateOwnUserRequestDto.Email);
-        
-        var mappedUser = _mapper.Map<UserEntity>(updateOwnUserRequestDto);
-        
-        mappedUser.FormatEmail();
-        
-        await UpdateUserAsync(
-            mappedUser,
-            requester,
-            authentication.UserGuid);
-    }
 
-    [Transaction(ReadOnly = false)]
-    public async Task UpdateUserAsync(
-        UserEntity newUser,
-        UserEntity oldUser,
-        Guid requesterGuid)
-    {
-        if (!oldUser.CheckChanges(newUser))
+        var mappedUser = _mapper.Map<UserEntity>(updateOwnUserRequestDto);
+
+        mappedUser.FormatEmail();
+
+        if (!requester.CheckChanges(mappedUser))
         {
             throw new ZootifyException(ErrorCode.NoUpdatedData);
         }
-        
-        oldUser.UpdateUserData(
-            newUser,
-            requesterGuid);
-        
-        await _userRepository.UpdateAsync(oldUser);
+
+        requester.UpdateUserData(mappedUser, authentication.UserGuid);
+
+        await _userRepository.UpdateAsync(requester);
     }
 
     [Transaction(ReadOnly = true)]

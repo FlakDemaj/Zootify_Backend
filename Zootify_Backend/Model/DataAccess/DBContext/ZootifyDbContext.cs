@@ -2,7 +2,7 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Configuration;
 
-namespace Zootify_Backend.Models.DataAccess.DBContext;
+namespace Zootify_Backend.Model.DataAccess.DBContext;
 
 /// <summary>
 /// The main EF Core database context for the Zootify application.

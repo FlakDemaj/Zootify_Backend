@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
-using Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
 

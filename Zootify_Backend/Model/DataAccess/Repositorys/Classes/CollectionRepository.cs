@@ -3,10 +3,10 @@ using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.Auth;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Models.DataAccess.DBContext;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Classes;
 
@@ -85,7 +85,7 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
         string? sortBy,
         SortDirection sortDirection)
     {
-        var desc = sortDirection == SortDirection.DESC;
+        var desc = sortDirection == SortDirection.Desc;
 
         if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "name")
         {

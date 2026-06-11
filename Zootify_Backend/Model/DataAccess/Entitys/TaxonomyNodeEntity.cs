@@ -3,7 +3,7 @@ using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
-public class TaxonomyNodeEntity: BaseDeletionEntity
+public class TaxonomyNodeEntity : BaseCreationEntity
 {
     public string Name { get; set; } = string.Empty;
     

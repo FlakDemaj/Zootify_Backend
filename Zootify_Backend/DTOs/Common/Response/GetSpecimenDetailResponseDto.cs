@@ -5,47 +5,47 @@ namespace Zootify_Backend.DTOs.Common.Response;
 
 public class GetSpecimenDetailResponseDto
 {
-    public Guid SpecimenGuid { get; set; }
+    public Guid SpecimenGuid { get; init; }
     
-    public required string Name { get; set; }
+    public required string Name { get; init; }
     
-    public required string LatinName { get; set; }
+    public required string LatinName { get; init; }
     
-    public DateTime DateOfDiscovery { get; set; }
+    public DateTime DateOfDiscovery { get; init; }
     
-    public double Latitude { get; set; }
+    public double Latitude { get; init; }
     
-    public double Longitude { get; set; }
+    public double Longitude { get; init; }
     
-    public string? StorageBuilding { get; set; }
+    public string? StorageBuilding { get; init; }
     
-    public string? StorageCabinet { get; set; }
+    public string? StorageCabinet { get; init; }
     
-    public string? StorageShelf { get; set; }
+    public string? StorageShelf { get; init; }
     
-    public string? StorageCompartment { get; set; }
+    public string? StorageCompartment { get; init; }
     
-    public string? Comment { get; set; }
+    public string? Comment { get; init; }
     
-    public bool IsPublic { get; set; }
+    public bool IsPublic { get; init; }
     
-    public SpecimenStatus Status { get; set; }
+    public SpecimenStatus Status { get; init; }
     
-    public Guid? ImageGuid { get; set; }
+    public Guid? ImageGuid { get; init; }
     
-    public string? CreatedByName { get; set; }
+    public string? CreatedByName { get; init; }
     
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; init; }
     
-    public string? UpdatedByName { get; set; }
+    public string? UpdatedByName { get; init; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; init; }
     
-    public string? DeletedByName { get; set; }
+    public string? DeletedByName { get; init; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedAt { get; init; }
     
-    public List<GeoLocationNodeDto> GeoPath { get; set; } = [];
+    public List<GeoLocationNodeDto> GeoPath { get; init; } = [];
     
     public List<GetAllTaxonomyNodesByFilterDto> TaxonomyPath { get; set; } = [];
 }

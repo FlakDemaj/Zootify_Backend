@@ -1,14 +1,13 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Base;
-using Zootify_Backend.DTOs.Common.Request;
-using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Models.DataAccess.DBContext;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Classes;
 
@@ -157,7 +156,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
         Expression<Func<UserEntity, TKey>> keySelector,
         SortDirection direction)
     {
-        if (direction == SortDirection.DESC)
+        if (direction == SortDirection.Desc)
         {
             return userQuery.OrderByDescending(keySelector).ThenBy(q => q.Guid);
         }

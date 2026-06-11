@@ -57,10 +57,28 @@ public class SpecimenMapper : Profile
         CreateMap<SpecimenEntity, GetSpecimenDetailResponseDto>(MemberList.None)
             .ForMember(d => d.SpecimenGuid,
                 o => o.MapFrom(s => s.Guid))
+            .ForMember(d => d.Name,
+                o => o.MapFrom(s => s.Name))
+            .ForMember(d => d.LatinName,
+                o => o.MapFrom(s => s.LatinName))
+            .ForMember(d => d.StorageBuilding,
+                o => o.MapFrom(s => s.StorageBuilding))
+            .ForMember(d => d.StorageCabinet,
+                o => o.MapFrom(s => s.StorageCabinet))
+            .ForMember(d => d.StorageCompartment,
+                o => o.MapFrom(s => s.StorageCompartment))
+            .ForMember(d => d.StorageShelf,
+                o => o.MapFrom(s => s.StorageShelf))
             .ForMember(d => d.CreatedAt,
                 o => o.MapFrom(s => s.CreationDate))
-            .ForMember(d => d.UpdatedAt,
-                o => o.MapFrom(s => s.UpdatedDate))
+            .ForMember(d => d.Comment,
+                o => o.MapFrom(s => s.Comment))
+            .ForMember(d => d.DateOfDiscovery,
+                o => o.MapFrom(s => s.DateOfDiscovery))
+            .ForMember(d => d.Longitude,
+                o => o.MapFrom(s => s.Longitude))
+            .ForMember(d => d.Latitude,
+                o => o.MapFrom(s => s.Latitude))
             .ForMember(d => d.DeletedAt,
                 o => o.MapFrom(s => s.DeletionDate))
             .ForMember(d => d.ImageGuid,

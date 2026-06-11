@@ -2,11 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
 using Zootify_Backend.Model.DataAccess.Entitys;
-using Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
-public class TaxonomyNodeEntityConfiguration : BaseDeletionEntityConfiguration<TaxonomyNodeEntity>
+public class TaxonomyNodeEntityConfiguration : BaseCreationEntityConfiguration<TaxonomyNodeEntity>
 {
     private string Table { get; }
 
@@ -60,18 +59,6 @@ public class TaxonomyNodeEntityConfiguration : BaseDeletionEntityConfiguration<T
             .HasForeignKey(t => t.CreatedByUserGuid)
             .OnDelete(DeleteBehavior.NoAction);
         
-        builder
-            .HasOne(t => t.UpdatedByUser)
-            .WithMany(u => u.UpdatedTaxonomies)
-            .HasForeignKey(t => t.UpdatedByUserGuid)
-            .OnDelete(DeleteBehavior.NoAction);
-        
-        builder
-            .HasOne(t => t.DeletedByUser)
-            .WithMany(u => u.DeletedTaxonomies)
-            .HasForeignKey(t => t.DeletedByUserGuid)
-            .OnDelete(DeleteBehavior.NoAction);
-
         builder
             .HasOne(t => t.ApprovedByUser)
             .WithMany(u => u.ApprovedTaxonomies)

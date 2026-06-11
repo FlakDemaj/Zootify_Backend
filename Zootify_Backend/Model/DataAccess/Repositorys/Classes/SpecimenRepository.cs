@@ -3,10 +3,10 @@ using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.Auth;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Classes;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Models.DataAccess.DBContext;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Classes;
 
@@ -140,10 +140,13 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         SpecimenStatus? status = null)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>(true)
-            .Where(sp => speciesGuids.Contains(sp.TaxonomySpeciesGuid));
+            .Where(sp => sp.TaxonomySpeciesGuid.HasValue
+                         && speciesGuids.Contains(sp.TaxonomySpeciesGuid.Value));
 
         if (status.HasValue)
+        {
             query = query.Where(sp => sp.Status == status.Value);
+        }
 
         return await query.ToListAsync();
     }
@@ -153,7 +156,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         string? sortBy,
         SortDirection sortDirection)
     {
-        var desc = sortDirection == SortDirection.DESC;
+        var desc = sortDirection == SortDirection.Desc;
         return sortBy switch
         {
             "name"            => desc ? query.OrderByDescending(sp => sp.Name)            : query.OrderBy(sp => sp.Name),
@@ -172,6 +175,17 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
                 && sp.DeletionDate != null
                 && sp.DeletionDate < cutoff)
             .OrderBy(sp => sp.DeletionDate)
+            .Take(batchSize)
+            .ToListAsync();
+    }
+
+    public async Task<List<SpecimenEntity>> GetRejectedSpecimensForPurgeAsync(DateTime cutoff, int batchSize)
+    {
+        return await Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.Status == SpecimenStatus.Rejected
+                && sp.RejectedAt != null
+                && sp.RejectedAt < cutoff)
+            .OrderBy(sp => sp.RejectedAt)
             .Take(batchSize)
             .ToListAsync();
     }

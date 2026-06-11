@@ -1,3 +1,4 @@
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify.Tests.Shared.Builders;
 
 namespace Zootify.Tests.Integration.Utils.Helpers;
@@ -66,7 +67,9 @@ public class UserTestRepository
         user.SetPassword(password);
 
         if (status == UserStatus.Pending)
+        {
             user.CreateRegistrationToken(24);
+        }
 
         _dbContext.Add(user);
         await _dbContext.SaveChangesAsync();

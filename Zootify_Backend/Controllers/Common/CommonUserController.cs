@@ -15,31 +15,12 @@ namespace Zootify_Backend.Controllers.Common;
 public class CommonUserController : BaseRestController
 {
     private readonly ICommonUserService _commonUserService;
-    
-    public CommonUserController(ICommonUserService commonUserService) 
+
+    public CommonUserController(ICommonUserService commonUserService)
     {
         _commonUserService = commonUserService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<GetAllUserResponseDto>>> 
-        GetAllUsersAsync(
-            [FromQuery] GetAllUsersFilterDto query)
-    {
-        var users = await _commonUserService
-            .GetAllUsersAsync(
-                Authentication,
-                query);
-        return Ok(users);
-    }
-
-    [HttpGet("{userGuid:guid}")]
-    public async Task<ActionResult<GetUserResponseDto>> GetUserAsync(Guid userGuid)
-    {
-        var user = await _commonUserService.GetUserByGuidAsync(Authentication,userGuid);
-        return Ok(user);
-    }
-    
     [HttpPatch]
     public async Task<IActionResult> UpdateOwnUserAsync(
         Guid userGuid,

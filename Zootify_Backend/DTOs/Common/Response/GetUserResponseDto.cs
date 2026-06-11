@@ -4,27 +4,27 @@ namespace Zootify_Backend.DTOs.Common.Response;
 
 public class GetUserResponseDto
 {
-    public required Guid UserGuid { get; set; }
+    public required Guid UserGuid { get; init; }
     
-    public required string FirstName { get; set; }
+    public required string FirstName { get; init; }
 
-    public required string LastName { get; set; }
+    public required string LastName { get; init; }
     
-    public required string Email { get; set; }
+    public required string Email { get; init; }
     
-    public UserStatus UserStatus { get; set; }
+    public UserStatus UserStatus { get; init; }
     
-    public UserRole UserRole { get; set; }
+    public UserRole UserRole { get; init; }
     
-    public required int LoginAttempts { get; set; }
+    public required int LoginAttempts { get; init; }
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; init; }
     
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; init; }
     
-    public string? UpdatedBy { get; set; }
+    public string? UpdatedBy { get; init; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedAt { get; init; }
     
-    public string? DeletedBy { get; set; }
+    public string? DeletedBy { get; init; }
 }

@@ -279,7 +279,9 @@ public class UserEntityTests
         var user = UserTestData.CreateUser();
 
         for (var i = 0; i < 5; i++)
+        {
             user.IncrementLoginAttempts(5);
+        }
 
         user.Status.Should().Be(UserStatus.Blocked);
     }
@@ -294,7 +296,9 @@ public class UserEntityTests
         user.ActivateUser();
 
         for (var i = 0; i < 4; i++)
+        {
             user.IncrementLoginAttempts(5);
+        }
 
         user.Status.Should().Be(UserStatus.Active);
     }
@@ -371,7 +375,9 @@ public class UserEntityTests
     {
         var user = UserTestData.CreateUser();
         for (var i = 0; i < 5; i++)
+        {
             user.IncrementLoginAttempts(5);
+        }
 
         user.ActivateUser();
 

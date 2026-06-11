@@ -36,4 +36,6 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
         SpecimenStatus? status = null);
 
     Task<List<SpecimenEntity>> GetDeletedSpecimensForPurgeAsync(DateTime cutoff, int batchSize);
+
+    Task<List<SpecimenEntity>> GetRejectedSpecimensForPurgeAsync(DateTime cutoff, int batchSize);
 }

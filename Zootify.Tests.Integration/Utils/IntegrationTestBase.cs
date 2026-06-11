@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify_Backend.Model.Providers.SignalR;
 using Zootify.Tests.Integration.Utils.Helpers;
@@ -25,6 +26,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly SpecimenTestRepository SpecimenRepo;
     protected readonly TagTestRepository TagRepo;
     protected readonly CollectionTestRepository CollectionRepo;
+    protected readonly LoanTestRepository LoanRepo;
     protected Mock<INominatimProvider> NominatimMock => Fixture.NominatimMock;
     protected Mock<IHubContext<NotificationHub>> HubContextMock => Fixture.HubContextMock;
 
@@ -43,6 +45,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         SpecimenRepo = new SpecimenTestRepository(_dbContext);
         TagRepo = new TagTestRepository(_dbContext);
         CollectionRepo = new CollectionTestRepository(_dbContext);
+        LoanRepo = new LoanTestRepository(_dbContext);
     }
 
     /// <summary>

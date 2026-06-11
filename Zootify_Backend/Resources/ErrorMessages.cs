@@ -6,4 +6,4 @@ namespace Zootify_Backend.Resources;
 /// <c>Resources/ErrorMessages.en.resx</c> (en).
 /// Keys correspond to <see cref="Zootify_Backend.Enums.ErrorCode"/> member names.
 /// </summary>
-public class ErrorMessages { }
+public class ErrorMessages;

@@ -5,4 +5,3 @@ global using Moq;
 global using Xunit;
 global using Zootify_Backend.Enums;
 global using Zootify_Backend.Model.DataAccess.Entitys;
-global using Zootify_Backend.Models.DataAccess.DBContext;

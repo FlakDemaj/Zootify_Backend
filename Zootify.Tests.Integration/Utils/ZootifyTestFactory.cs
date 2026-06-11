@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Providers.Nominatim;
@@ -66,7 +67,9 @@ public class ZootifyTestFactory : WebApplicationFactory<Program>
             var existingOptions = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<ZootifyDbContext>));
             if (existingOptions != null)
+            {
                 services.Remove(existingOptions);
+            }
 
             services.AddDbContext<ZootifyDbContext>(options =>
                 options.UseSqlServer(_connectionString));

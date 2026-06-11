@@ -18,7 +18,7 @@ internal static class Routings
     
     #region Admin
 
-    internal const string AdminUserRouting              = "/rest/AdminUser";
+    internal const string AdminUserRouting              = "/rest/AdminModeratorUser";
     internal const string AdminLoanRouting              = "/rest/AdminLoan";
     internal const string AdminTaxonomyRouting          = "/rest/AdminTaxonomy";
     internal const string AdminTaxonomyForApprovalRouting = "/rest/AdminTaxonomy/for-approval";

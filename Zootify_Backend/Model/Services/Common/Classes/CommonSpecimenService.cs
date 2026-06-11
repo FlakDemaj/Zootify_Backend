@@ -78,7 +78,15 @@ public class CommonSpecimenService : ICommonSpecimenService
         CheckSpecimenInCollection(authentication, specimen, collectionGuid);
 
         var result = _mapper.Map<GetSpecimenDetailResponseDto>(specimen);
-        result.TaxonomyPath = await BuildTaxonomyPathAsync(specimen.Species);
+        result.TaxonomyPath = specimen.Species != null
+            ? await BuildTaxonomyPathAsync(specimen.Species)
+            : [new GetAllTaxonomyNodesByFilterDto
+            {
+                TaxonomyGuid    = Guid.Empty,
+                Name            = "Taxonomy deleted due to rejection",
+                Rank            = TaxonomyRank.Species,
+                ApprovalStatus  = ApprovalStatus.Rejected
+            }];
         return result;
     }
 
@@ -394,7 +402,7 @@ public class CommonSpecimenService : ICommonSpecimenService
         List<TagEntity> tagsToCreate,
         List<TagEntity> existingTags,
         GeoDto geoDto,
-        string imagesBase64)
+        string? imagesBase64)
     {
         var locationGuid = await ResolveGeographicLocationAsync(geoDto);
         
@@ -450,8 +458,12 @@ public class CommonSpecimenService : ICommonSpecimenService
 
     private async Task PersistSpecimenImagesAsync(
         SpecimenEntity specimen,
-        string imagesBase64)
+        string? imagesBase64)
     {
+        if (imagesBase64 == null)
+        {
+            return;
+        }
         
         var imageEntity = new SpecimenImageEntity
         {

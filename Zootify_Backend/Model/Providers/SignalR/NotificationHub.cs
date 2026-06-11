@@ -4,4 +4,4 @@ using Microsoft.AspNetCore.SignalR;
 namespace Zootify_Backend.Model.Providers.SignalR;
 
 [Authorize]
-public class NotificationHub : Hub { }
+public class NotificationHub : Hub;

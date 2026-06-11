@@ -6,9 +6,7 @@ namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 public interface ILoanRepository : IBaseRepository<LoanEntity>
 {
     Task<LoanEntity?> GetLoanByGuidWithDetailsAsync(Guid guid);
-
-    Task<List<LoanEntity>> GetActiveLoansWithDetailsAsync();
-
+    
     Task<List<LoanEntity>> GetLoansForStage1ReminderAsync(DateTime dueBefore, int batchSize);
 
     Task<List<LoanEntity>> GetLoansForStage2ReminderAsync(DateTime dueBefore, int batchSize);
