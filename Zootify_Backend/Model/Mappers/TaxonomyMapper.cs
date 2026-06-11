@@ -37,7 +37,7 @@ public class TaxonomyMapper : Profile
                 opt =>
                     opt.MapFrom(src => src.Guid));
         
-        CreateMap<List<GetTaxonomyTreeResponseDto>, GetTaxonomyTreeResponseDto>(MemberList.None)
+        CreateMap<List<GetTaxonomyTreeNodeDto>, GetTaxonomyTreeResponseDto>(MemberList.None)
             .ForMember(dest => dest.Nodes, 
                 opt => 
                     opt.MapFrom(src => src))
