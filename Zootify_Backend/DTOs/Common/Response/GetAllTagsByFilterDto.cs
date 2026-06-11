@@ -2,7 +2,7 @@ namespace Zootify_Backend.DTOs.Common.Response;
 
 public class GetAllTagsByFilterDto
 {
-    public required Guid TagGuid { get; set; }
+    public required Guid TagGuid { get; init; }
   
-    public required string TagName { get; set; }
+    public required string TagName { get; init; }
 }

@@ -1,3 +1,5 @@
+using Zootify_Backend.Model.DataAccess.DBContext;
+
 namespace Zootify.Tests.Integration.Utils.Helpers;
 
 public class TagTestRepository

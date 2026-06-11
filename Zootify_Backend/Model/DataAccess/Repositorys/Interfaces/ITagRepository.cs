@@ -8,6 +8,4 @@ public interface ITagRepository : IBaseRepository<TagEntity>
     Task<List<TagEntity>> GetTagByGuidAsync(List<Guid> guids);
     
     Task<List<TagEntity>> GetTagsByStartsWithNameAsync(string? startsWith);
-    
-    Task<List<TagEntity>> GetTagsByNameAsync(List<string> names);
 }

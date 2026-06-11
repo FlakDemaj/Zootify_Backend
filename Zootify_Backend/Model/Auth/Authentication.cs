@@ -9,7 +9,7 @@ public class Authentication : IAuthentication
 {
     public Guid UserGuid { get; }
 
-    public UserRole Role { get; set; }
+    public UserRole Role { get; }
 
     /// <summary>
     /// Initializes a new <see cref="Authentication"/> with the user's GUID and authentication type.

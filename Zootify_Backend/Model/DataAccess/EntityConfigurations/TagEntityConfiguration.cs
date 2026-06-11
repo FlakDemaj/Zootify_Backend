@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Zootify_Backend.Model.DataAccess.EntityConfigurations.Base;
 using Zootify_Backend.Model.DataAccess.Entitys;
-using Zootify_Backend.Models.DataAccess.EntityConfigurations.Base;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
 public class TagEntityConfiguration : BaseGuidEntityConfiguration<TagEntity>
 {
-    private string Table { get; set; }
+    private string Table { get; }
     
     public TagEntityConfiguration()
     {

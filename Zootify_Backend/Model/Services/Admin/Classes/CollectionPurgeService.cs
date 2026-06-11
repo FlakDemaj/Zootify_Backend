@@ -21,7 +21,10 @@ public class CollectionPurgeService : ICollectionPurgeService
         var batch = await _collectionRepository.GetDeletedCollectionsForPurgeAsync(
             cutoff, ZootifyConfiguration.CleanupJobsBatchSize);
 
-        if (batch.Count == 0) return 0;
+        if (batch.Count == 0)
+        {
+            return 0;
+        }
 
         await _collectionRepository.MassDeleteAsync(batch);
         return batch.Count;

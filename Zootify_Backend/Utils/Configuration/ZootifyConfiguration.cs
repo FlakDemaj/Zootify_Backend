@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
-
 namespace Zootify_Backend.Configuration;
 
 public class ZootifyConfiguration : BaseConfiguration
@@ -82,6 +80,19 @@ public class ZootifyConfiguration : BaseConfiguration
 
     public static int CleanupJobsBatchSize =>
         SafeGetParsed("CleanupJobs:BatchSize", 100);
+
+    #endregion
+
+    #region RejectedSpecimenPurgeJob
+
+    public static int RejectedSpecimenPurgeJobIntervalInHours =>
+        SafeGetParsed("RejectedSpecimenPurgeJob:IntervalInHours", 12);
+
+    public static int RejectedSpecimenPurgeJobRetentionDays =>
+        SafeGetParsed("RejectedSpecimenPurgeJob:RetentionDays", 14);
+
+    public static int RejectedSpecimenPurgeJobBatchSize =>
+        SafeGetParsed("RejectedSpecimenPurgeJob:BatchSize", 100);
 
     #endregion
 

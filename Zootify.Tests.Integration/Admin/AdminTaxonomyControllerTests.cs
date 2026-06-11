@@ -186,21 +186,21 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
     #region RejectTaxonomy
 
     [Fact]
-    public async Task RejectTaxonomy_Success_NodeStatusChangesToRejected()
+    public async Task RejectTaxonomy_Success_NodeIsHardDeleted()
     {
         var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
         AuthenticateAs(admin);
 
         var node = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "Invalid taxonomy entry." };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "Invalid taxonomy entry." });
+            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var updated = await GetTaxonomyNodeFromDbAsync(node.Guid);
-        updated!.ApprovalStatus.Should().Be(ApprovalStatus.Rejected);
+        var deleted = await GetTaxonomyNodeFromDbAsync(node.Guid);
+        deleted.Should().BeNull();
     }
 
     [Fact]
@@ -222,9 +222,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         var pendingSpecimen = await SpecimenRepo.CreateSpecimenAsync(
             species.Guid, geo.Guid, status: SpecimenStatus.Pending, createdByUserGuid: user.Guid);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "Incorrect classification." };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{phylum.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "Incorrect classification." });
+            $"{Routings.AdminTaxonomyRouting}/{phylum.Guid}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -249,9 +249,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         var alreadyRejected = await SpecimenRepo.CreateSpecimenAsync(
             species.Guid, geo.Guid, status: SpecimenStatus.Rejected, createdByUserGuid: user.Guid);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "Bad data." };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{phylum.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "Bad data." });
+            $"{Routings.AdminTaxonomyRouting}/{phylum.Guid}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -260,31 +260,14 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task RejectTaxonomy_AlreadyRejected_ReturnsError()
-    {
-        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
-        AuthenticateAs(admin);
-
-        var node = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Rejected);
-
-        var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "test" });
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.TaxonomyAlreadyRejected);
-    }
-
-    [Fact]
     public async Task RejectTaxonomy_NotFound_ReturnsError()
     {
         var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
         AuthenticateAs(admin);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "test" };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{Guid.NewGuid()}/reject",
-            new RejectTaxonomyRequestDto { Comment = "test" });
+            $"{Routings.AdminTaxonomyRouting}/{Guid.NewGuid()}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
@@ -299,9 +282,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         var node = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "Reason for rejection." };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "Reason for rejection." });
+            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -314,9 +297,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         var node = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "test" };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "test" });
+            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -326,9 +309,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
     {
         var node = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
 
+        var request = new RejectTaxonomyRequestDto { Comment = "test" };
         var response = await Client.PostAsJsonAsync(
-            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject",
-            new RejectTaxonomyRequestDto { Comment = "test" });
+            $"{Routings.AdminTaxonomyRouting}/{node.Guid}/reject", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

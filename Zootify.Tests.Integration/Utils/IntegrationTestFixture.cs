@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Respawn;
 using Testcontainers.MsSql;
+using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Providers.Nominatim;

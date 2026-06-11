@@ -42,7 +42,10 @@ public class LoanReminderService : ILoanReminderService
 
     private async Task ProcessStageAsync(List<LoanEntity> loans, int stageNumber, DateTime today)
     {
-        if (loans.Count == 0) return;
+        if (loans.Count == 0)
+        {
+            return;
+        }
 
         foreach (var loan in loans)
         {

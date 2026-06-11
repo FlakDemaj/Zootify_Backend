@@ -89,7 +89,8 @@ public class AdminTaxonomyService : IAdminTaxonomyService
                 .GetSpecimensBySpeciesGuidsAsync(subtreeSpeciesGuids, SpecimenStatus.Pending);
 
             var toActivate = pendingSpecimens
-                .Where(s => IsFullChainApproved(s.TaxonomySpeciesGuid, byGuid))
+                .Where(s => s.TaxonomySpeciesGuid.HasValue
+                            && IsFullChainApproved(s.TaxonomySpeciesGuid.Value, byGuid))
                 .ToList();
 
             foreach (var specimen in toActivate)
@@ -132,16 +133,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
         }
 
-        if (node.ApprovalStatus == ApprovalStatus.Rejected)
-        {
-            throw new ZootifyException(ErrorCode.TaxonomyAlreadyRejected);
-        }
-
-        node.ApprovalStatus = ApprovalStatus.Rejected;
-        await _taxonomyRepository.UpdateAsync(node);
-
         var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
-        var subtreeSpeciesGuids = CollectSubtreeSpeciesGuids(taxonomyGuid, allNodes);
+        var subtreeNodes = CollectSubtreeNodesDeepestFirst(taxonomyGuid, allNodes);
+        var subtreeSpeciesGuids = subtreeNodes
+            .Where(n => n.Rank == TaxonomyRank.Species)
+            .Select(n => n.Guid)
+            .ToList();
 
         var affectedUserGuids = new HashSet<Guid>();
         if (node.CreatedByUserGuid.HasValue)
@@ -155,10 +152,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
                 .GetSpecimensBySpeciesGuidsAsync(subtreeSpeciesGuids);
 
             var toReject = specimens.Where(s => s.Status != SpecimenStatus.Rejected).ToList();
+            var rejectedAt = DateTime.UtcNow;
 
             foreach (var specimen in toReject)
             {
                 specimen.Status = SpecimenStatus.Rejected;
+                specimen.RejectedAt = rejectedAt;
 
                 if (specimen.CreatedByUserGuid.HasValue)
                 {
@@ -171,6 +170,10 @@ public class AdminTaxonomyService : IAdminTaxonomyService
                 await _specimenRepository.MassUpdateAsync(toReject);
             }
         }
+
+        // Hard-delete the entire subtree (deepest first to satisfy FK Restrict on ParentGuid).
+        // The SetNull cascade on specimens.species_guid runs as part of this delete.
+        await _taxonomyRepository.MassDeleteAsync(subtreeNodes);
 
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
         foreach (var user in users)
@@ -240,6 +243,35 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         }
 
         return speciesGuids;
+    }
+
+    private static List<TaxonomyNodeEntity> CollectSubtreeNodesDeepestFirst(
+        Guid rootGuid,
+        List<TaxonomyNodeEntity> allNodes)
+    {
+        var byParent = allNodes.ToLookup(n => n.ParentGuid);
+        var result = new List<TaxonomyNodeEntity>();
+        var queue = new Queue<Guid>();
+        queue.Enqueue(rootGuid);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            var node = allNodes.FirstOrDefault(n => n.Guid == current);
+            if (node != null)
+            {
+                result.Add(node);
+            }
+
+            foreach (var child in byParent[current])
+            {
+                queue.Enqueue(child.Guid);
+            }
+        }
+
+        // Reverse BFS order → deepest nodes first; satisfies FK Restrict on ParentGuid.
+        result.Reverse();
+        return result;
     }
 
     private static bool IsFullChainApproved(

@@ -18,8 +18,8 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         await CreateUserSettingsInDbAsync(user.Guid, darkMode: false, language: "de");
         AuthenticateAs(user);
 
-        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting,
-            new UpdateUserSettingsRequestDto { DarkMode = true, Language = "de" });
+        var request = new UpdateUserSettingsRequestDto { DarkMode = true, Language = "de" };
+        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -34,8 +34,8 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         await CreateUserSettingsInDbAsync(user.Guid, darkMode: false, language: "de");
         AuthenticateAs(user);
 
-        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting,
-            new UpdateUserSettingsRequestDto { DarkMode = false, Language = "en" });
+        var request = new UpdateUserSettingsRequestDto { DarkMode = false, Language = "en" };
+        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -50,8 +50,8 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         await CreateUserSettingsInDbAsync(user.Guid, darkMode: false, language: "de");
         AuthenticateAs(user);
 
-        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting,
-            new UpdateUserSettingsRequestDto { DarkMode = true, Language = "en" });
+        var request = new UpdateUserSettingsRequestDto { DarkMode = true, Language = "en" };
+        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -70,8 +70,8 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting,
-            new UpdateUserSettingsRequestDto { DarkMode = true, Language = "en" });
+        var request = new UpdateUserSettingsRequestDto { DarkMode = true, Language = "en" };
+        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting, request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.DefaultErrorCode);
@@ -95,8 +95,8 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
     [Fact]
     public async Task UpdateUserSettings_NotAuthenticated_ReturnsUnauthorized()
     {
-        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting,
-            new UpdateUserSettingsRequestDto { DarkMode = true, Language = "en" });
+        var request = new UpdateUserSettingsRequestDto { DarkMode = true, Language = "en" };
+        var response = await Client.PatchAsJsonAsync(Routings.CommonUserSettingsRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

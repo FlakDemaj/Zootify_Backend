@@ -39,6 +39,46 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         specimen.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
+    [Fact]
+    public async Task CreateSpecimen_AllFieldsPersisted()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var dateOfDiscovery = new DateTime(2020, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+
+        SetupNominatimMock();
+        AuthenticateAs(user);
+
+        var request = BuildRequest(
+            species.Guid,
+            name:               "Lion",
+            latinName:          "Panthera leo",
+            dateOfDiscovery:    dateOfDiscovery,
+            comment:            "Found near the river.",
+            storageBuilding:    "Building A",
+            storageCabinet:     "Cabinet 3",
+            storageShelf:       "Shelf 2",
+            storageCompartment: "Compartment B");
+
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
+        var specimen = await GetSpecimenFromDbAsync(result!.CreatedObjectGuid);
+
+        specimen!.Name.Should().Be("Lion");
+        specimen.LatinName.Should().Be("Panthera leo");
+        specimen.DateOfDiscovery.Should().BeCloseTo(dateOfDiscovery, TimeSpan.FromSeconds(1));
+        specimen.Comment.Should().Be("Found near the river.");
+        specimen.StorageBuilding.Should().Be("Building A");
+        specimen.StorageCabinet.Should().Be("Cabinet 3");
+        specimen.StorageShelf.Should().Be("Shelf 2");
+        specimen.StorageCompartment.Should().Be("Compartment B");
+        specimen.TaxonomySpeciesGuid.Should().Be(species.Guid);
+        specimen.CreatedByUserGuid.Should().Be(user.Guid);
+    }
+
     #endregion
 
     #region CreateSpecimen – Tags
@@ -136,6 +176,27 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         images.Should().HaveCount(1);
         images.Single().ImageBase64.Should().Be("base64image1");
+    }
+
+    [Fact]
+    public async Task CreateSpecimen_WithoutImage_SpecimenCreatedWithNoImage()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+
+        SetupNominatimMock();
+        AuthenticateAs(user);
+
+        var request = BuildRequest(species.Guid);
+
+        var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<CreatedObjectResponseDto>();
+        var images = await GetImagesForSpecimenFromDbAsync(result!.CreatedObjectGuid);
+
+        images.Should().BeEmpty();
     }
 
     #endregion
@@ -533,13 +594,13 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     [Fact]
     public async Task UpdateSpecimen_NotAuthenticated_ReturnsUnauthorized()
     {
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "X", LatinName = "X", DateOfDiscovery = DateTime.UtcNow,
+            Comment = null, IsPublic = true, Status = SpecimenStatus.Active
+        };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}",
-            new UpdateSpecimenRequestDto
-            {
-                Name = "X", LatinName = "X", DateOfDiscovery = DateTime.UtcNow,
-                Comment = null, IsPublic = true, Status = SpecimenStatus.Active
-            });
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -559,9 +620,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "newImage" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = "newImage" });
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
@@ -580,9 +641,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = null };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = null });
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
@@ -600,9 +661,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "brandNew" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = "brandNew" });
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
@@ -621,9 +682,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(user);
 
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "same" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = "same" });
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
@@ -635,9 +696,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
 
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "data" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = "data" });
+            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
@@ -655,9 +716,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(other);
 
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "hacked" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = "hacked" });
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -666,9 +727,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     [Fact]
     public async Task UpdateSpecimenImage_NotAuthenticated_ReturnsUnauthorized()
     {
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "data" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}",
-            new UpdateSpecimenImageRequestDto { ImageBase64 = "data" });
+            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -788,9 +849,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
 
+        var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}",
-            new UpdateSpecimenTagsRequestDto { SpecimenTags = [] });
+            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
@@ -824,9 +885,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     [Fact]
     public async Task UpdateSpecimenTags_NotAuthenticated_ReturnsUnauthorized()
     {
+        var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}",
-            new UpdateSpecimenTagsRequestDto { SpecimenTags = [] });
+            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -861,18 +922,31 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     private static CreateSpecimenRequestDto BuildRequest(
         Guid taxonomySpeciesGuid,
-        List<Guid>? tags = null,
+        string name               = "Test Specimen",
+        string latinName          = "Testus specienus",
+        DateTime? dateOfDiscovery = null,
+        string? comment           = null,
+        string? storageBuilding   = null,
+        string? storageCabinet    = null,
+        string? storageShelf      = null,
+        string? storageCompartment = null,
+        List<Guid>? tags          = null,
         List<string>? tagsToCreate = null,
-        string? base64Image = null) => new()
+        string? base64Image       = null) => new()
     {
-        Name = "Test Specimen",
-        LatinName = "Testus specienus",
-        DateOfDiscovery = DateTime.UtcNow,
-        Location = new GeoDto { Latitude = 48.137, Longitude = 11.575 },
+        Name               = name,
+        LatinName          = latinName,
+        DateOfDiscovery    = dateOfDiscovery ?? DateTime.UtcNow,
+        Location           = new GeoDto { Latitude = 48.137, Longitude = 11.575 },
         TaxonomySpeciesGuid = taxonomySpeciesGuid,
-        Tags = tags ?? [],
-        TagsToCreate = tagsToCreate ?? [],
-        Base64Image = base64Image ?? string.Empty
+        Comment            = comment,
+        StorageBuilding    = storageBuilding,
+        StorageCabinet     = storageCabinet,
+        StorageShelf       = storageShelf,
+        StorageCompartment = storageCompartment,
+        Tags               = tags ?? [],
+        TagsToCreate       = tagsToCreate ?? [],
+        Base64Image        = base64Image,
     };
 
     #endregion

@@ -1,4 +1,4 @@
-using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 

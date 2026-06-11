@@ -4,4 +4,4 @@ namespace Zootify_Backend.Resources;
 /// Marker class for the CollectionNames resource family.
 /// Keys: MyCollection, Active, Pending, Deleted.
 /// </summary>
-public class CollectionNames { }
+public class CollectionNames;

@@ -21,7 +21,10 @@ public class SpecimenPurgeService : ISpecimenPurgeService
         var batch = await _specimenRepository.GetDeletedSpecimensForPurgeAsync(
             cutoff, ZootifyConfiguration.CleanupJobsBatchSize);
 
-        if (batch.Count == 0) return 0;
+        if (batch.Count == 0)
+        {
+            return 0;
+        }
 
         await _specimenRepository.MassDeleteAsync(batch);
         return batch.Count;

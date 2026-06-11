@@ -79,7 +79,7 @@ public class CommonCollectionService : ICommonCollectionService
 
         if (!string.IsNullOrWhiteSpace(paging.SortBy) && paging.SortBy == "specimenCount")
         {
-            combined = paging.SortDirection == SortDirection.DESC
+            combined = paging.SortDirection == SortDirection.Desc
                 ? combined.OrderByDescending(c => c.SpecimenCount).ToList()
                 : combined.OrderBy(c => c.SpecimenCount).ToList();
         }
@@ -104,7 +104,9 @@ public class CommonCollectionService : ICommonCollectionService
         BaseSortAndPagingDto paging)
     {
         if (IsStaticCollection(collectionGuid))
+        {
             return await GetSpecimensFromStaticCollectionAsync(authentication, collectionGuid, paging);
+        }
 
         var collection = await _collectionRepository.GetCollectionWithAuditAsync(collectionGuid);
 
@@ -177,28 +179,50 @@ public class CommonCollectionService : ICommonCollectionService
     private static string StaticCollectionKey(Guid guid)
     {
         if (guid == AllSpecimensGuid)
+        {
             return "AllSpecimens";
-        if (guid == MyCollectionGuid)  
+        }
+
+        if (guid == MyCollectionGuid)
+        {
             return "MyCollection";
-        if (guid == MyActiveGuid)      
+        }
+
+        if (guid == MyActiveGuid)
+        {
             return "MyActive";
-        if (guid == MyPendingGuid)     
+        }
+
+        if (guid == MyPendingGuid)
+        {
             return "MyPending";
-        if (guid == MyDeletedGuid)     
+        }
+
+        if (guid == MyDeletedGuid)
+        {
             return "MyDeleted";
+        }
+
         return "MyRejected";
     }
 
     private static void CheckCollectionVisibility(IAuthentication? authentication, CollectionEntity collection)
     {
         var isPublicActive = !collection.IsPrivate && collection.Status == CollectionStatus.Active;
-        if (isPublicActive) return;
+        if (isPublicActive)
+        {
+            return;
+        }
 
         if (authentication == null)
+        {
             throw new ZootifyException(ErrorCode.Forbidden);
+        }
 
         if (authentication.Role == UserRole.User && authentication.UserGuid != collection.CreatedByUserGuid)
+        {
             throw new ZootifyException(ErrorCode.Forbidden);
+        }
     }
 
     private static string? FormatUserName(UserEntity? user) =>
@@ -208,7 +232,9 @@ public class CommonCollectionService : ICommonCollectionService
         IAuthentication? authentication)
     {
         if (authentication == null)
+        {
             return [];
+        }
 
         var culture = CultureInfo.CurrentUICulture;
 

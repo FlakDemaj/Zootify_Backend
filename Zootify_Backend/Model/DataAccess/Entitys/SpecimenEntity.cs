@@ -5,13 +5,13 @@ namespace Zootify_Backend.Model.DataAccess.Entitys;
 
 public class SpecimenEntity : BaseDeletionEntity
 {
-    public Guid TaxonomySpeciesGuid { get; set; }
+    public Guid? TaxonomySpeciesGuid { get; set; }
+
+    public TaxonomyNodeEntity? Species { get; set; }
     
-    public TaxonomyNodeEntity Species { get; set; } = null!;
+    public required string Name { get; set; }
     
-    public string Name { get; set; }
-    
-    public string LatinName  { get; set; }
+    public required string LatinName  { get; set; }
     
     public DateTime DateOfDiscovery { get; set; }
 
@@ -34,14 +34,16 @@ public class SpecimenEntity : BaseDeletionEntity
     public string? Comment { get; set; }
 
     public bool IsPublic { get; set; } = true;
-    
-    public SpecimenStatus Status { get; set; } =  SpecimenStatus.Active;
+
+    public SpecimenStatus Status { get; set; } = SpecimenStatus.Active;
+
+    public DateTime? RejectedAt { get; set; }
     
     public SpecimenImageEntity? Image { get; set; }
     
     public ICollection<LoanEntity> Loans { get; set; } = new List<LoanEntity>();
     
-    public ICollection<RelationSpecimensTagEntity> SpecimensTags { get; set; }
+    public ICollection<RelationSpecimensTagEntity> SpecimensTags { get; set; } = new  List<RelationSpecimensTagEntity>();
     
     public ICollection<SpecimenCollectionEntity> Collections { get; set; } = new List<SpecimenCollectionEntity>();
 
@@ -57,7 +59,7 @@ public class SpecimenEntity : BaseDeletionEntity
             throw new ZootifyException(ErrorCode.SpeciesNotFound);
         }
 
-        TaxonomySpeciesGuid = species.Guid;
+        TaxonomySpeciesGuid = (Guid?)species.Guid;
     }
 
     public void SetLocation(double latitude, double longitude)

@@ -2,7 +2,6 @@ using Autofac;
 using SendWithBrevo;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Extensions;
-using Zootify_Backend.Model.Providers;
 using Zootify_Backend.Model.Providers.Brevo;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify_Backend.Model.Providers.SignalR;

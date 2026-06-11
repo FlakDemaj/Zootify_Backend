@@ -6,7 +6,7 @@ using Zootify_Backend.Utils.Extensions;
 
 namespace Zootify_Backend.Server;
 
-public class Program
+public abstract class Program
 {
     /// <summary>
     /// Prevents external instantiation of the Program class.

@@ -41,8 +41,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     [Fact]
     public async Task CreateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
-        var response = await Client.PostAsJsonAsync(Routings.CommonCollectionRouting,
-            new CreateCollectionRequestDto { Name = "X", IsPrivate = false });
+        var request = new CreateCollectionRequestDto { Name = "X", IsPrivate = false };
+        var response = await Client.PostAsJsonAsync(Routings.CommonCollectionRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -658,9 +658,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     [Fact]
     public async Task UpdateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
+        var request = new UpdateCollectionRequestDto { Name = "X", IsPrivate = false };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonCollectionRouting}/{Guid.CreateVersion7()}",
-            new UpdateCollectionRequestDto { Name = "X", IsPrivate = false });
+            $"{Routings.CommonCollectionRouting}/{Guid.CreateVersion7()}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

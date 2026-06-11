@@ -15,13 +15,15 @@ public abstract class PurgeJobBase : BackgroundService
 
     protected abstract string JobName { get; }
 
+    protected virtual int IntervalInHours => ZootifyConfiguration.CleanupJobsIntervalInHours;
+
     protected abstract Task<int> ExecutePurgeBatchAsync(IServiceProvider serviceProvider);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await RunAsync();
 
-        var interval = TimeSpan.FromHours(ZootifyConfiguration.CleanupJobsIntervalInHours);
+        var interval = TimeSpan.FromHours(IntervalInHours);
         using var timer = new PeriodicTimer(interval);
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {

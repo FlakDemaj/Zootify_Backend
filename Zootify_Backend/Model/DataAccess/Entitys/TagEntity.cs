@@ -4,7 +4,7 @@ namespace Zootify_Backend.Model.DataAccess.Entitys;
 
 public class TagEntity : BaseGuidEntity
 {
-    public string Tag { get; set; }
+    public required string Tag { get; set; }
     
-    public ICollection<RelationSpecimensTagEntity> SpecimensTags { get; set; }
+    public ICollection<RelationSpecimensTagEntity> SpecimensTags { get; set; } = new List<RelationSpecimensTagEntity>();
 }

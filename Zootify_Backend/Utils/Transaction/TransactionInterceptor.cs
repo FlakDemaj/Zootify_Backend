@@ -3,7 +3,7 @@ using Castle.DynamicProxy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Zootify_Backend.Enums;
-using Zootify_Backend.Models.DataAccess.DBContext;
+using Zootify_Backend.Model.DataAccess.DBContext;
 
 namespace Zootify_Backend.Transaction
 {
