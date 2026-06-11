@@ -83,6 +83,5 @@ public enum ErrorCode
 
     LoanAlreadyReturned = -1009002,
     
-    ImageNotFound = -1010001,
-
+    ImageNotFound = -1010001
 }
