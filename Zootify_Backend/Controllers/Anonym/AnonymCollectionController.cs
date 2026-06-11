@@ -19,16 +19,14 @@ public class AnonymCollectionController : BaseRestController
 
     [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<List<GetCollectionResponseDto>>> GetPublicCollectionsAsync(
+    public async Task<ActionResult<GetAllCollectionsPagedResponseDto>> GetPublicCollectionsAsync(
         [FromQuery] string? filterByName,
-        [FromQuery] string? orderBy,
-        [FromQuery] string? orderDirection)
+        [FromQuery] BaseSortAndPagingDto paging)
     {
         return Ok(await _commonCollectionService.GetAllCollectionsAsync(
             null,
             filterByName,
-            orderBy,
-            orderDirection));
+            paging));
     }
 
     [AllowAnonymous]

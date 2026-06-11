@@ -5,5 +5,5 @@ namespace Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 public interface ISpecimenImageRepository : IBaseRepository<SpecimenImageEntity>
 {
-    
+    Task<SpecimenImageEntity?> GetSpecimenImageByGuid(Guid guid);
 }

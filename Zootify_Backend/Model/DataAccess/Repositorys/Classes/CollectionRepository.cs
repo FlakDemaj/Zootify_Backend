@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.Auth;
@@ -18,12 +19,11 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
     public async Task<List<CollectionEntity>> GetAllCollectionsByNameFilterAsync(
         IAuthentication? authentication,
         string? filterByName,
-        string? orderBy,
-        string? orderDirection)
+        BaseSortAndPagingDto paging)
     {
         var query = Context.GetTrackingSet<CollectionEntity>();
 
-        query = AddFilter(query, authentication, filterByName, orderBy, orderDirection);
+        query = AddFilter(query, authentication, filterByName, paging);
 
         return await query.ToListAsync();
     }
@@ -44,12 +44,22 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
             .FirstOrDefaultAsync(c => c.Guid == guid);
     }
 
+    public async Task<List<CollectionEntity>> GetDeletedCollectionsForPurgeAsync(DateTime cutoff, int batchSize)
+    {
+        return await Context.GetTrackingSet<CollectionEntity>()
+            .Where(c => c.Status == CollectionStatus.Deleted
+                && c.DeletionDate != null
+                && c.DeletionDate < cutoff)
+            .OrderBy(c => c.DeletionDate)
+            .Take(batchSize)
+            .ToListAsync();
+    }
+
     private static IQueryable<CollectionEntity> AddFilter(
         IQueryable<CollectionEntity> query,
         IAuthentication? authentication,
         string? filterByName,
-        string? orderBy,
-        string? orderDirection)
+        BaseSortAndPagingDto paging)
     {
         if (authentication == null)
         {
@@ -67,27 +77,27 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
             query = query.Where(c => c.Name.Contains(filterByName));
         }
 
-        return ApplyOrderBy(query, orderBy, orderDirection);
+        return ApplyOrderBy(query, paging.SortBy, paging.SortDirection);
     }
 
     private static IQueryable<CollectionEntity> ApplyOrderBy(
         IQueryable<CollectionEntity> query,
-        string? orderBy,
-        string? orderDirection)
+        string? sortBy,
+        SortDirection sortDirection)
     {
-        var desc = string.Equals(orderDirection, "desc", StringComparison.OrdinalIgnoreCase);
+        var desc = sortDirection == SortDirection.DESC;
 
-        if (!string.IsNullOrWhiteSpace(orderBy) && orderBy == "name")
+        if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "name")
         {
             return desc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name);
         }
 
-        if (!string.IsNullOrWhiteSpace(orderBy) && orderBy == "isPrivate")
+        if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "isPrivate")
         {
             return desc ? query.OrderByDescending(c => c.IsPrivate) : query.OrderBy(c => c.IsPrivate);
         }
 
-        if (!string.IsNullOrWhiteSpace(orderBy) && orderBy == "createdAt")
+        if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "createdAt")
         {
             return desc ? query.OrderByDescending(c => c.CreationDate) : query.OrderBy(c => c.CreationDate);
         }

@@ -28,7 +28,7 @@ public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<Spec
         builder
             .Property(p => p.ImageBase64)
             .HasColumnName("image_url")
-            .HasMaxLength(1000)
+            .HasColumnType("nvarchar(max)")
             .IsRequired();
 
         builder

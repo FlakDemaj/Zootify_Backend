@@ -12,9 +12,15 @@ public class TaxonomyNodeEntity: BaseDeletionEntity
     public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Pending;
     
     public Guid? ParentGuid { get; set; }
-    
+
+    public Guid? ApprovedByUserGuid { get; set; }
+
+    public DateTime? ApprovedDate { get; set; }
+
     public TaxonomyNodeEntity? Parent { get; set; }
-    
+
+    public UserEntity? ApprovedByUser { get; set; }
+
     public ICollection<TaxonomyNodeEntity> Children { get; set; } = new List<TaxonomyNodeEntity>();
 
     public ICollection<SpecimenEntity> Specimens { get; set; } = new List<SpecimenEntity>();

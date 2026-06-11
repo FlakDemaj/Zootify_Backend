@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Model.Auth;
+using Zootify_Backend.Model.Jobs;
 using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Models.DataAccess.DBContext;
 using Zootify_Backend.Persistance;
@@ -58,6 +59,10 @@ public class Startup
         
         builder.Services.AddHttpClient();
         builder.Services.AddSignalR();
+        builder.Services.AddHostedService<LoanReminderJob>();
+        builder.Services.AddHostedService<UserPurgeJob>();
+        builder.Services.AddHostedService<CollectionPurgeJob>();
+        builder.Services.AddHostedService<SpecimenPurgeJob>();
     }
 
     /// <summary>

@@ -122,4 +122,19 @@
   <data name="SpecimenNotInCollection" xml:space="preserve">
     <value>Das Exemplar befindet sich nicht in dieser Sammlung.</value>
   </data>
+  <data name="TaxonomyAlreadyApproved" xml:space="preserve">
+    <value>Diese Taxonomie wurde bereits genehmigt.</value>
+  </data>
+  <data name="TaxonomyAlreadyRejected" xml:space="preserve">
+    <value>Diese Taxonomie wurde bereits abgelehnt.</value>
+  </data>
+  <data name="LoanNotFound" xml:space="preserve">
+    <value>Die angegebene Ausleihe wurde nicht gefunden.</value>
+  </data>
+  <data name="LoanAlreadyReturned" xml:space="preserve">
+    <value>Diese Ausleihe wurde bereits zurückgegeben.</value>
+  </data>
+  <data name="ImageNotFound" xml:space="preserve">
+    <value>Das Bild wurde nicht gefunden.</value>
+  </data>
 </root>

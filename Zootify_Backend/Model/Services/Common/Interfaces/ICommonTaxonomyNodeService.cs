@@ -17,6 +17,8 @@ public interface ICommonTaxonomyNodeService
         string? startsWith,
         TaxonomyRank rank);
 
+    Task<GetTaxonomyTreeResponseDto> GetAllTaxonomyNodesAsTreeAsync(string? filterByName);
+
     Task<List<TaxonomyNodeEntity>> GetTaxonomyTreeAsync(
         TaxonomyNodeEntity taxonomyNode,
         List<TaxonomyNodeEntity> taxonomyNodes);

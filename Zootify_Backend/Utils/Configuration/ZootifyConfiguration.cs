@@ -71,4 +71,36 @@ public class ZootifyConfiguration : BaseConfiguration
         SafeGet("Brevo:ApiKey", string.Empty);
 
     #endregion
+
+    #region CleanupJobs
+
+    public static int CleanupJobsIntervalInHours =>
+        SafeGetParsed("CleanupJobs:IntervalInHours", 12);
+
+    public static int CleanupJobsRetentionYears =>
+        SafeGetParsed("CleanupJobs:RetentionYears", 3);
+
+    public static int CleanupJobsBatchSize =>
+        SafeGetParsed("CleanupJobs:BatchSize", 100);
+
+    #endregion
+
+    #region LoanReminderJob
+
+    public static int LoanReminderJobIntervalInHours =>
+        SafeGetParsed("LoanReminderJob:IntervalInHours", 12);
+
+    public static int LoanReminderJobBatchSize =>
+        SafeGetParsed("LoanReminderJob:BatchSize", 50);
+
+    public static int LoanReminderJobStage1Days =>
+        SafeGetParsed("LoanReminderJob:Stage1Days", 7);
+
+    public static int LoanReminderJobStage2Days =>
+        SafeGetParsed("LoanReminderJob:Stage2Days", 4);
+
+    public static int LoanReminderJobStage3Days =>
+        SafeGetParsed("LoanReminderJob:Stage3Days", 1);
+
+    #endregion
 }

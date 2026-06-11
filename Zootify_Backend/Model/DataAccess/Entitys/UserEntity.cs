@@ -36,6 +36,8 @@ public class UserEntity : BaseDeletionEntity
     public ICollection<TaxonomyNodeEntity> UpdatedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
 
     public ICollection<TaxonomyNodeEntity> DeletedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
+
+    public ICollection<TaxonomyNodeEntity> ApprovedTaxonomies { get; set; } = new List<TaxonomyNodeEntity>();
     
     public ICollection<LoanEntity> LoansAsLender { get; set; } = new List<LoanEntity>();
 

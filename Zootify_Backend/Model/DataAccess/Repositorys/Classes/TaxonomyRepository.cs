@@ -38,4 +38,13 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
         
         return await query.ToListAsync();
     }
+
+    public async Task<List<TaxonomyNodeEntity>> GetAllNodesForTreeAsync()
+    {
+        return await Context
+            .GetTrackingSet<TaxonomyNodeEntity>()
+            .OrderBy(t => t.Rank)
+            .ThenBy(t => t.Name)
+            .ToListAsync();
+    }
 }

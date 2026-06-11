@@ -72,6 +72,37 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
             .ToListAsync();
     }
 
+    public async Task<List<UserEntity>> GetUsersByGuidsAsync(List<Guid> guids)
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .Where(u => guids.Contains(u.Guid))
+            .ToListAsync();
+    }
+
+    public async Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith, int limit = 20)
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .Where(u => u.Status == UserStatus.Active
+                && ((u.FirstName + " " + u.LastName).StartsWith(startsWith)
+                    || u.FirstName.StartsWith(startsWith)
+                    || u.LastName.StartsWith(startsWith)))
+            .OrderBy(u => u.FirstName)
+            .ThenBy(u => u.LastName)
+            .Take(limit)
+            .ToListAsync();
+    }
+
+    public async Task<List<UserEntity>> GetDeletedUsersForPurgeAsync(DateTime cutoff, int batchSize)
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .Where(u => u.Status == UserStatus.Deleted
+                && u.DeletionDate != null
+                && u.DeletionDate < cutoff)
+            .OrderBy(u => u.DeletionDate)
+            .Take(batchSize)
+            .ToListAsync();
+    }
+
     private static IQueryable<UserEntity> FilterUserQuery(
         IQueryable<UserEntity> userQuery,
         GetAllUsersFilterDto query)

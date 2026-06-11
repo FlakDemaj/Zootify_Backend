@@ -12,6 +12,11 @@ public interface ICommonSpecimenService
         IAuthentication authentication,
         CreateSpecimenRequestDto request);
 
+    Task<GetSpecimenDetailResponseDto> GetSpecimenByGuidAsync(
+        IAuthentication? authentication,
+        Guid specimenGuid,
+        Guid collectionGuid);
+
     Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(string startsWith);
     
     Task UpdateSpecimenAsync(

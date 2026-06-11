@@ -34,8 +34,7 @@ public class CollectionTestRepository
         return collection;
     }
 
-    public async Task<SpecimenCollectionEntity> CreateSpecimenCollectionAsync(
-        Guid collectionGuid,
+    public async Task CreateSpecimenCollectionAsync(Guid collectionGuid,
         Guid specimenGuid)
     {
         var link = new SpecimenCollectionEntity
@@ -45,6 +44,5 @@ public class CollectionTestRepository
         };
         _dbContext.Add(link);
         await _dbContext.SaveChangesAsync();
-        return link;
     }
 }

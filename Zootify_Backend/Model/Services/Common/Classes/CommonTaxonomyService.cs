@@ -79,18 +79,6 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         return _mapper.Map<List<CreatedObjectResponseDto>>(createdNodes);
     }
 
-    private async Task SendNotificationAsync(bool needsApproval)
-    {
-        if (!needsApproval)
-        {
-            return;
-        }
-        
-        var users = await _userRepository.GetAllAdminsAndModeratorUsersWithSettingsAsync();
-        
-        _ = _notificationProvider.SendNotificationAsync(users);
-    }
-
     [Transaction(ReadOnly = true)]
     public async Task<List<List<GetAllTaxonomyNodesByFilterDto>>> GetAllTaxonomyNodesAsync(
         string? startsWith,
@@ -121,6 +109,32 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         return taxonomyTrees;
     }
     
+    [Transaction(ReadOnly = true)]
+    public async Task<GetTaxonomyTreeResponseDto> GetAllTaxonomyNodesAsTreeAsync(string? filterByName)
+    {
+        var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
+        var byParent = allNodes.ToLookup(n => n.ParentGuid);
+
+        var roots = byParent[null].AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filterByName))
+        {
+            roots = roots.Where(n => n.Name.Contains(filterByName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var nodes = roots
+            .OrderBy(n => n.Name)
+            .Select(r => BuildTreeNode(r, byParent))
+            .ToList();
+
+        return new GetTaxonomyTreeResponseDto
+        {
+            TotalCount = nodes.Count,
+            Nodes      = nodes,
+        };
+    }
+
+    [Transaction(ReadOnly = true)]
     public async Task<List<TaxonomyNodeEntity>> GetTaxonomyTreeAsync(
         TaxonomyNodeEntity taxonomyNode,
         List<TaxonomyNodeEntity> taxonomyNodes)
@@ -142,4 +156,30 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
 
         return await GetTaxonomyTreeAsync(parentTaxonomy, taxonomyNodes);
     }
+    
+    private async Task SendNotificationAsync(bool needsApproval)
+    {
+        if (!needsApproval)
+        {
+            return;
+        }
+        
+        var users = await _userRepository.GetAllAdminsAndModeratorUsersWithSettingsAsync();
+        
+        _ = _notificationProvider.SendNotificationAsync(users);
+    }
+    
+    private static GetTaxonomyTreeNodeDto BuildTreeNode(
+        TaxonomyNodeEntity node,
+        ILookup<Guid?, TaxonomyNodeEntity> byParent) => new()
+    {
+        TaxonomyGuid   = node.Guid,
+        Name           = node.Name,
+        Rank           = node.Rank,
+        ApprovalStatus = node.ApprovalStatus,
+        Children = byParent[node.Guid]
+            .OrderBy(c => c.Name)
+            .Select(c => BuildTreeNode(c, byParent))
+            .ToList(),
+    };
 }

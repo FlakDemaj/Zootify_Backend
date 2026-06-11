@@ -30,5 +30,17 @@
     "SpecialCharacters": "!@#$%^&*()_+-=[]{}|;:',.<>?",
     "RegistrationTokenExpiryInHours": 24,
     "ResetPasswordTokenExpiryInHours": 24
+  },
+  "CleanupJobs": {
+    "IntervalInHours": 12,
+    "RetentionYears": 2,
+    "BatchSize": 100
+  },
+  "LoanReminderJob": {
+    "IntervalInHours": 12,
+    "BatchSize": 50,
+    "Stage1Days": 7,
+    "Stage2Days": 4,
+    "Stage3Days": 1
   }
 }

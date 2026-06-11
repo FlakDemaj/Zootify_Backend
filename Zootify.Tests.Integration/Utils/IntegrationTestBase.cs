@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify_Backend.Model.Providers.SignalR;
@@ -163,11 +164,37 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _dbContext.ChangeTracker.Clear();
     }
 
+    protected async Task<LoanEntity?> GetLoanFromDbAsync(Guid guid)
+    {
+        return await _dbContext.Set<LoanEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Guid == guid);
+    }
+
     protected async Task<TaxonomyNodeEntity?> GetTaxonomyNodeFromDbAsync(Guid guid)
     {
         return await _dbContext.Set<TaxonomyNodeEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Guid == guid);
+    }
+
+    /// <summary>
+    /// Creates a new DI scope backed by the test application's service provider.
+    /// Use this to resolve scoped services (e.g. jobs, purge services) directly in tests.
+    /// </summary>
+    protected IServiceScope CreateScope() => Fixture.Services.CreateScope();
+
+    /// <summary>
+    /// Overrides the deletion_date column for any soft-deletable entity via EF Core's
+    /// change-tracker API, which bypasses the private setter on DeletionDate.
+    /// </summary>
+    protected async Task OverrideDeletionDateAsync(object entity, DateTime deletionDate)
+    {
+        _dbContext.ChangeTracker.Clear();
+        _dbContext.Attach(entity);
+        _dbContext.Entry(entity).Property("DeletionDate").CurrentValue = deletionDate;
+        await _dbContext.SaveChangesAsync();
+        _dbContext.ChangeTracker.Clear();
     }
 
     protected void AuthenticateAs(UserEntity user)

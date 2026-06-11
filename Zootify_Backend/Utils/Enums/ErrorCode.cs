@@ -65,9 +65,7 @@ public enum ErrorCode
     
     AddressDoesNotExist =  -1006003,
     
-    TaxonomyRankIsAtTheDeepestLevel = -1006004,
-    
-    TaxonomyRankIsNoSpecies = -1006005,
+    TaxonomyRankIsNoSpecies = -1006004,
 
     CollectionNotFound = -1007001,
 
@@ -75,6 +73,16 @@ public enum ErrorCode
 
     SpecimenAlreadyInCollection = -1007003,
 
-    SpecimenNotInCollection = -1007004
+    SpecimenNotInCollection = -1007004,
+
+    TaxonomyAlreadyApproved = -1008001,
+
+    TaxonomyAlreadyRejected = -1008002,
+
+    LoanNotFound = -1009001,
+
+    LoanAlreadyReturned = -1009002,
+    
+    ImageNotFound = -1010001,
 
 }

@@ -11,11 +11,10 @@ public interface ICommonCollectionService
         IAuthentication authentication,
         CreateCollectionRequestDto request);
 
-    Task<List<GetCollectionResponseDto>> GetAllCollectionsAsync(
+    Task<GetAllCollectionsPagedResponseDto> GetAllCollectionsAsync(
         IAuthentication? authentication,
         string? filterByName,
-        string? orderBy,
-        string? orderDirection);
+        BaseSortAndPagingDto paging);
 
     Task<GetAllSpecimenInCollectionResponseDto> GetAllSpecimensInCollectionAsync(
         IAuthentication? authentication,

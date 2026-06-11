@@ -41,7 +41,7 @@ public class CommonUserController : BaseRestController
     }
     
     [HttpPatch]
-    public async Task<IActionResult> UpdateUserAsync(
+    public async Task<IActionResult> UpdateOwnUserAsync(
         Guid userGuid,
         [FromBody] UpdateOwnUserRequestDto updateOwnUserRequestDto)
     {

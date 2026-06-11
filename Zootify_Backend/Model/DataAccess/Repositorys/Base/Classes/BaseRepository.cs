@@ -62,4 +62,13 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     {
         await Context.UpdateAndSaveChangesAsync(objectToUpdate);
     }
+
+    /// <summary>
+    /// Saves changes made to a set of tracked entities back to the database.
+    /// </summary>
+    public async Task MassUpdateAsync(List<T> objectsToUpdate)
+    {
+        Context.Set<T>().UpdateRange(objectsToUpdate);
+        await Context.SaveChangesAsync();
+    }
 }

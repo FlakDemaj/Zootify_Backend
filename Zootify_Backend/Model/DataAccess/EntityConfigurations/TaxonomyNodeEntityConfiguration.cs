@@ -41,6 +41,14 @@ public class TaxonomyNodeEntityConfiguration : BaseDeletionEntityConfiguration<T
             .HasColumnName("approval_status");
 
         builder
+            .Property(p => p.ApprovedByUserGuid)
+            .HasColumnName("approved_by_user_guid");
+
+        builder
+            .Property(p => p.ApprovedDate)
+            .HasColumnName("approved_date");
+
+        builder
             .HasOne(t => t.Parent)
             .WithMany(t => t.Children)
             .HasForeignKey(t => t.ParentGuid)
@@ -62,6 +70,12 @@ public class TaxonomyNodeEntityConfiguration : BaseDeletionEntityConfiguration<T
             .HasOne(t => t.DeletedByUser)
             .WithMany(u => u.DeletedTaxonomies)
             .HasForeignKey(t => t.DeletedByUserGuid)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder
+            .HasOne(t => t.ApprovedByUser)
+            .WithMany(u => u.ApprovedTaxonomies)
+            .HasForeignKey(t => t.ApprovedByUserGuid)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder

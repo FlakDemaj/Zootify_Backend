@@ -273,6 +273,228 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
     #endregion
 
+    #region GetTaxonomyTree
+
+    [Fact]
+    public async Task GetTaxonomyTree_FullChain_ReturnsCorrectTreeStructure()
+    {
+        var phylum  = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",  TaxonomyRank.Phylum);
+        var @class  = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class,  parentGuid: phylum.Guid);
+        var order   = await SpecimenRepo.CreateTaxonomyNodeAsync("Carnivora", TaxonomyRank.Order,  parentGuid: @class.Guid);
+        var family  = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae",   TaxonomyRank.Family, parentGuid: order.Guid);
+        var genus   = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera",  TaxonomyRank.Genus,  parentGuid: family.Guid);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo",       TaxonomyRank.Species, parentGuid: genus.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(Routings.CommonTaxonomyTreeRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetTaxonomyTreeResponseDto>();
+
+        result!.TotalCount.Should().Be(1);
+        var root = result.Nodes.Single();
+        root.TaxonomyGuid.Should().Be(phylum.Guid);
+        root.Rank.Should().Be(TaxonomyRank.Phylum);
+
+        var level2 = root.Children.Single();
+        level2.TaxonomyGuid.Should().Be(@class.Guid);
+        level2.Rank.Should().Be(TaxonomyRank.Class);
+
+        var level3 = level2.Children.Single();
+        level3.TaxonomyGuid.Should().Be(order.Guid);
+
+        var level4 = level3.Children.Single();
+        level4.TaxonomyGuid.Should().Be(family.Guid);
+
+        var level5 = level4.Children.Single();
+        level5.TaxonomyGuid.Should().Be(genus.Guid);
+
+        var level6 = level5.Children.Single();
+        level6.TaxonomyGuid.Should().Be(species.Guid);
+        level6.Children.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_MultipleRoots_ReturnsBothTrees()
+    {
+        var phylum1 = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",    TaxonomyRank.Phylum);
+        var phylum2 = await SpecimenRepo.CreateTaxonomyNodeAsync("Arthropoda",  TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class, parentGuid: phylum1.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Insecta",   TaxonomyRank.Class, parentGuid: phylum2.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            Routings.CommonTaxonomyTreeRouting);
+
+        result!.TotalCount.Should().Be(2);
+        result.Nodes.Should().ContainSingle(n => n.TaxonomyGuid == phylum1.Guid);
+        result.Nodes.Should().ContainSingle(n => n.TaxonomyGuid == phylum2.Guid);
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_RootsAreOrderedByNameAscending()
+    {
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Mollusca",   TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Arthropoda", TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",   TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            Routings.CommonTaxonomyTreeRouting);
+
+        result!.Nodes.Select(n => n.Name).Should().BeInAscendingOrder();
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_ChildrenAreOrderedByNameAscending()
+    {
+        var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Reptilia",  TaxonomyRank.Class, parentGuid: phylum.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Amphibia",  TaxonomyRank.Class, parentGuid: phylum.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class, parentGuid: phylum.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            Routings.CommonTaxonomyTreeRouting);
+
+        var root = result!.Nodes.Single();
+        root.Children.Select(c => c.Name).Should().BeInAscendingOrder();
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_RootWithNoChildren_ReturnsEmptyChildrenList()
+    {
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            Routings.CommonTaxonomyTreeRouting);
+
+        result!.TotalCount.Should().Be(1);
+        result.Nodes.Single().Children.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_NoNodes_ReturnsEmptyTree()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            Routings.CommonTaxonomyTreeRouting);
+
+        result!.TotalCount.Should().Be(0);
+        result.Nodes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_FilterByName_ReturnsMatchingRootsOnly()
+    {
+        var chordata   = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",   TaxonomyRank.Phylum);
+        var arthropoda = await SpecimenRepo.CreateTaxonomyNodeAsync("Arthropoda", TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia", TaxonomyRank.Class, parentGuid: chordata.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=Chord");
+
+        result!.TotalCount.Should().Be(1);
+        result.Nodes.Single().TaxonomyGuid.Should().Be(chordata.Guid);
+        result.Nodes.Should().NotContain(n => n.TaxonomyGuid == arthropoda.Guid);
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_FilterByName_IsCaseInsensitive()
+    {
+        var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=chordata");
+
+        result!.TotalCount.Should().Be(1);
+        result.Nodes.Single().TaxonomyGuid.Should().Be(phylum.Guid);
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_FilterByName_NoMatch_ReturnsEmptyTree()
+    {
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=zzznomatch");
+
+        result!.TotalCount.Should().Be(0);
+        result.Nodes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_FilteredRootIncludesFullSubtree()
+    {
+        var chordata  = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",  TaxonomyRank.Phylum);
+        var mammalia  = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class, parentGuid: chordata.Guid);
+        var carnivora = await SpecimenRepo.CreateTaxonomyNodeAsync("Carnivora", TaxonomyRank.Order, parentGuid: mammalia.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Arthropoda", TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=Chordata");
+
+        result!.TotalCount.Should().Be(1);
+        var root = result.Nodes.Single();
+        root.Children.Should().HaveCount(1);
+        root.Children.Single().TaxonomyGuid.Should().Be(mammalia.Guid);
+        root.Children.Single().Children.Single().TaxonomyGuid.Should().Be(carnivora.Guid);
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_NodeCarriesCorrectApprovalStatus()
+    {
+        var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum,
+            approvalStatus: ApprovalStatus.Approved);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia", TaxonomyRank.Class,
+            parentGuid: phylum.Guid, approvalStatus: ApprovalStatus.Pending);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            Routings.CommonTaxonomyTreeRouting);
+
+        var root = result!.Nodes.Single();
+        root.ApprovalStatus.Should().Be(ApprovalStatus.Approved);
+        root.Children.Single().ApprovalStatus.Should().Be(ApprovalStatus.Pending);
+    }
+
+    [Fact]
+    public async Task GetTaxonomyTree_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.GetAsync(Routings.CommonTaxonomyTreeRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
     #region Helpers
 
     #endregion

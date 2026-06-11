@@ -20,6 +20,17 @@ public class CommonSpecimenController : BaseRestController
         _commonSpecimenService = commonSpecimenService;
     }
 
+    [HttpGet("{specimenGuid:guid}")]
+    public async Task<ActionResult<GetSpecimenDetailResponseDto>> GetSpecimenDetailAsync(
+        Guid specimenGuid,
+        [FromQuery] Guid collectionGuid)
+    {
+        return Ok(await _commonSpecimenService.GetSpecimenByGuidAsync(
+            Authentication,
+            specimenGuid,
+            collectionGuid));
+    }
+
     [HttpPost]
     public async Task<ActionResult<CreatedObjectResponseDto>> CreateSpecimen(
         [FromBody] CreateSpecimenRequestDto specimen)
