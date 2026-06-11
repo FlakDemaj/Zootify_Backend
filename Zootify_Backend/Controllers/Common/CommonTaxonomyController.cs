@@ -29,6 +29,13 @@ public class CommonTaxonomyController : BaseRestController
             rank));
     }
     
+    [HttpGet("tree")]
+    public async Task<ActionResult<GetTaxonomyTreeResponseDto>> GetAllTaxonomyNodesAsTreeAsync(
+        [FromQuery] string? filterByName)
+    {
+        return Ok(await _commonTaxonomyNodeService.GetAllTaxonomyNodesAsTreeAsync(filterByName));
+    }
+
     [HttpPost]
     public async Task<ActionResult<List<CreatedObjectResponseDto>>> CreateTaxonomyNode(
         [FromBody] CreateTaxonomyNodeRequestDto requestDto)

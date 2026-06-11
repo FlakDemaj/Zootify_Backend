@@ -180,6 +180,202 @@ public class BrevoProvider : IBrevoProvider
         return (sender, recipients);
     }
 
+    public async Task<bool> SendTaxonomyApprovedEmail(
+        string email,
+        string firstname,
+        string lastname,
+        string taxonomyName,
+        TaxonomyRank rank)
+    {
+        var fullName = firstname + " " + lastname;
+        var rankLabel = TranslateRank(rank);
+
+        var template = await LoadTemplateAsync("TaxonomyApprovedEmail");
+        template = template.Replace("{userName}", fullName);
+        template = template.Replace("{taxonomyName}", taxonomyName);
+        template = template.Replace("{taxonomyRank}", rankLabel);
+
+        var (sender, recipients) = CreateSenderAndRecipient(fullName, email);
+
+        var subject = IsEnglish()
+            ? $"Taxonomy approved: {taxonomyName}"
+            : $"Taxonomie genehmigt: {taxonomyName}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    public async Task<bool> SendTaxonomyRejectedEmail(
+        string email,
+        string firstname,
+        string lastname,
+        string taxonomyName,
+        TaxonomyRank rank,
+        string comment)
+    {
+        var fullName = firstname + " " + lastname;
+        var rankLabel = TranslateRank(rank);
+
+        var template = await LoadTemplateAsync("TaxonomyRejectedEmail");
+        template = template.Replace("{userName}", fullName);
+        template = template.Replace("{taxonomyName}", taxonomyName);
+        template = template.Replace("{taxonomyRank}", rankLabel);
+        template = template.Replace("{comment}", comment);
+
+        var (sender, recipients) = CreateSenderAndRecipient(fullName, email);
+
+        var subject = IsEnglish()
+            ? $"Taxonomy rejected: {taxonomyName}"
+            : $"Taxonomie abgelehnt: {taxonomyName}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    public async Task<bool> SendLoanConfirmationEmail(
+        string borrowerEmail,
+        string borrowerName,
+        string lenderName,
+        string specimenName,
+        string specimenLatinName,
+        DateTime loanDate,
+        DateTime dueDate,
+        string? notes)
+    {
+        var dateFormat = IsEnglish() ? "MM/dd/yyyy" : "dd.MM.yyyy";
+
+        var template = await LoadTemplateAsync("LoanConfirmationEmail");
+        template = template.Replace("{borrowerName}", borrowerName);
+        template = template.Replace("{lenderName}", lenderName);
+        template = template.Replace("{specimenName}", specimenName);
+        template = template.Replace("{specimenLatinName}", specimenLatinName);
+        template = template.Replace("{loanDate}", loanDate.ToString(dateFormat));
+        template = template.Replace("{dueDate}", dueDate.ToString(dateFormat));
+        template = template.Replace("{notes}", string.IsNullOrWhiteSpace(notes)
+            ? (IsEnglish() ? "—" : "—")
+            : notes);
+
+        var (sender, recipients) = CreateSenderAndRecipient(borrowerName, borrowerEmail);
+
+        var subject = IsEnglish()
+            ? $"Loan confirmation: {specimenName}"
+            : $"Ausleihbestätigung: {specimenName}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    public async Task<bool> SendLoanReturnConfirmationEmail(
+        string borrowerEmail,
+        string borrowerName,
+        string specimenName,
+        string specimenLatinName,
+        DateTime loanDate,
+        DateTime returnDate,
+        string? notes)
+    {
+        var dateFormat = IsEnglish() ? "MM/dd/yyyy" : "dd.MM.yyyy";
+
+        var template = await LoadTemplateAsync("LoanReturnConfirmationEmail");
+        template = template.Replace("{borrowerName}", borrowerName);
+        template = template.Replace("{specimenName}", specimenName);
+        template = template.Replace("{specimenLatinName}", specimenLatinName);
+        template = template.Replace("{loanDate}", loanDate.ToString(dateFormat));
+        template = template.Replace("{returnDate}", returnDate.ToString(dateFormat));
+        template = template.Replace("{notes}", string.IsNullOrWhiteSpace(notes) ? "—" : notes);
+
+        var (sender, recipients) = CreateSenderAndRecipient(borrowerName, borrowerEmail);
+
+        var subject = IsEnglish()
+            ? $"Return confirmed: {specimenName}"
+            : $"Rückgabe bestätigt: {specimenName}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    public async Task<bool> SendLoanDueReminderEmail(
+        string recipientEmail,
+        string recipientName,
+        string specimenName,
+        string specimenLatinName,
+        int daysUntilDue,
+        DateTime dueDate,
+        bool isBorrower)
+    {
+        var dateFormat = IsEnglish() ? "MM/dd/yyyy" : "dd.MM.yyyy";
+
+        string daysText;
+        if (IsEnglish())
+        {
+            daysText = daysUntilDue switch
+            {
+                > 1  => $"in {daysUntilDue} days",
+                1    => "tomorrow",
+                0    => "today",
+                _    => $"{Math.Abs(daysUntilDue)} day(s) overdue",
+            };
+        }
+        else
+        {
+            daysText = daysUntilDue switch
+            {
+                > 1  => $"in {daysUntilDue} Tagen",
+                1    => "morgen",
+                0    => "heute",
+                _    => $"seit {Math.Abs(daysUntilDue)} Tag(en) überfällig",
+            };
+        }
+
+        string reminderMessage;
+        if (IsEnglish())
+        {
+            reminderMessage = isBorrower
+                ? $"Please remember to return <strong>{specimenName}</strong> {daysText}."
+                : $"<strong>{specimenName}</strong> is expected back {daysText}.";
+        }
+        else
+        {
+            reminderMessage = isBorrower
+                ? $"Bitte vergessen Sie nicht, <strong>{specimenName}</strong> {daysText} zurückzugeben."
+                : $"<strong>{specimenName}</strong> wird {daysText} zurückerwartet.";
+        }
+
+        var template = await LoadTemplateAsync("LoanDueReminderEmail");
+        template = template.Replace("{recipientName}", recipientName);
+        template = template.Replace("{specimenName}", specimenName);
+        template = template.Replace("{specimenLatinName}", specimenLatinName);
+        template = template.Replace("{daysText}", daysText);
+        template = template.Replace("{dueDate}", dueDate.ToString(dateFormat));
+        template = template.Replace("{reminderMessage}", reminderMessage);
+
+        var (sender, recipients) = CreateSenderAndRecipient(recipientName, recipientEmail);
+
+        var subject = IsEnglish()
+            ? $"Reminder: {specimenName} due {daysText}"
+            : $"Erinnerung: {specimenName} fällig {daysText}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    private static string TranslateRank(TaxonomyRank rank) => IsEnglish()
+        ? rank switch
+        {
+            TaxonomyRank.Phylum  => "Phylum",
+            TaxonomyRank.Class   => "Class",
+            TaxonomyRank.Order   => "Order",
+            TaxonomyRank.Family  => "Family",
+            TaxonomyRank.Genus   => "Genus",
+            TaxonomyRank.Species => "Species",
+            _                    => rank.ToString(),
+        }
+        : rank switch
+        {
+            TaxonomyRank.Phylum  => "Stamm",
+            TaxonomyRank.Class   => "Klasse",
+            TaxonomyRank.Order   => "Ordnung",
+            TaxonomyRank.Family  => "Familie",
+            TaxonomyRank.Genus   => "Gattung",
+            TaxonomyRank.Species => "Art",
+            _                    => rank.ToString(),
+        };
+
     private static bool IsEnglish() =>
         CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
 

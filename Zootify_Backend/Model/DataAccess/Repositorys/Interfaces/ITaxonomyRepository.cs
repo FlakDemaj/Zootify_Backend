@@ -11,4 +11,6 @@ public interface ITaxonomyRepository : IBaseRepository<TaxonomyNodeEntity>
     Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(
         string? startsWithName,
         TaxonomyRank rank);
+
+    Task<List<TaxonomyNodeEntity>> GetAllNodesForTreeAsync();
 }

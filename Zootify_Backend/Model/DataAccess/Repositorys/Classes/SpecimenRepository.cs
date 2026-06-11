@@ -36,32 +36,6 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         return await query.FirstOrDefaultAsync(sp => sp.Guid == guid);
     }
 
-    public async Task<List<SpecimenEntity>> GetAllSpecimensByStatusAsync(
-        IAuthentication authentication,
-        SpecimenStatus status)
-    {
-        var query = CreateSpecimenQuery().Where(sp => sp.Status == status);
-
-        if (authentication.Role == UserRole.User)
-        {
-            query = query.Where(sp => sp.IsPublic);
-        }
-
-        if (authentication.Role == UserRole.User && status == SpecimenStatus.Pending)
-        {
-            query = query.Where(sp => sp.CreatedByUserGuid == authentication.UserGuid);
-        }
-
-        return await query.ToListAsync();
-    }
-
-    public async Task<List<SpecimenEntity>> GetOwnSpecimensAsync(Guid userGuid)
-    {
-        return await CreateSpecimenQuery()
-            .Where(sp => sp.CreatedByUserGuid == userGuid)
-            .ToListAsync();
-    }
-
     public async Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication authentication)
     {
         return await Context.GetTrackingSet<SpecimenEntity>()
@@ -143,6 +117,37 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         return (items, total);
     }
 
+    public async Task<SpecimenEntity?> GetSpecimenWithDetailByGuidAsync(Guid guid)
+    {
+        return await Context.GetTrackingSet<SpecimenEntity>(true)
+            .Include(sp => sp.CreatedByUser)
+            .Include(sp => sp.UpdatedByUser)
+            .Include(sp => sp.DeletedByUser)
+            .Include(sp => sp.Image)
+            .Include(sp => sp.Species)
+            .Include(sp => sp.Collections)
+            .Include(sp => sp.GeographicLocation)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+            .FirstOrDefaultAsync(sp => sp.Guid == guid);
+    }
+
+    public async Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
+        List<Guid> speciesGuids,
+        SpecimenStatus? status = null)
+    {
+        var query = Context.GetTrackingSet<SpecimenEntity>(true)
+            .Where(sp => speciesGuids.Contains(sp.TaxonomySpeciesGuid));
+
+        if (status.HasValue)
+            query = query.Where(sp => sp.Status == status.Value);
+
+        return await query.ToListAsync();
+    }
+
     private static IQueryable<SpecimenEntity> ApplySort(
         IQueryable<SpecimenEntity> query,
         string? sortBy,
@@ -158,6 +163,17 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             "isPublic"        => desc ? query.OrderByDescending(sp => sp.IsPublic)        : query.OrderBy(sp => sp.IsPublic),
             _                 => query.OrderBy(sp => sp.Guid),
         };
+    }
+
+    public async Task<List<SpecimenEntity>> GetDeletedSpecimensForPurgeAsync(DateTime cutoff, int batchSize)
+    {
+        return await Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.Status == SpecimenStatus.Deleted
+                && sp.DeletionDate != null
+                && sp.DeletionDate < cutoff)
+            .OrderBy(sp => sp.DeletionDate)
+            .Take(batchSize)
+            .ToListAsync();
     }
 
     private IQueryable<SpecimenEntity> CreateSpecimenQuery()

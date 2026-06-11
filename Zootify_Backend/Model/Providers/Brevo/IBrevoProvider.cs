@@ -1,3 +1,5 @@
+using Zootify_Backend.Enums;
+
 namespace Zootify_Backend.Model.Providers.Brevo;
 
 /// <summary>
@@ -44,4 +46,47 @@ public interface IBrevoProvider
         string email,
         string firstname,
         string lastname);
+
+    public Task<bool> SendTaxonomyApprovedEmail(
+        string email,
+        string firstname,
+        string lastname,
+        string taxonomyName,
+        TaxonomyRank rank);
+
+    public Task<bool> SendTaxonomyRejectedEmail(
+        string email,
+        string firstname,
+        string lastname,
+        string taxonomyName,
+        TaxonomyRank rank,
+        string comment);
+
+    public Task<bool> SendLoanConfirmationEmail(
+        string borrowerEmail,
+        string borrowerName,
+        string lenderName,
+        string specimenName,
+        string specimenLatinName,
+        DateTime loanDate,
+        DateTime dueDate,
+        string? notes);
+
+    public Task<bool> SendLoanReturnConfirmationEmail(
+        string borrowerEmail,
+        string borrowerName,
+        string specimenName,
+        string specimenLatinName,
+        DateTime loanDate,
+        DateTime returnDate,
+        string? notes);
+
+    public Task<bool> SendLoanDueReminderEmail(
+        string recipientEmail,
+        string recipientName,
+        string specimenName,
+        string specimenLatinName,
+        int daysUntilDue,
+        DateTime dueDate,
+        bool isBorrower);
 }

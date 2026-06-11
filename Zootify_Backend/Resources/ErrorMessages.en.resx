@@ -104,9 +104,6 @@
   <data name="AddressDoesNotExist" xml:space="preserve">
     <value>The location you entered does not exist.</value>
   </data>
-  <data name="TaxonomyRankIsAtTheDeepestLevel" xml:space="preserve">
-    <value>You are on the lowest level. It is not possible to add another level.</value>
-  </data>
   <data name="TaxonomyRankIsNoSpecies" xml:space="preserve">
     <value>This is not a species you selected.</value>
   </data>
@@ -121,5 +118,20 @@
   </data>
   <data name="SpecimenNotInCollection" xml:space="preserve">
     <value>The specimen is not part of this collection.</value>
+  </data>
+  <data name="TaxonomyAlreadyApproved" xml:space="preserve">
+    <value>This taxonomy has already been approved.</value>
+  </data>
+  <data name="TaxonomyAlreadyRejected" xml:space="preserve">
+    <value>This taxonomy has already been rejected.</value>
+  </data>
+  <data name="LoanNotFound" xml:space="preserve">
+    <value>The requested item could not be found.</value>
+  </data>
+  <data name="LoanAlreadyReturned" xml:space="preserve">
+    <value>This item has already been returned.</value>
+  </data>
+  <data name="ImageNotFound" xml:space="preserve">
+    <value>The image could not be found.</value>
   </data>
 </root>

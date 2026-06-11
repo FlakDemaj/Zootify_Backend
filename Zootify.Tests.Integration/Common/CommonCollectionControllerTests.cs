@@ -60,14 +60,14 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(6);
-        result!.Should().Contain(c => c.Name == "Alle Exemplare");
-        result.Should().Contain(c => c.Name == "Meine Sammlung");
-        result.Should().Contain(c => c.Name == "Meine Aktiven");
-        result.Should().Contain(c => c.Name == "Meine Ausstehenden");
-        result.Should().Contain(c => c.Name == "Meine Gelöschten");
-        result.Should().Contain(c => c.Name == "Meine Abgelehnten");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(6);
+        result.Collections.Should().Contain(c => c.Name == "Alle Exemplare");
+        result.Collections.Should().Contain(c => c.Name == "Meine Sammlung");
+        result.Collections.Should().Contain(c => c.Name == "Meine Aktiven");
+        result.Collections.Should().Contain(c => c.Name == "Meine Ausstehenden");
+        result.Collections.Should().Contain(c => c.Name == "Meine Gelöschten");
+        result.Collections.Should().Contain(c => c.Name == "Meine Abgelehnten");
     }
 
     [Fact]
@@ -82,8 +82,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(8);
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(8);
+        result.Collections.Should().HaveCount(8);
     }
 
     [Fact]
@@ -98,9 +99,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().Contain(c => c.Name == "Public");
-        result.Should().NotContain(c => c.Name == "Private");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "Public");
+        result.Collections.Should().NotContain(c => c.Name == "Private");
     }
 
     [Fact]
@@ -113,8 +114,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().Contain(c => c.Name == "My Secret");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "My Secret");
     }
 
     [Fact]
@@ -129,9 +130,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().Contain(c => c.Name == "ActiveColl");
-        result.Should().NotContain(c => c.Name == "DeletedColl");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "ActiveColl");
+        result.Collections.Should().NotContain(c => c.Name == "DeletedColl");
     }
 
     [Fact]
@@ -151,14 +152,14 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
 
-        result!.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(3);
-        result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(3);
-        result.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
-        result.Single(c => c.Name == "Meine Ausstehenden").SpecimenCount.Should().Be(1);
-        result.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(0);
-        result.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
+        result!.Collections.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(3);
+        result.Collections.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(3);
+        result.Collections.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
+        result.Collections.Single(c => c.Name == "Meine Ausstehenden").SpecimenCount.Should().Be(1);
+        result.Collections.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(0);
+        result.Collections.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
     }
 
     [Fact]
@@ -181,13 +182,13 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user1);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
 
-        result!.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(4);
-        result.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
-        result.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(1);
-        result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(2);
-        result.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
+        result!.Collections.Single(c => c.Name == "Alle Exemplare").SpecimenCount.Should().Be(4);
+        result.Collections.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
+        result.Collections.Single(c => c.Name == "Meine Gelöschten").SpecimenCount.Should().Be(1);
+        result.Collections.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(2);
+        result.Collections.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
     }
 
     [Fact]
@@ -208,10 +209,10 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(admin);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
 
-        result!.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
-        result.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(1);
+        result!.Collections.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(1);
+        result.Collections.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(1);
     }
 
     [Fact]
@@ -229,9 +230,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
 
-        result!.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
+        result!.Collections.Single(c => c.Name == "Meine Aktiven").SpecimenCount.Should().Be(2);
     }
 
     #endregion
@@ -249,9 +250,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}?filterByName=Birds");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().Contain(c => c.Name == "Birds of Europe");
-        result.Should().NotContain(c => c.Name == "Mammals");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "Birds of Europe");
+        result.Collections.Should().NotContain(c => c.Name == "Mammals");
     }
 
     [Fact]
@@ -262,13 +263,13 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}?filterByName=Meine");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().Contain(c => c.Name == "Meine Sammlung");
-        result.Should().Contain(c => c.Name == "Meine Aktiven");
-        result.Should().Contain(c => c.Name == "Meine Ausstehenden");
-        result.Should().Contain(c => c.Name == "Meine Gelöschten");
-        result.Should().Contain(c => c.Name == "Meine Abgelehnten");
-        result.Should().NotContain(c => c.Name == "Alle Exemplare");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "Meine Sammlung");
+        result.Collections.Should().Contain(c => c.Name == "Meine Aktiven");
+        result.Collections.Should().Contain(c => c.Name == "Meine Ausstehenden");
+        result.Collections.Should().Contain(c => c.Name == "Meine Gelöschten");
+        result.Collections.Should().Contain(c => c.Name == "Meine Abgelehnten");
+        result.Collections.Should().NotContain(c => c.Name == "Alle Exemplare");
     }
 
     [Fact]
@@ -279,12 +280,12 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}?filterByName=alle");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().Contain(c => c.Name == "Alle Exemplare");
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "Alle Exemplare");
     }
 
     [Fact]
-    public async Task GetAllCollections_FilterByName_NoMatch_ReturnsEmpty()
+    public async Task GetAllCollections_FilterByName_NoMatch_ReturnsEmptyCollections()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         await CollectionRepo.CreateCollectionAsync(name: "Birds", isPrivate: false);
@@ -292,16 +293,76 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}?filterByName=zzznomatch");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result!.Should().BeEmpty();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(0);
+        result.Collections.Should().BeEmpty();
     }
 
     #endregion
 
-    #region GetAllCollections – OrderBy
+    #region GetAllCollections – Paging
 
     [Fact]
-    public async Task GetAllCollections_OrderByName_Asc_ReturnsDynamicCollectionsSortedAscending()
+    public async Task GetAllCollections_Paging_ReturnsCorrectPage()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        for (var i = 0; i < 5; i++)
+        {
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+        }
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?page=1&pageSize=5");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(11); // 6 statics + 5 dynamic
+        result.Collections.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task GetAllCollections_Paging_SecondPageReturnsRemainingItems()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        for (var i = 0; i < 5; i++)
+        {
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+        }
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?page=2&pageSize=8");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(11); // 6 statics + 5 dynamic
+        result.Collections.Should().HaveCount(3); // 11 - 8 = 3 on page 2
+    }
+
+    [Fact]
+    public async Task GetAllCollections_Paging_TotalCountMatchesWithFilter()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        await CollectionRepo.CreateCollectionAsync(name: "Birds A", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Birds B", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?filterByName=Birds&page=1&pageSize=1");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(2);
+        result.Collections.Should().HaveCount(1);
+    }
+
+    #endregion
+
+    #region GetAllCollections – SortBy
+
+    [Fact]
+    public async Task GetAllCollections_SortByName_Asc_ReturnsDynamicCollectionsSortedAscending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         await CollectionRepo.CreateCollectionAsync(name: "Zebra Collection", isPrivate: false);
@@ -311,11 +372,11 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
-            $"{Routings.CommonCollectionRouting}?orderBy=name&orderDirection=asc");
+            $"{Routings.CommonCollectionRouting}?sortBy=name&sortDirection=ASC");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        var dynamicNames = result!
-            .Skip(6) // skip the 6 static collections
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var dynamicNames = result!.Collections
+            .Skip(6)
             .Select(c => c.Name)
             .ToList();
 
@@ -323,7 +384,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetAllCollections_OrderByName_Desc_ReturnsDynamicCollectionsSortedDescending()
+    public async Task GetAllCollections_SortByName_Desc_ReturnsDynamicCollectionsSortedDescending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         await CollectionRepo.CreateCollectionAsync(name: "Zebra Collection", isPrivate: false);
@@ -333,10 +394,10 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
-            $"{Routings.CommonCollectionRouting}?orderBy=name&orderDirection=desc");
+            $"{Routings.CommonCollectionRouting}?sortBy=name&sortDirection=DESC");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        var dynamicNames = result!
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var dynamicNames = result!.Collections
             .Skip(6)
             .Select(c => c.Name)
             .ToList();
@@ -345,7 +406,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetAllCollections_OrderBySpecimenCount_Desc_SortsEntireListDescending()
+    public async Task GetAllCollections_SortBySpecimenCount_Desc_SortsEntireListDescending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
@@ -371,16 +432,16 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
-            $"{Routings.CommonCollectionRouting}?orderBy=specimenCount&orderDirection=desc");
+            $"{Routings.CommonCollectionRouting}?sortBy=specimenCount&sortDirection=DESC");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        var counts = result!.Select(c => c.SpecimenCount).ToList();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var counts = result!.Collections.Select(c => c.SpecimenCount).ToList();
 
         counts.Should().BeInDescendingOrder();
     }
 
     [Fact]
-    public async Task GetAllCollections_OrderBySpecimenCount_Asc_SortsEntireListAscending()
+    public async Task GetAllCollections_SortBySpecimenCount_Asc_SortsEntireListAscending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
@@ -402,16 +463,16 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
-            $"{Routings.CommonCollectionRouting}?orderBy=specimenCount&orderDirection=asc");
+            $"{Routings.CommonCollectionRouting}?sortBy=specimenCount&sortDirection=ASC");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        var counts = result!.Select(c => c.SpecimenCount).ToList();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var counts = result!.Collections.Select(c => c.SpecimenCount).ToList();
 
         counts.Should().BeInAscendingOrder();
     }
 
     [Fact]
-    public async Task GetAllCollections_OrderByCreatedAt_Desc_ReturnsDynamicCollectionsSortedDescending()
+    public async Task GetAllCollections_SortByCreatedAt_Desc_ReturnsDynamicCollectionsSortedDescending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         await CollectionRepo.CreateCollectionAsync(name: "First", isPrivate: false);
@@ -421,10 +482,10 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
-            $"{Routings.CommonCollectionRouting}?orderBy=createdAt&orderDirection=desc");
+            $"{Routings.CommonCollectionRouting}?sortBy=createdAt&sortDirection=DESC");
 
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        var dynamicDates = result!
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var dynamicDates = result!.Collections
             .Skip(6)
             .Where(c => c.CreatedAt.HasValue)
             .Select(c => c.CreatedAt!.Value)

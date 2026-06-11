@@ -1,5 +1,6 @@
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify.Tests.Integration.Utils;
@@ -873,6 +874,254 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         TagsToCreate = tagsToCreate ?? [],
         Base64Image = base64Image ?? string.Empty
     };
+
+    #endregion
+
+    #region GetSpecimenDetail
+
+    [Fact]
+    public async Task GetSpecimenDetail_PublicSpecimenInDynamicCollection_ReturnsDetail()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        var viewer = await UserRepo.CreateUserAsync("viewer@test.de");
+        AuthenticateAs(viewer);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={collection.Guid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetSpecimenDetailResponseDto>();
+        result!.SpecimenGuid.Should().Be(specimen.Guid);
+        result.IsPublic.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_ReturnsAllCoreFields()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={collection.Guid}");
+
+        result!.SpecimenGuid.Should().Be(specimen.Guid);
+        result.Name.Should().Be(specimen.Name);
+        result.LatinName.Should().Be(specimen.LatinName);
+        result.Status.Should().Be(specimen.Status);
+        result.IsPublic.Should().Be(specimen.IsPublic);
+        result.CreatedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_TaxonomyPathOrderedByRankAscending()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var phylum  = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",  TaxonomyRank.Phylum);
+        var @class  = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class,  parentGuid: phylum.Guid);
+        var order   = await SpecimenRepo.CreateTaxonomyNodeAsync("Carnivora", TaxonomyRank.Order,  parentGuid: @class.Guid);
+        var family  = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae",   TaxonomyRank.Family, parentGuid: order.Guid);
+        var genus   = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera",  TaxonomyRank.Genus,  parentGuid: family.Guid);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo",       TaxonomyRank.Species, parentGuid: genus.Guid);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={collection.Guid}");
+
+        result!.TaxonomyPath.Should().HaveCount(6);
+        result.TaxonomyPath.Should().BeInAscendingOrder(n => n.Rank);
+        result.TaxonomyPath[0].TaxonomyGuid.Should().Be(phylum.Guid);
+        result.TaxonomyPath[^1].TaxonomyGuid.Should().Be(species.Guid);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_GeoPathOrderedRootToLeaf()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var country = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var city    = await SpecimenRepo.CreateGeographicLocationAsync("Munich", GeographicLevel.City, parentGuid: country.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, city.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={collection.Guid}");
+
+        result!.GeoPath.Should().HaveCount(2);
+        result.GeoPath[0].Level.Should().Be(GeographicLevel.Country);
+        result.GeoPath[0].Name.Should().Be("DE");
+        result.GeoPath[1].Level.Should().Be(GeographicLevel.City);
+        result.GeoPath[1].Name.Should().Be("Munich");
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_OwnPrivateSpecimen_ReturnsDetail()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={AllSpecimensGuid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_OtherUsersPrivateSpecimen_ReturnsForbidden()
+    {
+        var owner  = await UserRepo.CreateUserAsync("owner@test.de");
+        var viewer = await UserRepo.CreateUserAsync("viewer@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(viewer);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={AllSpecimensGuid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_AdminCanSeePrivateSpecimenOfOtherUser()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={AllSpecimensGuid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_SpecimenNotInDynamicCollection_ReturnsSpecimenNotInCollection()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={collection.Guid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_StaticCollection_AllSpecimens_AlwaysAllowed()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={AllSpecimensGuid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_StaticCollection_MyActive_ReturnsSpecimenNotInCollectionForWrongStatus()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, SpecimenStatus.Pending, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={MyActiveGuid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_StaticCollection_MyCollection_OtherUserSpecimen_ReturnsSpecimenNotInCollection()
+    {
+        var owner  = await UserRepo.CreateUserAsync("owner@test.de");
+        var other  = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(other);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}?collectionGuid={MyCollectionGuid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_UnknownSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}?collectionGuid={AllSpecimensGuid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    [Fact]
+    public async Task GetSpecimenDetail_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}?collectionGuid={AllSpecimensGuid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private static readonly Guid AllSpecimensGuid = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid MyCollectionGuid = new("00000000-0000-0000-0000-000000000002");
+    private static readonly Guid MyActiveGuid     = new("00000000-0000-0000-0000-000000000003");
 
     #endregion
 }

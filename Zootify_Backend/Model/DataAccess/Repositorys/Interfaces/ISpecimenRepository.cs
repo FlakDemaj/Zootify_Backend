@@ -13,11 +13,7 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
         bool includeImage = false,
         bool includeTags = false);
 
-    Task<List<SpecimenEntity>> GetAllSpecimensByStatusAsync(
-        IAuthentication authentication,
-        SpecimenStatus status);
-
-    Task<List<SpecimenEntity>> GetOwnSpecimensAsync(Guid userGuid);
+    Task<SpecimenEntity?> GetSpecimenWithDetailByGuidAsync(Guid guid);
 
     Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication authentication);
 
@@ -34,4 +30,10 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
         Guid? userGuid,
         SpecimenStatus? status,
         BaseSortAndPagingDto paging);
+
+    Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
+        List<Guid> speciesGuids,
+        SpecimenStatus? status = null);
+
+    Task<List<SpecimenEntity>> GetDeletedSpecimensForPurgeAsync(DateTime cutoff, int batchSize);
 }

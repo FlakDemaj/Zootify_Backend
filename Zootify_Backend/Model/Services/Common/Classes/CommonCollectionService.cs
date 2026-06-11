@@ -57,34 +57,44 @@ public class CommonCollectionService : ICommonCollectionService
     }
 
     [Transaction(ReadOnly = true)]
-    public async Task<List<GetCollectionResponseDto>> GetAllCollectionsAsync(
+    public async Task<GetAllCollectionsPagedResponseDto> GetAllCollectionsAsync(
         IAuthentication? authentication,
         string? filterByName,
-        string? orderBy,
-        string? orderDirection)
+        BaseSortAndPagingDto paging)
     {
         var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
             await _collectionRepository.GetAllCollectionsByNameFilterAsync(
-                authentication, filterByName, orderBy, orderDirection));
+                authentication, filterByName, paging));
 
         var statics = await BuildStaticCollectionsAsync(authentication);
 
         if (!string.IsNullOrWhiteSpace(filterByName))
+        {
             statics = statics
                 .Where(c => c.Name.Contains(filterByName, StringComparison.OrdinalIgnoreCase))
                 .ToList();
+        }
 
         var combined = statics.Concat(dynamic).ToList();
 
-        if (!string.IsNullOrWhiteSpace(orderBy) && orderBy == "specimenCount")
+        if (!string.IsNullOrWhiteSpace(paging.SortBy) && paging.SortBy == "specimenCount")
         {
-            var desc = string.Equals(orderDirection, "desc", StringComparison.OrdinalIgnoreCase);
-            combined = desc
+            combined = paging.SortDirection == SortDirection.DESC
                 ? combined.OrderByDescending(c => c.SpecimenCount).ToList()
                 : combined.OrderBy(c => c.SpecimenCount).ToList();
         }
 
-        return combined;
+        var total = combined.Count;
+        var paged = combined
+            .Skip((paging.Page - 1) * paging.PageSize)
+            .Take(paging.PageSize)
+            .ToList();
+
+        return new GetAllCollectionsPagedResponseDto
+        {
+            TotalCount  = total,
+            Collections = paged,
+        };
     }
 
     [Transaction(ReadOnly = true)]

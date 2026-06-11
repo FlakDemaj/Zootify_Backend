@@ -33,4 +33,9 @@ public interface IBaseRepository<T>
     /// Saves changes made to the given tracked entity back to the database.
     /// </summary>
     Task UpdateAsync(T objectToUpdate);
+
+    /// <summary>
+    /// Saves changes made to a set of tracked entities back to the database.
+    /// </summary>
+    Task MassUpdateAsync(List<T> objectsToUpdate);
 }

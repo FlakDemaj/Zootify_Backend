@@ -19,8 +19,9 @@ public class AnonymCollectionControllerTests : IntegrationTestBase
         var response = await Client.GetAsync(Routings.AnonymCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().HaveCount(1);
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Collections.Should().HaveCount(1);
     }
 
     [Fact]
@@ -29,8 +30,40 @@ public class AnonymCollectionControllerTests : IntegrationTestBase
         var response = await Client.GetAsync(Routings.AnonymCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<GetCollectionResponseDto>>();
-        result.Should().BeEmpty();
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(0);
+        result.Collections.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_PrivateCollectionIsNotReturned()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        await CollectionRepo.CreateCollectionAsync(name: "Secret", isPrivate: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "Open", isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var response = await Client.GetAsync(Routings.AnonymCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Collections.Should().Contain(c => c.Name == "Open");
+        result.Collections.Should().NotContain(c => c.Name == "Secret");
+    }
+
+    [Fact]
+    public async Task GetPublicCollections_Paging_ReturnsTotalCountAndCorrectPage()
+    {
+        for (var i = 0; i < 5; i++)
+        {
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+        }
+
+        var response = await Client.GetAsync(
+            $"{Routings.AnonymCollectionRouting}?page=1&pageSize=3");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(5);
+        result.Collections.Should().HaveCount(3);
     }
 
     #endregion

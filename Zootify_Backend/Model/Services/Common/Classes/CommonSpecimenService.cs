@@ -15,6 +15,13 @@ namespace Zootify_Backend.Model.Services.Common.Classes;
 
 public class CommonSpecimenService : ICommonSpecimenService
 {
+    private static readonly Guid AllSpecimensGuid = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid MyCollectionGuid = new("00000000-0000-0000-0000-000000000002");
+    private static readonly Guid MyActiveGuid     = new("00000000-0000-0000-0000-000000000003");
+    private static readonly Guid MyPendingGuid    = new("00000000-0000-0000-0000-000000000004");
+    private static readonly Guid MyDeletedGuid    = new("00000000-0000-0000-0000-000000000005");
+    private static readonly Guid MyRejectedGuid   = new("00000000-0000-0000-0000-000000000006");
+
     private readonly ISpecimenRepository _specimenRepository;
     
     private readonly ITagRepository _tagRepository;
@@ -52,6 +59,102 @@ public class CommonSpecimenService : ICommonSpecimenService
         _nominatimProvider = nominatimProvider;
         _geographicLocationRepository = geographicLocationRepository;
         _commonTaxonomyNodeService = commonTaxonomyNodeService;
+    }
+
+    [Transaction(ReadOnly = true)]
+    public async Task<GetSpecimenDetailResponseDto> GetSpecimenByGuidAsync(
+        IAuthentication? authentication,
+        Guid specimenGuid,
+        Guid collectionGuid)
+    {
+        var specimen = await _specimenRepository.GetSpecimenWithDetailByGuidAsync(specimenGuid);
+
+        if (specimen == null)
+        {
+            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+        }
+
+        CheckSpecimenVisibility(authentication, specimen);
+        CheckSpecimenInCollection(authentication, specimen, collectionGuid);
+
+        var result = _mapper.Map<GetSpecimenDetailResponseDto>(specimen);
+        result.TaxonomyPath = await BuildTaxonomyPathAsync(specimen.Species);
+        return result;
+    }
+
+    private static void CheckSpecimenVisibility(IAuthentication? authentication, SpecimenEntity specimen)
+    {
+        if (authentication == null && !specimen.IsPublic)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+
+        if (authentication != null
+            && authentication.Role == UserRole.User
+            && !specimen.IsPublic
+            && specimen.CreatedByUserGuid != authentication.UserGuid)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+    }
+
+    private static void CheckSpecimenInCollection(
+        IAuthentication? authentication,
+        SpecimenEntity specimen,
+        Guid collectionGuid)
+    {
+        if (collectionGuid == AllSpecimensGuid)
+        {
+            return;
+        }
+
+        if (collectionGuid == MyCollectionGuid
+            || collectionGuid == MyActiveGuid
+            || collectionGuid == MyPendingGuid
+            || collectionGuid == MyDeletedGuid
+            || collectionGuid == MyRejectedGuid)
+        {
+            if (authentication == null || specimen.CreatedByUserGuid != authentication.UserGuid)
+            {
+                throw new ZootifyException(ErrorCode.SpecimenNotInCollection);
+            }
+
+            if (collectionGuid == MyActiveGuid && specimen.Status != SpecimenStatus.Active)
+            {
+                throw new ZootifyException(ErrorCode.SpecimenNotInCollection);
+            }
+
+            if (collectionGuid == MyPendingGuid && specimen.Status != SpecimenStatus.Pending)
+            {
+                throw new ZootifyException(ErrorCode.SpecimenNotInCollection);
+            }
+
+            if (collectionGuid == MyDeletedGuid && specimen.Status != SpecimenStatus.Deleted)
+            {
+                throw new ZootifyException(ErrorCode.SpecimenNotInCollection);
+            }
+
+            if (collectionGuid == MyRejectedGuid && specimen.Status != SpecimenStatus.Rejected)
+            {
+                throw new ZootifyException(ErrorCode.SpecimenNotInCollection);
+            }
+
+            return;
+        }
+
+        if (!specimen.Collections.Any(sc => sc.CollectionGuid == collectionGuid))
+        {
+            throw new ZootifyException(ErrorCode.SpecimenNotInCollection);
+        }
+    }
+
+    private async Task<List<GetAllTaxonomyNodesByFilterDto>> BuildTaxonomyPathAsync(TaxonomyNodeEntity species)
+    {
+        var nodes = new List<TaxonomyNodeEntity>();
+        await _commonTaxonomyNodeService.GetTaxonomyTreeAsync(species, nodes);
+        return _mapper.Map<List<GetAllTaxonomyNodesByFilterDto>>(nodes)
+            .OrderBy(n => n.Rank)
+            .ToList();
     }
 
     [Transaction(ReadOnly = false)]

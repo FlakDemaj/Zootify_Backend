@@ -31,6 +31,7 @@ public class IntegrationTestFixture : IAsyncLifetime
     private IServiceScope _dbScope = null!;
 
     public HttpClient Client { get; private set; } = null!;
+    public IServiceProvider Services => _factory.Services;
     private string ConnectionString { get; set; } = null!;
     public Mock<IBrevoProvider> BrevoMock { get; } = new();
     public Mock<INominatimProvider> NominatimMock { get; } = new();

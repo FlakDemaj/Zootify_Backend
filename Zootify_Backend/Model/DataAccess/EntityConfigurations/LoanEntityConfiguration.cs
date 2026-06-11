@@ -32,12 +32,8 @@ public class LoanEntityConfiguration : BaseGuidEntityConfiguration<LoanEntity>
 
         builder
             .Property(p => p.BorrowerGuid)
-            .HasColumnName("borrower_guid");
-
-        builder
-            .Property(p => p.BorrowerExternalName)
-            .HasColumnName("borrower_external_name")
-            .HasMaxLength(256);
+            .HasColumnName("borrower_guid")
+            .IsRequired();
 
         builder
             .Property(p => p.LoanDate)
@@ -57,6 +53,18 @@ public class LoanEntityConfiguration : BaseGuidEntityConfiguration<LoanEntity>
             .Property(p => p.Notes)
             .HasColumnName("notes")
             .HasMaxLength(2000);
+
+        builder
+            .Property(p => p.Stage1ReminderSentAt)
+            .HasColumnName("stage1_reminder_sent_at");
+
+        builder
+            .Property(p => p.Stage2ReminderSentAt)
+            .HasColumnName("stage2_reminder_sent_at");
+
+        builder
+            .Property(p => p.Stage3ReminderSentAt)
+            .HasColumnName("stage3_reminder_sent_at");
         
         builder
             .HasOne(l => l.Specimen)
@@ -74,6 +82,7 @@ public class LoanEntityConfiguration : BaseGuidEntityConfiguration<LoanEntity>
             .HasOne(l => l.Borrower)
             .WithMany(u => u.LoansAsBorrower)
             .HasForeignKey(l => l.BorrowerGuid)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
     }
 }

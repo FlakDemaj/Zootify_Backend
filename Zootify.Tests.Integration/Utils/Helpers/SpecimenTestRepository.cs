@@ -29,12 +29,14 @@ public class SpecimenTestRepository
 
     public async Task<GeographicLocationEntity> CreateGeographicLocationAsync(
         string name = "DE",
-        GeographicLevel level = GeographicLevel.Country)
+        GeographicLevel level = GeographicLevel.Country,
+        Guid? parentGuid = null)
     {
         var location = new GeographicLocationEntity
         {
-            Name = name,
-            Level = level
+            Name       = name,
+            Level      = level,
+            ParentGuid = parentGuid,
         };
         _dbContext.Add(location);
         await _dbContext.SaveChangesAsync();
@@ -86,6 +88,25 @@ public class SpecimenTestRepository
         return specimen;
     }
 
+    public async Task<SpecimenImageEntity> CreateImageForSpecimenAsync(
+        Guid speciesGuid,
+        Guid geoLocationGuid,
+        string imageBase64 = "base64data",
+        SpecimenStatus status = SpecimenStatus.Active,
+        Guid? createdByUserGuid = null)
+    {
+        var specimen = await CreateSpecimenAsync(speciesGuid, geoLocationGuid, status, createdByUserGuid: createdByUserGuid);
+        var image = new SpecimenImageEntity
+        {
+            SpecimenGuid = specimen.Guid,
+            ImageBase64 = imageBase64
+        };
+        _dbContext.Add(image);
+        await _dbContext.SaveChangesAsync();
+        return image;
+    }
+
+    
     public async Task<SpecimenEntity> CreateSpecimenWithTagsAsync(
         Guid speciesGuid,
         Guid geoLocationGuid,

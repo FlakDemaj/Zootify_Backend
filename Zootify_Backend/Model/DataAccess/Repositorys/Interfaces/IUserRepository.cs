@@ -16,4 +16,10 @@ public interface IUserRepository : IBaseRepository<UserEntity>
         GetAllUsersFilterDto query);
     
     Task<List<UserEntity>> GetAllAdminsAndModeratorUsersWithSettingsAsync();
+
+    Task<List<UserEntity>> GetUsersByGuidsAsync(List<Guid> guids);
+
+    Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith, int limit = 20);
+
+    Task<List<UserEntity>> GetDeletedUsersForPurgeAsync(DateTime cutoff, int batchSize);
 }

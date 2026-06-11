@@ -54,6 +54,45 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.IsPublic,      o => o.MapFrom(s => s.IsPublic))
             .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status));
 
+        CreateMap<SpecimenEntity, GetSpecimenDetailResponseDto>(MemberList.None)
+            .ForMember(d => d.SpecimenGuid,
+                o => o.MapFrom(s => s.Guid))
+            .ForMember(d => d.CreatedAt,
+                o => o.MapFrom(s => s.CreationDate))
+            .ForMember(d => d.UpdatedAt,
+                o => o.MapFrom(s => s.UpdatedDate))
+            .ForMember(d => d.DeletedAt,
+                o => o.MapFrom(s => s.DeletionDate))
+            .ForMember(d => d.ImageGuid,
+                o => o.MapFrom(s => s.Image != null ? s.Image.Guid : (Guid?)null))
+            .ForMember(d => d.CreatedByName,
+                o => o.MapFrom(s => s.CreatedByUser != null
+                    ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}".Trim()
+                    : null))
+            .ForMember(d => d.UpdatedByName,
+                o => o.MapFrom(s => s.UpdatedByUser != null
+                    ? $"{s.UpdatedByUser.FirstName} {s.UpdatedByUser.LastName}".Trim()
+                    : null))
+            .ForMember(d => d.DeletedByName,
+                o => o.MapFrom(s => s.DeletedByUser != null
+                    ? $"{s.DeletedByUser.FirstName} {s.DeletedByUser.LastName}".Trim()
+                    : null))
+            .ForMember(d => d.GeoPath,
+                o => o.MapFrom((s, _) =>
+                {
+                    var path = new List<GeoLocationNodeDto>();
+                    var current = s.GeographicLocation;
+                    while (current != null)
+                    {
+                        path.Add(new GeoLocationNodeDto { Name = current.Name, Level = current.Level });
+                        current = current.Parent;
+                    }
+                    path.Reverse();
+                    return path;
+                }))
+            .ForMember(d => d.TaxonomyPath,
+                o => o.Ignore());
+
         CreateMap<UpdateSpecimenRequestDto, SpecimenEntity>(MemberList.None)
             .ForMember(d => d.Comment,
                 opt =>
