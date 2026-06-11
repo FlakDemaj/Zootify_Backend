@@ -31,8 +31,8 @@ public class LoanReminderServiceTests : IntegrationTestBase
     {
         var species  = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
         var location = await SpecimenRepo.CreateGeographicLocationAsync("DE");
-        var lender   = await UserRepo.CreateUserAsync("lender@test.de", firstName: "Max", lastName: "Mustermann", status: UserStatus.Active);
-        var borrower = await UserRepo.CreateUserAsync("borrower@test.de", firstName: "Anna", lastName: "Test", status: UserStatus.Active);
+        var lender   = await UserRepo.CreateUserAsync($"{Guid.CreateVersion7()}lender@test.de", firstName: "Max", lastName: "Mustermann", status: UserStatus.Active);
+        var borrower = await UserRepo.CreateUserAsync($"{Guid.CreateVersion7()}borrower@test.de", firstName: "Anna", lastName: "Test", status: UserStatus.Active);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
         return (lender, borrower, specimen);
     }
@@ -202,16 +202,18 @@ public class LoanReminderServiceTests : IntegrationTestBase
     {
         SetupBrevoMock();
         var (lender, borrower, specimen) = await CreateLoanParticipantsAsync();
+        var (lenderTwo, borrowerTwo, specimenTwo) = await CreateLoanParticipantsAsync();
+        var (lenderThree, borrowerThree, specimenThree) = await CreateLoanParticipantsAsync();
 
         // Stage-1 only
         await LoanRepo.CreateLoanAsync(specimen.Guid, lender.Guid, borrower.Guid,
             dueDate: DateTime.UtcNow.Date.AddDays(7));
         // Stage-2 only (stage1 already sent)
-        await LoanRepo.CreateLoanAsync(specimen.Guid, lender.Guid, borrower.Guid,
+        await LoanRepo.CreateLoanAsync(specimenTwo.Guid, lenderTwo.Guid, borrowerTwo.Guid,
             dueDate: DateTime.UtcNow.Date.AddDays(3),
             stage1SentAt: DateTime.UtcNow.AddDays(-4));
         // Stage-3 only (stage1+2 already sent)
-        await LoanRepo.CreateLoanAsync(specimen.Guid, lender.Guid, borrower.Guid,
+        await LoanRepo.CreateLoanAsync(specimenThree.Guid, lenderThree.Guid, borrowerThree.Guid,
             dueDate: DateTime.UtcNow.Date.AddDays(1),
             stage1SentAt: DateTime.UtcNow.AddDays(-7),
             stage2SentAt: DateTime.UtcNow.AddDays(-4));
