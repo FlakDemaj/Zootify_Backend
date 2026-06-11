@@ -19,7 +19,7 @@ public interface IUserRepository : IBaseRepository<UserEntity>
 
     Task<List<UserEntity>> GetUsersByGuidsAsync(List<Guid> guids);
 
-    Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith, int limit = 20);
+    Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith);
 
     Task<List<UserEntity>> GetDeletedUsersForPurgeAsync(DateTime cutoff, int batchSize);
 }
