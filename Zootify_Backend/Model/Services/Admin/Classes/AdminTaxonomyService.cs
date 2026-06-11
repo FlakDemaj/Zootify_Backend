@@ -1,7 +1,7 @@
+using AutoMapper;
 using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
-using Zootify_Backend;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
@@ -17,17 +17,19 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
+    private readonly Mapper _mapper;
 
     public AdminTaxonomyService(
         ITaxonomyRepository taxonomyRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider)
+        IBrevoProvider brevoProvider, Mapper mapper)
     {
         _taxonomyRepository = taxonomyRepository;
         _specimenRepository = specimenRepository;
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
+        _mapper = mapper;
     }
 
     [Transaction(ReadOnly = true)]
@@ -42,7 +44,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             .Select(r => BuildTreeNode(r, byParent))
             .ToList();
 
-        return new GetTaxonomyTreeResponseDto { TotalCount = roots.Count, Nodes = roots };
+        return _mapper.Map<GetTaxonomyTreeResponseDto>(roots);
     }
 
     [Transaction(ReadOnly = false)]
@@ -51,9 +53,14 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         var node = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync(taxonomyGuid);
 
         if (node == null)
+        {
             throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+        }
+
         if (node.ApprovalStatus == ApprovalStatus.Approved)
+        {
             throw new ZootifyException(ErrorCode.TaxonomyAlreadyApproved);
+        }
 
         node.ApprovalStatus = ApprovalStatus.Approved;
         node.ApprovedByUserGuid = authentication.UserGuid;
@@ -63,13 +70,17 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
         var byGuid = allNodes.ToDictionary(n => n.Guid);
         if (byGuid.TryGetValue(taxonomyGuid, out var cached))
+        {
             cached.ApprovalStatus = ApprovalStatus.Approved;
+        }
 
         var subtreeSpeciesGuids = CollectSubtreeSpeciesGuids(taxonomyGuid, allNodes);
 
         var affectedUserGuids = new HashSet<Guid>();
         if (node.CreatedByUserGuid.HasValue)
+        {
             affectedUserGuids.Add(node.CreatedByUserGuid.Value);
+        }
 
         if (subtreeSpeciesGuids.Count > 0)
         {
@@ -81,20 +92,30 @@ public class AdminTaxonomyService : IAdminTaxonomyService
                 .ToList();
 
             foreach (var specimen in toActivate)
+            {
                 specimen.Status = SpecimenStatus.Active;
+            }
 
             if (toActivate.Count > 0)
+            {
                 await _specimenRepository.MassUpdateAsync(toActivate);
+            }
 
             foreach (var specimen in toActivate)
+            {
                 if (specimen.CreatedByUserGuid.HasValue)
+                {
                     affectedUserGuids.Add(specimen.CreatedByUserGuid.Value);
+                }
+            }
         }
 
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
         foreach (var user in users)
+        {
             await _brevoProvider.SendTaxonomyApprovedEmail(
                 user.Email, user.FirstName, user.LastName, node.Name, node.Rank);
+        }
     }
 
     [Transaction(ReadOnly = false)]
@@ -106,9 +127,14 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         var node = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync(taxonomyGuid);
 
         if (node == null)
+        {
             throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+        }
+
         if (node.ApprovalStatus == ApprovalStatus.Rejected)
+        {
             throw new ZootifyException(ErrorCode.TaxonomyAlreadyRejected);
+        }
 
         node.ApprovalStatus = ApprovalStatus.Rejected;
         await _taxonomyRepository.UpdateAsync(node);
@@ -118,7 +144,9 @@ public class AdminTaxonomyService : IAdminTaxonomyService
 
         var affectedUserGuids = new HashSet<Guid>();
         if (node.CreatedByUserGuid.HasValue)
+        {
             affectedUserGuids.Add(node.CreatedByUserGuid.Value);
+        }
 
         if (subtreeSpeciesGuids.Count > 0)
         {
@@ -130,18 +158,25 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             foreach (var specimen in toReject)
             {
                 specimen.Status = SpecimenStatus.Rejected;
+
                 if (specimen.CreatedByUserGuid.HasValue)
+                {
                     affectedUserGuids.Add(specimen.CreatedByUserGuid.Value);
+                }
             }
 
             if (toReject.Count > 0)
+            {
                 await _specimenRepository.MassUpdateAsync(toReject);
+            }
         }
 
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
         foreach (var user in users)
+        {
             await _brevoProvider.SendTaxonomyRejectedEmail(
                 user.Email, user.FirstName, user.LastName, node.Name, node.Rank, request.Comment);
+        }
     }
 
     private static bool SubtreeContainsPending(
@@ -152,9 +187,14 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         foreach (var child in children)
         {
             if (child.ApprovalStatus == ApprovalStatus.Pending)
+            {
                 return true;
+            }
+
             if (SubtreeContainsPending(child.Guid, byParent))
+            {
                 return true;
+            }
         }
         return false;
     }
@@ -186,11 +226,16 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         {
             var current = queue.Dequeue();
             var node = allNodes.FirstOrDefault(n => n.Guid == current);
+
             if (node?.Rank == TaxonomyRank.Species)
+            {
                 speciesGuids.Add(current);
+            }
 
             foreach (var child in byParent[current])
+            {
                 queue.Enqueue(child.Guid);
+            }
         }
 
         return speciesGuids;
@@ -204,7 +249,10 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         while (current != null)
         {
             if (current.ApprovalStatus != ApprovalStatus.Approved)
+            {
                 return false;
+            }
+
             current = current.ParentGuid.HasValue
                 ? byGuid.GetValueOrDefault(current.ParentGuid.Value)
                 : null;

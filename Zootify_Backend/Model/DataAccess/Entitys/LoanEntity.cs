@@ -29,4 +29,22 @@ public class LoanEntity : BaseGuidEntity
     public DateTime? Stage2ReminderSentAt { get; set; }
 
     public DateTime? Stage3ReminderSentAt { get; set; }
+
+    public static LoanEntity CreateLoanEntity(
+        Guid specimenGuid,
+        Guid lenderGuid,
+        Guid borrowerGuid,
+        DateTime dueDate,
+        string? notes)
+    {
+        return new LoanEntity
+        {
+            SpecimenGuid = specimenGuid,
+            LenderGuid   = lenderGuid,
+            BorrowerGuid = borrowerGuid,
+            LoanDate     = DateTime.UtcNow,
+            DueDate      = dueDate,
+            Notes        = notes,
+        }; 
+    }
 }

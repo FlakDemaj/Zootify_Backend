@@ -1,3 +1,4 @@
+using AutoMapper;
 using Zootify_Backend;
 using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Admin.Response;
@@ -18,17 +19,19 @@ public class AdminLoanService : IAdminLoanService
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
+    private readonly Mapper _mapper;
 
     public AdminLoanService(
         ILoanRepository loanRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider)
+        IBrevoProvider brevoProvider, Mapper mapper)
     {
         _loanRepository = loanRepository;
         _specimenRepository = specimenRepository;
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
+        _mapper = mapper;
     }
 
     [Transaction(ReadOnly = true)]
@@ -36,13 +39,7 @@ public class AdminLoanService : IAdminLoanService
     {
         var users = await _userRepository.GetActiveUsersByNameStartsWithAsync(startsWith);
 
-        return users
-            .Select(u => new BorrowerPickerDto
-            {
-                UserGuid = u.Guid,
-                FullName = $"{u.FirstName} {u.LastName}".Trim(),
-            })
-            .ToList();
+        return _mapper.Map<List<BorrowerPickerDto>>(users);
     }
 
     [Transaction(ReadOnly = false)]
@@ -52,29 +49,33 @@ public class AdminLoanService : IAdminLoanService
     {
         var specimen = await _specimenRepository.GetSpecimenByGuidAsync(request.SpecimenGuid);
         if (specimen == null)
+        {
             throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+        }
 
         var borrower = await _userRepository.GetActiveUserByGuid(request.BorrowerGuid);
         if (borrower == null)
+        {
             throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+        }
 
         var lender = await _userRepository.GetActiveUserByGuid(authentication.UserGuid);
 
-        var loan = new LoanEntity
+        if (lender == null)
         {
-            SpecimenGuid = specimen.Guid,
-            LenderGuid   = authentication.UserGuid,
-            BorrowerGuid = borrower.Guid,
-            LoanDate     = DateTime.UtcNow,
-            DueDate      = request.DueDate,
-            Notes        = request.Notes,
-        };
+            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+        }
+
+        var loan = LoanEntity.CreateLoanEntity(
+            specimen.Guid,
+            authentication.UserGuid,
+            borrower.Guid,
+            request.DueDate,
+            request.Notes);
 
         await _loanRepository.CreateAsync(loan);
 
-        var lenderName = lender != null
-            ? $"{lender.FirstName} {lender.LastName}".Trim()
-            : string.Empty;
+        var lenderName = $"{lender.FirstName} {lender.LastName}".Trim();
 
         await _brevoProvider.SendLoanConfirmationEmail(
             borrower.Email,
@@ -94,10 +95,14 @@ public class AdminLoanService : IAdminLoanService
     {
         var loan = await _loanRepository.GetLoanByGuidWithDetailsAsync(loanGuid);
         if (loan == null)
+        {
             throw new ZootifyException(ErrorCode.LoanNotFound);
+        }
 
         if (loan.ReturnDate.HasValue)
+        {
             throw new ZootifyException(ErrorCode.LoanAlreadyReturned);
+        }
 
         loan.ReturnDate = DateTime.UtcNow;
 
