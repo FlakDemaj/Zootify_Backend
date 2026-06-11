@@ -30,7 +30,8 @@ public class LoanReminderServiceTests : IntegrationTestBase
         CreateLoanParticipantsAsync()
     {
         var species  = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
-        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE");
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        // Create Random email addresses
         var lender   = await UserRepo.CreateUserAsync($"{Guid.CreateVersion7()}lender@test.de", firstName: "Max", lastName: "Mustermann", status: UserStatus.Active);
         var borrower = await UserRepo.CreateUserAsync($"{Guid.CreateVersion7()}borrower@test.de", firstName: "Anna", lastName: "Test", status: UserStatus.Active);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
