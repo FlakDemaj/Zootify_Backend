@@ -1,6 +1,8 @@
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Model.Auth;
 
 namespace Zootify_Backend.Model.Services.Common.Interfaces;
@@ -11,7 +13,7 @@ public interface ICommonSpecimenService
         IAuthentication authentication,
         CreateSpecimenRequestDto request);
 
-    Task<GetSpecimenDetailResponseDto> GetSpecimenByGuidAsync(
+    Task<GetSpecimenDetailResponseDto> GetSpecimenInCollectionByGuidAsync(
         IAuthentication? authentication,
         Guid specimenGuid,
         Guid collectionGuid);
@@ -34,4 +36,5 @@ public interface ICommonSpecimenService
         UpdateSpecimenTagsRequestDto request
     );
 
+    Task<List<SpecimenDto>> GetSpecimensByTaxonomyNodeGuidAsync(IAuthentication? authentication, Guid taxonomyGuid);
 }

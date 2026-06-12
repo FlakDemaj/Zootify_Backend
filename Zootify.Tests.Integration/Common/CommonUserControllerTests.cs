@@ -21,7 +21,7 @@ public class CommonUserControllerTests : IntegrationTestBase
 
         AuthenticateAs(requester);
 
-        var response = await Client.GetFromJsonAsync<GetOwnUserData>(
+        var response = await Client.GetFromJsonAsync<GetOwnUserDataResponse>(
             $"{Routings.CommonUserRouting}/ownData");
 
         response.Should().NotBeNull();

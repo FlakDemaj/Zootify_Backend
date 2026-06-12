@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Anonym.Response;
+namespace Zootify_Backend.DTOs.Common.Response;
 
 public class GetImageBase64ResponseDto
 {

@@ -33,6 +33,7 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
 
     Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
         List<Guid> speciesGuids,
+        IAuthentication? authentication = null,
         SpecimenStatus? status = null);
 
     Task<List<SpecimenEntity>> GetDeletedSpecimensForPurgeAsync(DateTime cutoff, int batchSize);

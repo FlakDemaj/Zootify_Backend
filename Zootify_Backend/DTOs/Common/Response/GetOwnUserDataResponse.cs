@@ -1,6 +1,6 @@
 namespace Zootify_Backend.DTOs.Common.Response;
 
-public class GetOwnUserData
+public class GetOwnUserDataResponse
 {
     public required string FirstName { get; init; }
 

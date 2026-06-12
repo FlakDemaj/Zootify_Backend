@@ -1,3 +1,5 @@
+using Zootify_Backend.DTOs.Common.Response.Helpers;
+
 namespace Zootify_Backend.DTOs.Common.Response;
 
 public class GetTaxonomyTreeResponseDto

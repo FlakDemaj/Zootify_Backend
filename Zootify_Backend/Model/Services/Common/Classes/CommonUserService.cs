@@ -77,7 +77,7 @@ public class CommonUserService : ICommonUserService
     }
 
     [Transaction(ReadOnly = true)]
-    public async Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication)
+    public async Task<GetOwnUserDataResponse> GetOwnUserDataAsync(IAuthentication authentication)
     {
         var user = await _userRepository
             .GetActiveUserByGuid(authentication.UserGuid);
@@ -87,7 +87,7 @@ public class CommonUserService : ICommonUserService
             throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
         }
         
-        return _mapper.Map<GetOwnUserData>(user);
+        return _mapper.Map<GetOwnUserDataResponse>(user);
     }
     
 }

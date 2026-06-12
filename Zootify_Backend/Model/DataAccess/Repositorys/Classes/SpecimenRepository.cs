@@ -137,11 +137,21 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
 
     public async Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
         List<Guid> speciesGuids,
+        IAuthentication? authentication = null,
         SpecimenStatus? status = null)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>(true)
             .Where(sp => sp.TaxonomySpeciesGuid.HasValue
                          && speciesGuids.Contains(sp.TaxonomySpeciesGuid.Value));
+
+        if (authentication == null)
+        {
+            query = query.Where(sp => sp.IsPublic);
+        }
+        else if (authentication.Role == UserRole.User)
+        {
+            query = query.Where(sp => sp.IsPublic || sp.CreatedByUserGuid == authentication.UserGuid);
+        }
 
         if (status.HasValue)
         {
