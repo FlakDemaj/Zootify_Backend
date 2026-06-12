@@ -45,7 +45,7 @@ public class CommonUserController : BaseRestController
     }
 
     [HttpGet("ownData")]
-    public async Task<ActionResult<GetOwnUserData>> GetOwnUserDataAsync()
+    public async Task<ActionResult<GetOwnUserDataResponse>> GetOwnUserDataAsync()
     {
         var userData = await _commonUserService
             .GetOwnUserDataAsync(Authentication);

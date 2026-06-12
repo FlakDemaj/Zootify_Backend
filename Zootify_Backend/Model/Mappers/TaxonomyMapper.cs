@@ -1,6 +1,7 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Entitys;
 

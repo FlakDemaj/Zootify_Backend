@@ -104,7 +104,7 @@ public class UserMapper : Profile
             .ForMember(d => d.Email,
                 o => o.MapFrom(s => s.Email));
 
-        CreateMap<UserEntity, GetOwnUserData>()
+        CreateMap<UserEntity, GetOwnUserDataResponse>()
             .ForMember(d => d.FirstName,
                 o => o.MapFrom(s => s.FirstName))
             .ForMember(d => d.LastName,

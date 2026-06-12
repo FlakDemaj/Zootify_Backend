@@ -16,61 +16,40 @@ public class AuthenticationMiddleware
 
     public async Task Invoke(HttpContext context)
     {
+        var authentication = TryBuildAuthentication(context);
 
-        if (CheckIfAllowAnonymousExists(context))
+        if (authentication != null)
         {
-            await Next(context);
-            return;
+            context.Items.Add(nameof(IAuthentication), authentication);
         }
-
-        var userGuid = CheckUserGuid(context);
-
-        var userRole = CheckUserRole(context);
-        
-        var authentication = new Authentication(
-            userGuid,
-            userRole);
-
-        context.Items.Add(nameof(IAuthentication), authentication);
+        else if (!CheckIfAllowAnonymousExists(context))
+        {
+            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+        }
 
         await Next(context);
     }
 
-    private static Guid CheckUserGuid(HttpContext context)
+    private static Authentication? TryBuildAuthentication(HttpContext context)
     {
-        var userGuidString =
-            context
-                .User
-                .Claims
-                .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?
-                .Value;
+        var userGuidString = context.User.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var userRoleString = context.User.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrWhiteSpace(userGuidString) 
+        if (string.IsNullOrWhiteSpace(userGuidString)
             || !Guid.TryParse(userGuidString, out var userGuid))
         {
-            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+            return null;
         }
 
-        return userGuid;
-    }
-
-    private static UserRole CheckUserRole(HttpContext context)
-    {
-        var userRoleString =
-            context
-                .User
-                .Claims
-                .FirstOrDefault(
-                    c => c.Type == ClaimTypes.Role)?
-                .Value;
-
-        if (string.IsNullOrWhiteSpace(userRoleString) 
+        if (string.IsNullOrWhiteSpace(userRoleString)
             || !Enum.TryParse<UserRole>(userRoleString, out var userRole))
         {
-            throw new ZootifyException(ErrorCode.DefaultErrorCode);
+            return null;
         }
 
-        return userRole;
+        return new Authentication(userGuid, userRole);
     }
 
     private static bool CheckIfAllowAnonymousExists(HttpContext context)

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Admin.Request;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -86,7 +87,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         if (subtreeSpeciesGuids.Count > 0)
         {
             var pendingSpecimens = await _specimenRepository
-                .GetSpecimensBySpeciesGuidsAsync(subtreeSpeciesGuids, SpecimenStatus.Pending);
+                .GetSpecimensBySpeciesGuidsAsync(subtreeSpeciesGuids, status: SpecimenStatus.Pending);
 
             var toActivate = pendingSpecimens
                 .Where(s => s.TaxonomySpeciesGuid.HasValue

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
@@ -62,7 +63,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     }
 
     [Transaction(ReadOnly = true)]
-    public async Task<GetSpecimenDetailResponseDto> GetSpecimenByGuidAsync(
+    public async Task<GetSpecimenDetailResponseDto> GetSpecimenInCollectionByGuidAsync(
         IAuthentication? authentication,
         Guid specimenGuid,
         Guid collectionGuid)
@@ -78,15 +79,15 @@ public class CommonSpecimenService : ICommonSpecimenService
         CheckSpecimenInCollection(authentication, specimen, collectionGuid);
 
         var result = _mapper.Map<GetSpecimenDetailResponseDto>(specimen);
-        result.TaxonomyPath = specimen.Species != null
-            ? await BuildTaxonomyPathAsync(specimen.Species)
-            : [new GetAllTaxonomyNodesByFilterDto
-            {
-                TaxonomyGuid    = Guid.Empty,
-                Name            = "Taxonomy deleted due to rejection",
-                Rank            = TaxonomyRank.Species,
-                ApprovalStatus  = ApprovalStatus.Rejected
-            }];
+
+        if (specimen.Species != null)
+        {
+            result.TaxonomyPath = await BuildTaxonomyPathAsync(specimen.Species);
+        }
+        else
+        {
+            result.TaxonomyPath = GetAllTaxonomyNodesByFilterDto.DeletedTaxonomys();
+        }
         return result;
     }
 
@@ -246,6 +247,62 @@ public class CommonSpecimenService : ICommonSpecimenService
             mappedExistingTags,
             mappedNotExistingTags,
             specimen);
+    }
+
+    [Transaction(ReadOnly = true)]
+    public async Task<List<SpecimenDto>> GetSpecimensByTaxonomyNodeGuidAsync(
+        IAuthentication? authentication,
+        Guid taxonomyGuid)
+    {
+        var taxonomyNode = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync(taxonomyGuid);
+
+        if (taxonomyNode == null)
+        {
+            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+        }
+
+        var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
+        var byGuid   = allNodes.ToDictionary(n => n.Guid);
+        var byParent = allNodes.ToLookup(n => n.ParentGuid);
+
+        var speciesGuids = CollectDescendantSpeciesGuids(taxonomyGuid, byGuid, byParent);
+
+        var specimens = await _specimenRepository.GetSpecimensBySpeciesGuidsAsync(speciesGuids, authentication);
+
+        return _mapper.Map<List<SpecimenDto>>(specimens);
+    }
+
+    private static List<Guid> CollectDescendantSpeciesGuids(
+        Guid rootGuid,
+        Dictionary<Guid, TaxonomyNodeEntity> byGuid,
+        ILookup<Guid?, TaxonomyNodeEntity> byParent)
+    {
+        var result = new List<Guid>();
+        CollectSpeciesRecursive(rootGuid, byGuid, byParent, result);
+        return result;
+    }
+
+    private static void CollectSpeciesRecursive(
+        Guid nodeGuid,
+        Dictionary<Guid, TaxonomyNodeEntity> byGuid,
+        ILookup<Guid?, TaxonomyNodeEntity> byParent,
+        List<Guid> speciesGuids)
+    {
+        if (!byGuid.TryGetValue(nodeGuid, out var node))
+        {
+            return;
+        }
+
+        if (node.Rank == TaxonomyRank.Species)
+        {
+            speciesGuids.Add(nodeGuid);
+            return;
+        }
+
+        foreach (var child in byParent[nodeGuid])
+        {
+            CollectSpeciesRecursive(child.Guid, byGuid, byParent, speciesGuids);
+        }
     }
 
     [Transaction(ReadOnly = false)]

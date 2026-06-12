@@ -26,24 +26,26 @@ public class CommonCollectionController : BaseRestController
         return Ok(await _commonCollectionService.CreateCollectionAsync(Authentication, request));
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<GetAllCollectionsPagedResponseDto>> GetAllCollectionsAsync(
         [FromQuery] string? filterByName,
         [FromQuery] BaseSortAndPagingDto paging)
     {
         return Ok(await _commonCollectionService.GetAllCollectionsAsync(
-            Authentication,
+            OptionalAuthentication,
             filterByName,
             paging));
     }
 
+    [AllowAnonymous]
     [HttpGet("{collectionGuid:guid}/specimens")]
     public async Task<ActionResult<GetAllSpecimenInCollectionResponseDto>> GetAllSpecimensInCollectionAsync(
         Guid collectionGuid,
         [FromQuery] BaseSortAndPagingDto paging)
     {
         return Ok(await _commonCollectionService.GetAllSpecimensInCollectionAsync(
-            Authentication,
+            OptionalAuthentication,
             collectionGuid,
             paging));
     }

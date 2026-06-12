@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
+using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Common.Interfaces;
@@ -19,15 +20,25 @@ public class CommonSpecimenController : BaseRestController
         _commonSpecimenService = commonSpecimenService;
     }
 
-    [HttpGet("{specimenGuid:guid}")]
-    public async Task<ActionResult<GetSpecimenDetailResponseDto>> GetSpecimenDetailAsync(
+    [AllowAnonymous]
+    [HttpGet("{collectionGuid:guid}/{specimenGuid:guid}")]
+    public async Task<ActionResult<GetSpecimenDetailResponseDto>> GetSpecimenDetailInCollectionAsync(
         Guid specimenGuid,
-        [FromQuery] Guid collectionGuid)
+        Guid collectionGuid)
     {
-        return Ok(await _commonSpecimenService.GetSpecimenByGuidAsync(
-            Authentication,
+        return Ok(await _commonSpecimenService.GetSpecimenInCollectionByGuidAsync(
+            OptionalAuthentication,
             specimenGuid,
             collectionGuid));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("{taxonomyGuid:guid}")]
+    public async Task<ActionResult<List<SpecimenDto>>> GetSpecimensByTaxonomyGuidAsync(Guid taxonomyGuid)
+    {
+        return Ok(await _commonSpecimenService.GetSpecimensByTaxonomyNodeGuidAsync(
+            OptionalAuthentication,
+            taxonomyGuid));
     }
 
     [HttpPost]

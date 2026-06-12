@@ -1,15 +1,15 @@
-using Zootify_Backend.DTOs.Anonym.Response;
+using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
-using Zootify_Backend.Model.Services.Anonym.Interface;
+using Zootify_Backend.Model.Services.Common.Interfaces;
 
-namespace Zootify_Backend.Model.Services.Anonym.Classes;
+namespace Zootify_Backend.Model.Services.Common.Classes;
 
-public class AnonymSpecimenImageService : IAnonymSpecimenImageService
+public class CommonSpecimenImageService : ICommonSpecimenImageService
 {
     private readonly ISpecimenImageRepository _specimenImageRepository;
 
-    public AnonymSpecimenImageService(ISpecimenImageRepository specimenImageRepository)
+    public CommonSpecimenImageService(ISpecimenImageRepository specimenImageRepository)
     {
         _specimenImageRepository = specimenImageRepository;
     }

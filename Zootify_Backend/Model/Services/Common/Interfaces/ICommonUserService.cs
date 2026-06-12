@@ -14,5 +14,5 @@ public interface ICommonUserService
         IAuthentication authentication,
         Guid userToDeleteGuid);
 
-    Task<GetOwnUserData> GetOwnUserDataAsync(IAuthentication authentication);
+    Task<GetOwnUserDataResponse> GetOwnUserDataAsync(IAuthentication authentication);
 }

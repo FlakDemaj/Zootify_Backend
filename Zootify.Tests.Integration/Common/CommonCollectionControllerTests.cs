@@ -1319,4 +1319,124 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     #endregion
+
+    #region GetAllCollections – Anonymous
+
+    [Fact]
+    public async Task GetAllCollections_Anonymous_AllowsUnauthenticatedAccess()
+    {
+        await CollectionRepo.CreateCollectionAsync(name: "Public", isPrivate: false);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Collections.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetAllCollections_Anonymous_ContainsNoStaticCollections()
+    {
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(0);
+        result.Collections.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllCollections_Anonymous_PrivateCollectionIsNotReturned()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        await CollectionRepo.CreateCollectionAsync(name: "Secret", isPrivate: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "Open", isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Collections.Should().Contain(c => c.Name == "Open");
+        result.Collections.Should().NotContain(c => c.Name == "Secret");
+    }
+
+    [Fact]
+    public async Task GetAllCollections_Anonymous_Paging_ReturnsTotalCountAndCorrectPage()
+    {
+        for (var i = 0; i < 5; i++)
+        {
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+        }
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?page=1&pageSize=3");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.TotalCount.Should().Be(5);
+        result.Collections.Should().HaveCount(3);
+    }
+
+    #endregion
+
+    #region GetAllSpecimensInCollection – Anonymous
+
+    [Fact]
+    public async Task GetAllSpecimensInCollection_Anonymous_PublicCollection_OnlyPublicSpecimensReturned()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var publicSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        var privateSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicSp.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, privateSp.Guid);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Single().SpecimenGuid.Should().Be(publicSp.Guid);
+    }
+
+    [Fact]
+    public async Task GetAllSpecimensInCollection_Anonymous_PrivateCollection_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: true, createdByUserGuid: owner.Guid);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetAllSpecimensInCollection_Anonymous_StaticCollection_ReturnsForbidden()
+    {
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}/00000000-0000-0000-0000-000000000001/specimens");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetAllSpecimensInCollection_Anonymous_DeletedPublicCollection_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            isPrivate: false,
+            createdByUserGuid: owner.Guid,
+            deletedByUserGuid: owner.Guid);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    #endregion
 }
