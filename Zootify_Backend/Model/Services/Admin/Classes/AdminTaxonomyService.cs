@@ -12,6 +12,9 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Admin.Classes;
 
+/// <summary>
+/// Handles taxonomy moderation business logic including approval and rejection of pending nodes.
+/// </summary>
 public class AdminTaxonomyService : IAdminTaxonomyService
 {
     private readonly ITaxonomyRepository _taxonomyRepository;
@@ -20,11 +23,19 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     private readonly IBrevoProvider _brevoProvider;
     private readonly IMapper _mapper;
 
+    /// <summary>
+    /// Initializes a new <see cref="AdminTaxonomyService"/> with its required dependencies.
+    /// </summary>
+    /// <param name="taxonomyRepository">Repository for taxonomy node persistence operations.</param>
+    /// <param name="specimenRepository">Repository for specimen persistence operations.</param>
+    /// <param name="userRepository">Repository for user lookups.</param>
+    /// <param name="brevoProvider">Email provider for sending taxonomy notification emails.</param>
+    /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminTaxonomyService(
         ITaxonomyRepository taxonomyRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider, 
+        IBrevoProvider brevoProvider,
         IMapper mapper)
     {
         _taxonomyRepository = taxonomyRepository;
@@ -34,6 +45,10 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Returns the taxonomy tree filtered to only include subtrees containing at least one pending node.
+    /// </summary>
+    /// <returns>A taxonomy tree response DTO containing all pending subtrees.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<GetTaxonomyTreeResponseDto> GetTaxonomiesForApprovalAsync()
     {
@@ -49,6 +64,11 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         return _mapper.Map<GetTaxonomyTreeResponseDto>(roots);
     }
 
+    /// <summary>
+    /// Approves a pending taxonomy node, activates specimens whose full taxonomy chain is now approved, and notifies affected users.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the approving moderator or admin.</param>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node to approve.</param>
     [Transaction(ReadOnly = false)]
     public async Task ApproveTaxonomyAsync(IAuthentication authentication, Guid taxonomyGuid)
     {
@@ -121,6 +141,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         }
     }
 
+    /// <summary>
+    /// Rejects a taxonomy node, hard-deletes its entire subtree, rejects all associated specimens, and notifies affected users.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the rejecting moderator or admin.</param>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node to reject.</param>
+    /// <param name="request">Contains the rejection comment to send to affected users.</param>
     [Transaction(ReadOnly = false)]
     public async Task RejectTaxonomyAsync(
         IAuthentication authentication,
@@ -184,6 +210,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         }
     }
 
+    /// <summary>
+    /// Recursively checks whether the subtree rooted at the given node contains at least one pending taxonomy node.
+    /// </summary>
+    /// <param name="nodeGuid">The GUID of the root node to check.</param>
+    /// <param name="byParent">Lookup of nodes keyed by their parent GUID.</param>
+    /// <returns><c>true</c> if any descendant node has a pending approval status; otherwise <c>false</c>.</returns>
     private static bool SubtreeContainsPending(
         Guid nodeGuid,
         ILookup<Guid?, TaxonomyNodeEntity> byParent)
@@ -204,6 +236,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         return false;
     }
 
+    /// <summary>
+    /// Recursively builds a <see cref="GetTaxonomyTreeNodeDto"/> for the given node and all its descendants.
+    /// </summary>
+    /// <param name="node">The taxonomy node to build a tree DTO for.</param>
+    /// <param name="byParent">Lookup of nodes keyed by their parent GUID.</param>
+    /// <returns>A populated <see cref="GetTaxonomyTreeNodeDto"/> including all child nodes.</returns>
     private static GetTaxonomyTreeNodeDto BuildTreeNode(
         TaxonomyNodeEntity node,
         ILookup<Guid?, TaxonomyNodeEntity> byParent) => new()
@@ -218,6 +256,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             .ToList(),
     };
 
+    /// <summary>
+    /// Performs a BFS over the subtree rooted at the given GUID and returns the GUIDs of all species-rank nodes found.
+    /// </summary>
+    /// <param name="rootGuid">The GUID of the subtree root node.</param>
+    /// <param name="allNodes">The complete flat list of all taxonomy nodes.</param>
+    /// <returns>A list of GUIDs for all species-rank nodes within the subtree.</returns>
     private static List<Guid> CollectSubtreeSpeciesGuids(
         Guid rootGuid,
         List<TaxonomyNodeEntity> allNodes)
@@ -246,6 +290,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         return speciesGuids;
     }
 
+    /// <summary>
+    /// Collects all nodes in the subtree rooted at the given GUID in BFS order then reverses the list so deepest nodes come first.
+    /// </summary>
+    /// <param name="rootGuid">The GUID of the subtree root node.</param>
+    /// <param name="allNodes">The complete flat list of all taxonomy nodes.</param>
+    /// <returns>A list of <see cref="TaxonomyNodeEntity"/> instances ordered deepest-first to satisfy foreign-key delete constraints.</returns>
     private static List<TaxonomyNodeEntity> CollectSubtreeNodesDeepestFirst(
         Guid rootGuid,
         List<TaxonomyNodeEntity> allNodes)
@@ -275,6 +325,12 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         return result;
     }
 
+    /// <summary>
+    /// Walks the ancestor chain from the given species node to the root and returns <c>true</c> only if every node in the chain is approved.
+    /// </summary>
+    /// <param name="speciesGuid">The GUID of the species-rank node to check.</param>
+    /// <param name="byGuid">Dictionary of all taxonomy nodes keyed by GUID.</param>
+    /// <returns><c>true</c> if every ancestor including the species node is approved; otherwise <c>false</c>.</returns>
     private static bool IsFullChainApproved(
         Guid speciesGuid,
         Dictionary<Guid, TaxonomyNodeEntity> byGuid)

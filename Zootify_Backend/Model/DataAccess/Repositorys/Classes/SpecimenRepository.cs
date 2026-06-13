@@ -10,12 +10,25 @@ using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 
 namespace Zootify_Backend.Model.DataAccess.Repositorys.Classes;
 
+/// <summary>
+/// Repository for querying and persisting <see cref="SpecimenEntity"/> records.
+/// </summary>
 public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepository
 {
+    /// <summary>
+    /// Initializes a new <see cref="SpecimenRepository"/> with the given database context.
+    /// </summary>
+    /// <param name="context">The database context to use for persistence operations.</param>
     public SpecimenRepository(ZootifyDbContext context) : base(context)
     {
     }
 
+    /// <summary>
+    /// Returns the specimen with the given GUID, optionally loading image and tag data, or <c>null</c> if not found.
+    /// </summary>
+    /// <param name="guid">The GUID of the specimen to retrieve.</param>
+    /// <param name="includeImage">Whether to eagerly load the specimen's image.</param>
+    /// <param name="includeTags">Whether to eagerly load the specimen's tag associations.</param>
     public async Task<SpecimenEntity?> GetSpecimenByGuidAsync(
         Guid guid,
         bool includeImage = false,
@@ -36,6 +49,11 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         return await query.FirstOrDefaultAsync(sp => sp.Guid == guid);
     }
 
+    /// <summary>
+    /// Returns the number of specimens owned by the authenticated user that have the given status.
+    /// </summary>
+    /// <param name="status">The specimen status to count.</param>
+    /// <param name="authentication">The authentication context of the user whose specimens are counted.</param>
     public async Task<int> CountByStatusAsync(SpecimenStatus status, IAuthentication authentication)
     {
         return await Context.GetTrackingSet<SpecimenEntity>()
@@ -44,6 +62,10 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .CountAsync();
     }
 
+    /// <summary>
+    /// Returns the total number of specimens created by the given user.
+    /// </summary>
+    /// <param name="userGuid">The GUID of the user whose specimens are counted.</param>
     public async Task<int> CountOwnAsync(Guid userGuid)
     {
         return await Context.GetTrackingSet<SpecimenEntity>()
@@ -51,6 +73,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .CountAsync();
     }
 
+    /// <summary>
+    /// Returns the total number of public specimens across all users.
+    /// </summary>
     public async Task<int> CountPublicAsync()
     {
         return await Context.GetTrackingSet<SpecimenEntity>()
@@ -58,6 +83,13 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .CountAsync();
     }
 
+    /// <summary>
+    /// Returns a paged list of specimens belonging to the specified collection, applying visibility rules based on the caller's authentication.
+    /// </summary>
+    /// <param name="collectionGuid">The GUID of the collection to retrieve specimens from.</param>
+    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
     public async Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensInCollectionPagedAsync(
         Guid collectionGuid,
         IAuthentication? authentication,
@@ -86,6 +118,13 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         return (items, total);
     }
 
+    /// <summary>
+    /// Returns a paged list of specimens, optionally filtered by owner and status.
+    /// </summary>
+    /// <param name="userGuid">Optional GUID of the owning user; if <c>null</c>, only public specimens are returned.</param>
+    /// <param name="status">Optional status filter.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
     public async Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensPagedAsync(
         Guid? userGuid,
         SpecimenStatus? status,
@@ -117,6 +156,10 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         return (items, total);
     }
 
+    /// <summary>
+    /// Returns the specimen with the given GUID, eagerly loading all detail navigation properties including audit users, image, species, collections, and geographic location chain, or <c>null</c> if not found.
+    /// </summary>
+    /// <param name="guid">The GUID of the specimen to retrieve.</param>
     public async Task<SpecimenEntity?> GetSpecimenWithDetailByGuidAsync(Guid guid)
     {
         return await Context.GetTrackingSet<SpecimenEntity>(true)
@@ -135,6 +178,12 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .FirstOrDefaultAsync(sp => sp.Guid == guid);
     }
 
+    /// <summary>
+    /// Returns all specimens whose taxonomy species GUID is in the given list, applying optional visibility and status filters.
+    /// </summary>
+    /// <param name="speciesGuids">The list of species GUIDs to match against.</param>
+    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
+    /// <param name="status">Optional status filter.</param>
     public async Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
         List<Guid> speciesGuids,
         IAuthentication? authentication = null,
@@ -161,6 +210,13 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         return await query.ToListAsync();
     }
 
+    /// <summary>
+    /// Applies ordering to the specimen query based on the given sort field and direction.
+    /// </summary>
+    /// <param name="query">The queryable to sort.</param>
+    /// <param name="sortBy">The name of the field to sort by.</param>
+    /// <param name="sortDirection">The sort direction.</param>
+    /// <returns>The ordered queryable.</returns>
     private static IQueryable<SpecimenEntity> ApplySort(
         IQueryable<SpecimenEntity> query,
         string? sortBy,
@@ -178,6 +234,11 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         };
     }
 
+    /// <summary>
+    /// Returns a batch of soft-deleted specimens whose deletion date is older than the given cutoff, for purging.
+    /// </summary>
+    /// <param name="cutoff">The exclusive upper bound for the deletion date.</param>
+    /// <param name="batchSize">The maximum number of specimens to return.</param>
     public async Task<List<SpecimenEntity>> GetDeletedSpecimensForPurgeAsync(DateTime cutoff, int batchSize)
     {
         return await Context.GetTrackingSet<SpecimenEntity>()
@@ -189,6 +250,11 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Returns a batch of rejected specimens whose rejection date is older than the given cutoff, for purging.
+    /// </summary>
+    /// <param name="cutoff">The exclusive upper bound for the rejection date.</param>
+    /// <param name="batchSize">The maximum number of specimens to return.</param>
     public async Task<List<SpecimenEntity>> GetRejectedSpecimensForPurgeAsync(DateTime cutoff, int batchSize)
     {
         return await Context.GetTrackingSet<SpecimenEntity>()
@@ -200,6 +266,10 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Builds a base queryable for <see cref="SpecimenEntity"/> with audit users and geographic location chain eagerly loaded.
+    /// </summary>
+    /// <returns>The base <see cref="IQueryable{SpecimenEntity}"/> with navigation properties included.</returns>
     private IQueryable<SpecimenEntity> CreateSpecimenQuery()
     {
         return Context.GetTrackingSet<SpecimenEntity>()

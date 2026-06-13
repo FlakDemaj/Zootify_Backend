@@ -12,6 +12,9 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Admin.Classes;
 
+/// <summary>
+/// Handles business logic for creating and returning specimen loans.
+/// </summary>
 public class AdminLoanService : IAdminLoanService
 {
     private readonly ILoanRepository _loanRepository;
@@ -20,11 +23,19 @@ public class AdminLoanService : IAdminLoanService
     private readonly IBrevoProvider _brevoProvider;
     private readonly IMapper _mapper;
 
+    /// <summary>
+    /// Initializes a new <see cref="AdminLoanService"/> with its required dependencies.
+    /// </summary>
+    /// <param name="loanRepository">Repository for loan persistence operations.</param>
+    /// <param name="specimenRepository">Repository for specimen lookups.</param>
+    /// <param name="userRepository">Repository for user lookups.</param>
+    /// <param name="brevoProvider">Email provider for sending loan notification emails.</param>
+    /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminLoanService(
         ILoanRepository loanRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider, 
+        IBrevoProvider brevoProvider,
         IMapper mapper)
     {
         _loanRepository = loanRepository;
@@ -34,6 +45,11 @@ public class AdminLoanService : IAdminLoanService
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Returns a list of active users whose names start with the given prefix, for use in borrower picker controls.
+    /// </summary>
+    /// <param name="startsWith">The prefix to filter user names by.</param>
+    /// <returns>A list of matching borrower picker DTOs.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<List<BorrowerPickerDto>> GetBorrowersAsync(string startsWith)
     {
@@ -42,6 +58,12 @@ public class AdminLoanService : IAdminLoanService
         return _mapper.Map<List<BorrowerPickerDto>>(users);
     }
 
+    /// <summary>
+    /// Creates a new loan record, verifies the specimen and borrower exist, and sends a confirmation email to the borrower.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the lending user.</param>
+    /// <param name="request">The loan creation data including specimen, borrower, due date, and notes.</param>
+    /// <returns>A DTO containing the GUID of the newly created loan.</returns>
     [Transaction(ReadOnly = false)]
     public async Task<CreatedObjectResponseDto> CreateLoanAsync(
         IAuthentication authentication,
@@ -90,6 +112,11 @@ public class AdminLoanService : IAdminLoanService
         return new CreatedObjectResponseDto { CreatedObjectGuid = loan.Guid };
     }
 
+    /// <summary>
+    /// Marks a loan as returned, appends optional notes, and sends a return confirmation email to the borrower.
+    /// </summary>
+    /// <param name="loanGuid">The GUID of the loan to mark as returned.</param>
+    /// <param name="request">Optional notes to append to the loan record.</param>
     [Transaction(ReadOnly = false)]
     public async Task ReturnLoanAsync(Guid loanGuid, ReturnLoanRequestDto request)
     {

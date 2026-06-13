@@ -134,4 +134,7 @@
   <data name="ImageNotFound" xml:space="preserve">
     <value>The image could not be found.</value>
   </data>
+  <data name="ObjectIsNotActive" xml:space="preserve">
+    <value>The object is not active. Only active objects can be edited.</value>
+  </data>
 </root>

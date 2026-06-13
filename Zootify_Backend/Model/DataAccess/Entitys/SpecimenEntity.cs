@@ -62,6 +62,19 @@ public class SpecimenEntity : BaseDeletionEntity
         TaxonomySpeciesGuid = (Guid?)species.Guid;
     }
 
+    public void DeleteSpecimen(Guid requesterGuid)
+    {
+        Status = SpecimenStatus.Deleted;
+        SetDeletedBy(requesterGuid);
+    }
+
+    public void ActivateSpecimen(Guid requesterGuid)
+    {
+        Status = SpecimenStatus.Active;
+        RemoveDeletion();
+        SetUpdatedBy(requesterGuid);
+    }
+
     public void SetLocation(double latitude, double longitude)
     {
         Latitude = latitude;

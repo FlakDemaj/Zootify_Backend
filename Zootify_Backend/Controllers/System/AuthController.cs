@@ -14,7 +14,11 @@ namespace Zootify_Backend.Controllers.System;
 public class AuthController : BaseRestController
 {
     private readonly ISystemAuthService _systemAuthService;
-    
+
+    /// <summary>
+    /// Initializes a new <see cref="AuthController"/> with its required service.
+    /// </summary>
+    /// <param name="systemAuthService">The service handling authentication and user registration logic.</param>
     public AuthController(ISystemAuthService systemAuthService)
     {
         _systemAuthService = systemAuthService;

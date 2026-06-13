@@ -5,15 +5,26 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Admin.Classes;
 
+/// <summary>
+/// Purges soft-deleted user accounts that have exceeded the configured retention period.
+/// </summary>
 public class UserPurgeService : IUserPurgeService
 {
     private readonly IUserRepository _userRepository;
 
+    /// <summary>
+    /// Initializes a new <see cref="UserPurgeService"/> with its required repository.
+    /// </summary>
+    /// <param name="userRepository">Repository for user persistence operations.</param>
     public UserPurgeService(IUserRepository userRepository)
     {
         _userRepository = userRepository;
     }
 
+    /// <summary>
+    /// Hard-deletes a batch of soft-deleted user accounts that have passed the configured retention cutoff.
+    /// </summary>
+    /// <returns>The number of users deleted in this batch.</returns>
     [Transaction(ReadOnly = false)]
     public async Task<int> PurgeBatchAsync()
     {

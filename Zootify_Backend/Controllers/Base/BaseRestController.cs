@@ -27,6 +27,9 @@ public class BaseRestController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Tries to get the authentication from the HTTP context, returning <c>null</c> if no authenticated user is present.
+    /// </summary>
     protected IAuthentication? OptionalAuthentication
     {
         get

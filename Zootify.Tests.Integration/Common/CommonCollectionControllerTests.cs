@@ -665,6 +665,27 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task UpdateCollection_CollectionIsNotActive_ReturnsObjectIsNotActive()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            name: "Deleted Collection",
+            isPrivate: false,
+            createdByUserGuid: user.Guid,
+            deletedByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateCollectionRequestDto { Name = "New Name", IsPrivate = false };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
+    }
+
     #endregion
 
     #region DeleteCollection

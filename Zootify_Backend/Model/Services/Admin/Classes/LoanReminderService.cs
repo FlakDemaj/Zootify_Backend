@@ -7,17 +7,29 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Admin.Classes;
 
+/// <summary>
+/// Sends staged due-date reminder emails to loan borrowers and lenders.
+/// </summary>
 public class LoanReminderService : ILoanReminderService
 {
     private readonly ILoanRepository _loanRepository;
     private readonly IBrevoProvider _brevoProvider;
 
+    /// <summary>
+    /// Initializes a new <see cref="LoanReminderService"/> with its required dependencies.
+    /// </summary>
+    /// <param name="loanRepository">Repository for loan persistence operations.</param>
+    /// <param name="brevoProvider">Email provider for sending reminder emails.</param>
     public LoanReminderService(ILoanRepository loanRepository, IBrevoProvider brevoProvider)
     {
         _loanRepository = loanRepository;
         _brevoProvider = brevoProvider;
     }
 
+    /// <summary>
+    /// Sends reminder emails for all three reminder stages and marks processed loans accordingly.
+    /// </summary>
+    /// <returns>The total number of loans for which reminders were sent across all stages.</returns>
     [Transaction(ReadOnly = false)]
     public async Task<int> SendReminderBatchAsync()
     {
@@ -40,6 +52,12 @@ public class LoanReminderService : ILoanReminderService
         return stage1.Count + stage2.Count + stage3.Count;
     }
 
+    /// <summary>
+    /// Sends reminder emails for all loans in the given stage and records the reminder timestamp on each loan.
+    /// </summary>
+    /// <param name="loans">The loans to process for this reminder stage.</param>
+    /// <param name="stageNumber">The reminder stage number (1, 2, or 3) determining which timestamp field to set.</param>
+    /// <param name="today">The current UTC date used to calculate days until due.</param>
     private async Task ProcessStageAsync(List<LoanEntity> loans, int stageNumber, DateTime today)
     {
         if (loans.Count == 0)

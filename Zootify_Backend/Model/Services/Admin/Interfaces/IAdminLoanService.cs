@@ -5,11 +5,30 @@ using Zootify_Backend.Model.Auth;
 
 namespace Zootify_Backend.Model.Services.Admin.Interfaces;
 
+/// <summary>
+/// Defines operations for managing specimen loan records.
+/// </summary>
 public interface IAdminLoanService
 {
+    /// <summary>
+    /// Returns a list of active users whose names start with the given prefix, for use in borrower picker controls.
+    /// </summary>
+    /// <param name="startsWith">The prefix to filter user names by.</param>
+    /// <returns>A list of matching borrower picker DTOs.</returns>
     Task<List<BorrowerPickerDto>> GetBorrowersAsync(string startsWith);
 
+    /// <summary>
+    /// Creates a new loan record and sends a confirmation email to the borrower.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the lending user.</param>
+    /// <param name="request">The loan creation data including specimen, borrower, due date, and notes.</param>
+    /// <returns>A DTO containing the GUID of the newly created loan.</returns>
     Task<CreatedObjectResponseDto> CreateLoanAsync(IAuthentication authentication, CreateLoanRequestDto request);
 
+    /// <summary>
+    /// Marks a loan as returned, appends optional notes, and sends a return confirmation email to the borrower.
+    /// </summary>
+    /// <param name="loanGuid">The GUID of the loan to mark as returned.</param>
+    /// <param name="request">Optional notes to append to the loan record.</param>
     Task ReturnLoanAsync(Guid loanGuid, ReturnLoanRequestDto request);
 }

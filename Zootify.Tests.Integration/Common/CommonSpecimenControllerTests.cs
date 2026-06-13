@@ -606,6 +606,31 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task UpdateSpecimen_SpecimenIsNotActive_ReturnsObjectIsNotActive()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid,
+            status: SpecimenStatus.Deleted,
+            createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "Updated", LatinName = "X", DateOfDiscovery = DateTime.UtcNow,
+            Comment = null, IsPublic = true, Status = SpecimenStatus.Deleted
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
+    }
+
     #endregion
 
     #region UpdateSpecimenImage
@@ -733,6 +758,28 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenImage_SpecimenIsNotActive_ReturnsObjectIsNotActive()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid,
+            status: SpecimenStatus.Deleted,
+            createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "new-image" };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
     }
 
     #endregion
@@ -891,6 +938,28 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateSpecimenTags_SpecimenIsNotActive_ReturnsObjectIsNotActive()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid,
+            status: SpecimenStatus.Deleted,
+            createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
     }
 
     #endregion
@@ -1179,6 +1248,187 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    #endregion
+
+    #region DeleteSpecimen
+
+    [Fact]
+    public async Task DeleteSpecimen_AsOwner_SoftDeletesSpecimen()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var deleted = await GetSpecimenFromDbAsync(specimen.Guid);
+        deleted.Should().NotBeNull();
+        deleted!.DeletedByUserGuid.Should().Be(owner.Guid);
+        deleted.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
+        deleted.Status.Should().Be(SpecimenStatus.Deleted);
+    }
+
+    [Fact]
+    public async Task DeleteSpecimen_AsAdmin_CanSoftDeleteAnySpecimen()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var deleted = await GetSpecimenFromDbAsync(specimen.Guid);
+        deleted.Should().NotBeNull();
+        deleted!.DeletedByUserGuid.Should().Be(admin.Guid);
+        deleted.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
+        deleted.Status.Should().Be(SpecimenStatus.Deleted);
+    }
+
+    [Fact]
+    public async Task DeleteSpecimen_AsUserOnOtherUsersSpecimen_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var other = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(other);
+
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task DeleteSpecimen_SpecimenNotFound_ReturnsNoSpecimenWithThisGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    [Fact]
+    public async Task DeleteSpecimen_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    #endregion
+
+    #region ActivateSpecimen
+
+    [Fact]
+    public async Task ActivateSpecimen_AsOwner_ActivatesSpecimen()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.PostAsync(
+            $"{Routings.CommonSpecimenRouting}/activate/{specimen.Guid}", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var activated = await GetSpecimenFromDbAsync(specimen.Guid);
+        activated!.DeletionDate.Should().BeNull();
+        activated.DeletedByUserGuid.Should().BeNull();
+        activated.UpdatedByUserGuid.Should().Be(owner.Guid);
+        activated.Status.Should().Be(SpecimenStatus.Active);
+    }
+
+    [Fact]
+    public async Task ActivateSpecimen_AsAdmin_CanActivateAnySpecimen()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.PostAsync(
+            $"{Routings.CommonSpecimenRouting}/activate/{specimen.Guid}", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var activated = await GetSpecimenFromDbAsync(specimen.Guid);
+        activated!.DeletionDate.Should().BeNull();
+        activated.DeletedByUserGuid.Should().BeNull();
+        activated.UpdatedByUserGuid.Should().Be(admin.Guid);
+        activated.Status.Should().Be(SpecimenStatus.Active);
+    }
+
+    [Fact]
+    public async Task ActivateSpecimen_AsUserOnOtherUsersSpecimen_ReturnsForbidden()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var other = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(other);
+
+        var response = await Client.PostAsync(
+            $"{Routings.CommonSpecimenRouting}/activate/{specimen.Guid}", null);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task ActivateSpecimen_SpecimenNotFound_ReturnsNoSpecimenWithThisGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.PostAsync(
+            $"{Routings.CommonSpecimenRouting}/activate/{Guid.CreateVersion7()}", null);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+    }
+
+    [Fact]
+    public async Task ActivateSpecimen_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.PostAsync(
+            $"{Routings.CommonSpecimenRouting}/activate/{Guid.CreateVersion7()}", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     #endregion
