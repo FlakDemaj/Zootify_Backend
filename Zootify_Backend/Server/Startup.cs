@@ -185,9 +185,10 @@ public class Startup
     private void EnableCors(IServiceCollection service)
     {
         service.AddCors(option => option.AddPolicy("AllowOrigin",
-            policy => policy.AllowAnyOrigin()
+            policy => policy.WithOrigins("http://localhost:4200")
                             .AllowAnyMethod()
-                            .AllowAnyHeader()));
+                            .AllowAnyHeader()
+                            .AllowCredentials()));
     }
 
     /// <summary>
