@@ -28,6 +28,8 @@ public class CommonUserSettingsService : ICommonUserSettingsService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="requestDto">The new settings values to apply.</param>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateUserSettingsAsync(
         IAuthentication authentication,

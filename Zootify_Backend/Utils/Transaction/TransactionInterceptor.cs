@@ -55,6 +55,8 @@ namespace Zootify_Backend.Transaction
             // Handle async methods appropriately
             if (IsAsyncMethod(method))
             {
+                // The `dynamic` cast lets the runtime resolve the correct generic overload
+                // (Task vs Task<T>) so both void-async and value-returning-async methods are handled.
                 invocation.ReturnValue = InterceptAsync((dynamic)invocation.ReturnValue!, isReadonly);
             }
             else
@@ -68,6 +70,7 @@ namespace Zootify_Backend.Transaction
         /// Rolls back the transaction in case of failure.
         /// </summary>
         /// <param name="function">The action to execute within the transaction.</param>
+        /// <exception cref="ZootifyException">Thrown when a database operation fails.</exception>
         private void StartTransaction(Action function)
         {
             DbContextTransaction = Context.Database.BeginTransaction();
@@ -104,6 +107,7 @@ namespace Zootify_Backend.Transaction
         /// Executes post-transaction actions such as committing or rolling back.
         /// </summary>
         /// <param name="isReadonly">If <see langword="true"/>, the transaction is rolled back instead of committed.</param>
+        /// <exception cref="ZootifyException">Thrown when a database operation fails.</exception>
         private async Task RunAfter(bool isReadonly)
         {
             try
@@ -142,8 +146,11 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Executes any registered post-transaction actions.
         /// </summary>
+        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
         private async Task InvokeAfterTransactionActions()
         {
+            // Snapshot and clear before iterating so that actions added by other callbacks
+            // during execution are not processed in the same pass (avoids re-entrancy).
             var actions = AfterTransactionActions.ToList();
             AfterTransactionActions.Clear();
 
@@ -171,6 +178,7 @@ namespace Zootify_Backend.Transaction
         /// </summary>
         /// <param name="task">The asynchronous task returned by the intercepted method.</param>
         /// <param name="isReadonly">If <see langword="true"/>, the transaction is rolled back instead of committed.</param>
+        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
         private async Task InterceptAsync(Task task, bool isReadonly)
         {
             try
@@ -197,6 +205,7 @@ namespace Zootify_Backend.Transaction
         /// <param name="task">The asynchronous task returned by the intercepted method.</param>
         /// <param name="isReadonly">If <see langword="true"/>, the transaction is rolled back instead of committed.</param>
         /// <returns>The result produced by the intercepted method.</returns>
+        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
         private async Task<T> InterceptAsync<T>(Task<T> task, bool isReadonly)
         {
             T result;

@@ -100,6 +100,8 @@ public class CommonCollectionService : ICommonCollectionService
 
         var combined = statics.Concat(dynamic).ToList();
 
+        // specimenCount sort is applied in memory because static collections are not in the DB
+        // query and therefore cannot be sorted server-side alongside the dynamic ones.
         if (!string.IsNullOrWhiteSpace(paging.SortBy) && paging.SortBy == "specimenCount")
         {
             combined = paging.SortDirection == SortDirection.Desc
@@ -127,6 +129,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="collectionGuid">The GUID of the collection to retrieve specimens from.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A response containing the collection metadata and its paged specimens.</returns>
+    /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
     [Transaction(ReadOnly = true)]
     public async Task<GetAllSpecimenInCollectionResponseDto> GetAllSpecimensInCollectionAsync(
         IAuthentication? authentication,
@@ -172,6 +175,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="collectionGuid">The well-known GUID identifying the static collection.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A response containing the virtual collection metadata and its paged specimens.</returns>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private async Task<GetAllSpecimenInCollectionResponseDto> GetSpecimensFromStaticCollectionAsync(
         IAuthentication? authentication,
         Guid collectionGuid,
@@ -257,6 +261,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// </summary>
     /// <param name="authentication">The optional authentication context of the caller.</param>
     /// <param name="collection">The collection whose visibility to check.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private static void CheckCollectionVisibility(IAuthentication? authentication, CollectionEntity collection)
     {
         var isPublicActive = !collection.IsPrivate && collection.Status == CollectionStatus.Active;
@@ -341,6 +346,9 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="collectionGuid">The GUID of the collection to add the specimen to.</param>
     /// <param name="specimenGuid">The GUID of the specimen to add.</param>
+    /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
+    /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the specimen is already in the collection.</exception>
     [Transaction(ReadOnly = false)]
     public async Task AddSpecimenToCollectionAsync(
         IAuthentication authentication,
@@ -386,6 +394,9 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="collectionGuid">The GUID of the collection to update.</param>
     /// <param name="request">The new data to apply to the collection.</param>
+    /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateCollectionAsync(
         IAuthentication authentication,
@@ -422,6 +433,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="collectionGuid">The GUID of the collection to delete.</param>
+    /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
     [Transaction(ReadOnly = false)]
     public async Task DeleteCollectionAsync(
         IAuthentication authentication,
@@ -445,6 +457,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="collectionGuid">The GUID of the collection to activate.</param>
+    /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
     [Transaction(ReadOnly = false)]
     public async Task ActivateCollectionAsync(
         IAuthentication authentication,
@@ -469,6 +482,8 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="collectionGuid">The GUID of the collection to remove the specimen from.</param>
     /// <param name="specimenGuid">The GUID of the specimen to remove.</param>
+    /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
+    /// <exception cref="ZootifyException">Thrown when the specimen is not in the collection.</exception>
     [Transaction(ReadOnly = false)]
     public async Task RemoveSpecimenFromCollectionAsync(
         IAuthentication authentication,
@@ -500,6 +515,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="collection">The collection whose ownership to verify.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private static void CheckCollectionOwnership(IAuthentication authentication, CollectionEntity collection)
     {
         if (authentication.Role == UserRole.User

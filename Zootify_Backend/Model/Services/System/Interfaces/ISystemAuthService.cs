@@ -13,30 +13,35 @@ public interface ISystemAuthService
     /// </summary>
     /// <param name="request">The login credentials including email and password.</param>
     /// <returns>A DTO containing the user's name, JWT token, and settings.</returns>
+    /// <exception cref="ZootifyException">Thrown when the user is not found, is not active, or provides incorrect credentials.</exception>
     public Task<LoginUserResponseDto> LoginAsync(LoginUserRequestDto request);
 
     /// <summary>
     /// Registers a new user, creates a registration token, and sends a confirmation email.
     /// </summary>
     /// <param name="request">The registration data including email, name, and password.</param>
+    /// <exception cref="ZootifyException">Thrown when a user with the given email already exists or the email/password is invalid.</exception>
     public Task RegisterAsync(RegisterUserRequestDto request);
 
     /// <summary>
     /// Confirms a user's registration using the token sent by email and activates the account.
     /// </summary>
     /// <param name="token">The registration token sent to the user by email.</param>
+    /// <exception cref="ZootifyException">Thrown when the token is invalid, expired, or the user is already active, blocked, or deleted.</exception>
     public Task ConfirmRegistrationAsync(string token);
 
     /// <summary>
     /// Resends the registration confirmation email to a pending user with a fresh token.
     /// </summary>
     /// <param name="request">Contains the email address of the pending user.</param>
+    /// <exception cref="ZootifyException">Thrown when no user with the given email is found or the user is already active.</exception>
     public Task SendNewRegistrationEmailAsync(SendNewRegistrationEmailRequestDto request);
 
     /// <summary>
     /// Sends a password-reset email to an active user with a fresh reset token.
     /// </summary>
     /// <param name="request">Contains the email address of the user requesting a password reset.</param>
+    /// <exception cref="ZootifyException">Thrown when no user with the given email is found, or the user is pending or deleted.</exception>
     public Task SendNewResetPasswordEmailAsync(SendNewResetPasswordEmailRequestDto request);
 
     /// <summary>
@@ -44,5 +49,6 @@ public interface ISystemAuthService
     /// </summary>
     /// <param name="request">The new password data including the password and its confirmation.</param>
     /// <param name="resetPasswordToken">The reset token sent to the user by email.</param>
+    /// <exception cref="ZootifyException">Thrown when the token is invalid or expired, the passwords do not match, or the password does not meet strength requirements.</exception>
     public Task ResetPasswordAsync(ResetPasswordRequestDto request, string resetPasswordToken);
 }

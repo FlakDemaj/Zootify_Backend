@@ -84,6 +84,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="specimenGuid">The GUID of the specimen to retrieve.</param>
     /// <param name="collectionGuid">The GUID of the collection context to validate membership against.</param>
     /// <returns>A detailed specimen response DTO including taxonomy path and audit information.</returns>
+    /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
     public async Task<GetSpecimenDetailResponseDto> GetSpecimenInCollectionByGuidAsync(
         IAuthentication? authentication,
@@ -118,6 +119,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// </summary>
     /// <param name="authentication">The optional authentication context of the caller.</param>
     /// <param name="specimen">The specimen whose visibility to check.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private static void CheckSpecimenVisibility(IAuthentication? authentication, SpecimenEntity specimen)
     {
         if (authentication == null && !specimen.IsPublic)
@@ -140,6 +142,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="authentication">The optional authentication context used for ownership checks on virtual collections.</param>
     /// <param name="specimen">The specimen to validate against the collection.</param>
     /// <param name="collectionGuid">The GUID of the collection context to check membership in.</param>
+    /// <exception cref="ZootifyException">Thrown when the specimen is not in the collection.</exception>
     private static void CheckSpecimenInCollection(
         IAuthentication? authentication,
         SpecimenEntity specimen,
@@ -250,6 +253,8 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="specimenGuid">The GUID of the specimen whose image to update.</param>
     /// <param name="request">The new Base64 image data.</param>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateSpecimenImageAsync(
         IAuthentication authentication,
@@ -283,6 +288,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="specimenGuid">The GUID of the specimen whose tags to update.</param>
     /// <param name="request">The new set of tags, which may include both existing and new tags.</param>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateSpecimenTagsAsync(
         IAuthentication authentication,
@@ -352,6 +358,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="authentication">The optional authentication context used to enforce visibility rules.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to search under.</param>
     /// <returns>A list of specimen DTOs matching the taxonomy subtree.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
     public async Task<List<SpecimenDto>> GetSpecimensByTaxonomyNodeGuidAsync(
         IAuthentication? authentication,
@@ -428,6 +435,8 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="specimenGuid">The GUID of the specimen to update.</param>
     /// <param name="request">The new data to apply to the specimen.</param>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateSpecimenAsync(
         IAuthentication authentication,
@@ -463,6 +472,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="existingTags">Tags that already exist in the database and should be linked to the specimen.</param>
     /// <param name="notExistingTags">New tags that must be created and then linked to the specimen.</param>
     /// <param name="specimen">The specimen entity whose tags are being replaced.</param>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     private async Task UpdateSpecimenTagsAsync(
         IAuthentication authentication,
         List<TagEntity> existingTags,
@@ -583,9 +593,11 @@ public class CommonSpecimenService : ICommonSpecimenService
         TaxonomyNodeEntity taxonomyNode)
     {
         var taxonomyTreeList = new List<TaxonomyNodeEntity>();
-        
+
         await _commonTaxonomyNodeService.GetTaxonomyTreeAsync(taxonomyNode, taxonomyTreeList);
-        
+
+        // A specimen is placed in Pending if *any* ancestor node is still pending,
+        // not just the immediate species node.
         return taxonomyTreeList.Any(tn => tn.ApprovalStatus == ApprovalStatus.Pending);
     }
 
@@ -594,6 +606,8 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// </summary>
     /// <param name="specimenGuid">The GUID of the taxonomy species node to validate.</param>
     /// <returns>The validated species-rank <see cref="TaxonomyNodeEntity"/>.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the taxonomy node is not of species rank.</exception>
     private async Task<TaxonomyNodeEntity> CheckSpeciesAsync(Guid specimenGuid)
     {
         var species = await _taxonomyRepository
@@ -720,6 +734,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// </summary>
     /// <param name="guids">The list of tag GUIDs to look up.</param>
     /// <returns>The list of found <see cref="TagEntity"/> instances.</returns>
+    /// <exception cref="ZootifyException">Thrown when no tags are found for the given GUIDs.</exception>
     private async Task<List<TagEntity>> GetExistingTagsAsync(List<Guid> guids)
     {
         var tags = await _tagRepository.GetTagByGuidAsync(guids);
@@ -738,6 +753,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// </summary>
     /// <param name="geoData">The latitude and longitude to resolve.</param>
     /// <returns>The GUID of the most specific resolved <see cref="GeographicLocationEntity"/>.</returns>
+    /// <exception cref="ZootifyException">Thrown when the geographic address cannot be resolved.</exception>
     private async Task<Guid> ResolveGeographicLocationAsync(GeoDto geoData)
     {
         var location = await _nominatimProvider.SearchLocationAsync(geoData);
@@ -837,6 +853,8 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <param name="includeImage">Whether to eagerly load the specimen's image.</param>
     /// <param name="includeTags">Whether to eagerly load the specimen's tag associations.</param>
     /// <returns>The found and ownership-verified <see cref="SpecimenEntity"/>.</returns>
+    /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private async Task<SpecimenEntity> CheckSpecimenWithOwnership(
         Guid specimenGuid,
         IAuthentication authentication,

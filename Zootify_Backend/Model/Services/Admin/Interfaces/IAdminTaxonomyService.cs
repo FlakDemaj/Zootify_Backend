@@ -20,6 +20,8 @@ public interface IAdminTaxonomyService
     /// </summary>
     /// <param name="authentication">The authentication context of the approving moderator or admin.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to approve.</param>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the taxonomy node is already approved.</exception>
     Task ApproveTaxonomyAsync(IAuthentication authentication, Guid taxonomyGuid);
 
     /// <summary>
@@ -28,5 +30,6 @@ public interface IAdminTaxonomyService
     /// <param name="authentication">The authentication context of the rejecting moderator or admin.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to reject.</param>
     /// <param name="request">Contains the rejection comment to send to affected users.</param>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     Task RejectTaxonomyAsync(IAuthentication authentication, Guid taxonomyGuid, RejectTaxonomyRequestDto request);
 }

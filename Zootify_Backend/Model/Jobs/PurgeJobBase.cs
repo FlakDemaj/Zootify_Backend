@@ -41,6 +41,9 @@ public abstract class PurgeJobBase : BackgroundService
             int deleted;
             do
             {
+                // A fresh DI scope per batch gives each batch its own DbContext, so the
+                // change tracker is discarded between batches instead of accumulating every
+                // purged entity in memory across the whole run.
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 deleted = await ExecutePurgeBatchAsync(scope.ServiceProvider);
                 totalDeleted += deleted;

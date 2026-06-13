@@ -95,7 +95,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
             .GetTrackingSet<UserEntity>()
             .Include(u => u.Settings)
             .Where(u => u.Status == UserStatus.Active
-                && u.Role == UserRole.Moderator || u.Role == UserRole.Admin)
+                && (u.Role == UserRole.Moderator || u.Role == UserRole.Admin))
             .ToListAsync();
     }
 

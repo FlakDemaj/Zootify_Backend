@@ -14,6 +14,8 @@ public interface ICommonUserService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="updateOwnUserRequestDto">The new profile data to apply.</param>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     Task UpdateOwnUserAsync(
         IAuthentication authentication,
         UpdateOwnUserRequestDto updateOwnUserRequestDto);
@@ -23,6 +25,8 @@ public interface ICommonUserService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="userToDeleteGuid">The GUID of the user to delete.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     Task DeleteUserAsync(
         IAuthentication authentication,
         Guid userToDeleteGuid);
@@ -32,5 +36,6 @@ public interface ICommonUserService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <returns>A response DTO containing the current user's data.</returns>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     Task<GetOwnUserDataResponse> GetOwnUserDataAsync(IAuthentication authentication);
 }

@@ -37,6 +37,9 @@ public class LoanReminderJob : BackgroundService
             int sent;
             do
             {
+                // A fresh DI scope per batch gives each batch its own DbContext, so the
+                // change tracker is discarded between batches instead of accumulating every
+                // processed loan in memory across the whole run.
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var service = scope.ServiceProvider.GetRequiredService<ILoanReminderService>();
                 sent = await service.SendReminderBatchAsync();

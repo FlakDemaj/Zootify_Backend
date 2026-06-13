@@ -98,6 +98,9 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.GeoPath,
                 o => o.MapFrom((s, _) =>
                 {
+                    // Walk the eagerly-loaded parent chain from the leaf (most specific level,
+                    // e.g. house number) up to the root (country), then reverse so the resulting
+                    // path runs root-to-leaf.
                     var path = new List<GeoLocationNodeDto>();
                     var current = s.GeographicLocation;
                     while (current != null)

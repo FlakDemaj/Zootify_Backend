@@ -17,6 +17,7 @@ public class NominatimProvider : INominatimProvider
     {
         var client = _httpClientFactory.CreateClient();
 
+        // Nominatim's usage policy requires a descriptive User-Agent; requests without one are blocked.
         client.DefaultRequestHeaders.UserAgent.ParseAdd("Zootify-Server/1.0");
 
         var url =

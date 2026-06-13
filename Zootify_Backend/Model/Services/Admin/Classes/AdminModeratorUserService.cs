@@ -37,6 +37,7 @@ public class AdminModeratorUserService : IAdminModeratorUserService
     /// </summary>
     /// <param name="guid">The GUID of the user to retrieve.</param>
     /// <returns>A detailed user response DTO.</returns>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
     public async Task<GetUserResponseDto> GetUserByGuidAsync(Guid guid)
     {
@@ -68,6 +69,9 @@ public class AdminModeratorUserService : IAdminModeratorUserService
     /// <param name="authentication">The authentication context of the requesting admin.</param>
     /// <param name="userToUpdateGuid">The GUID of the user to update.</param>
     /// <param name="updateUserRequestDto">The new data to apply to the user.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateUserAsync(
         IAuthentication authentication,
@@ -115,6 +119,7 @@ public class AdminModeratorUserService : IAdminModeratorUserService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting admin.</param>
     /// <param name="userToActivateGuid">The GUID of the deleted user to activate.</param>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     [Transaction(ReadOnly = false)]
     public async Task ActivateUserAsync(
         IAuthentication authentication,

@@ -83,6 +83,7 @@ public static class ZootifyDbContextExtensions
     /// </summary>
     /// <param name="context">The database context.</param>
     /// <param name="updateData">The entity instance to update.</param>
+    /// <exception cref="ZootifyException">Thrown when a database operation fails.</exception>
     public static async Task UpdateAndSaveChangesAsync(
         this ZootifyDbContext context,
         object updateData)

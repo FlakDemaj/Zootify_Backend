@@ -51,6 +51,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
     /// <param name="authentication">The authentication context of the creating user.</param>
     /// <param name="requestDto">The taxonomy node chain to create, including an optional parent GUID.</param>
     /// <returns>A list of DTOs containing the GUIDs of the created nodes.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = false)]
     public async Task<List<CreatedObjectResponseDto>> CreateTaxonomyNodeAsync(
         IAuthentication authentication,
@@ -79,6 +80,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
             var node = _mapper.Map<TaxonomyNodeEntity>(taxonomyNode);
             node.SetCreatedBy(authentication.UserGuid);
             node.ParentGuid = parentGuid;
+            // Each newly created node becomes the parent of the next, building a linear chain.
             parentGuid = node.Guid;
 
             if (!needsApproval)
@@ -168,6 +170,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
     /// <param name="taxonomyNode">The starting taxonomy node.</param>
     /// <param name="taxonomyNodes">The accumulator list that will contain the full ancestor chain.</param>
     /// <returns>The accumulated list of <see cref="TaxonomyNodeEntity"/> instances from leaf to root.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
     public async Task<List<TaxonomyNodeEntity>> GetTaxonomyTreeAsync(
         TaxonomyNodeEntity taxonomyNode,

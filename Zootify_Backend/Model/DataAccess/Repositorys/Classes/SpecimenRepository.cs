@@ -169,6 +169,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .Include(sp => sp.Image)
             .Include(sp => sp.Species)
             .Include(sp => sp.Collections)
+            // Five levels of Parent cover the full geographic hierarchy depth
+            // (Country → State → City → Postcode → Street → HouseNumber); EF cannot
+            // load a self-referencing chain recursively, so each level is included explicitly.
             .Include(sp => sp.GeographicLocation)
                 .ThenInclude(g => g.Parent)
                 .ThenInclude(g => g.Parent)
@@ -276,6 +279,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .Include(sp => sp.CreatedByUser)
             .Include(sp => sp.UpdatedByUser)
             .Include(sp => sp.DeletedByUser)
+            // Five levels of Parent cover the full geographic hierarchy depth
+            // (Country → State → City → Postcode → Street → HouseNumber); EF cannot
+            // load a self-referencing chain recursively, so each level is included explicitly.
             .Include(sp => sp.GeographicLocation)
             .ThenInclude(g => g.Parent)
             .ThenInclude(g => g.Parent)

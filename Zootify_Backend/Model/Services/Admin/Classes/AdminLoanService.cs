@@ -64,6 +64,8 @@ public class AdminLoanService : IAdminLoanService
     /// <param name="authentication">The authentication context of the lending user.</param>
     /// <param name="request">The loan creation data including specimen, borrower, due date, and notes.</param>
     /// <returns>A DTO containing the GUID of the newly created loan.</returns>
+    /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     [Transaction(ReadOnly = false)]
     public async Task<CreatedObjectResponseDto> CreateLoanAsync(
         IAuthentication authentication,
@@ -117,6 +119,8 @@ public class AdminLoanService : IAdminLoanService
     /// </summary>
     /// <param name="loanGuid">The GUID of the loan to mark as returned.</param>
     /// <param name="request">Optional notes to append to the loan record.</param>
+    /// <exception cref="ZootifyException">Thrown when no loan with the given GUID is found.</exception>
+    /// <exception cref="ZootifyException">Thrown when the loan has already been returned.</exception>
     [Transaction(ReadOnly = false)]
     public async Task ReturnLoanAsync(Guid loanGuid, ReturnLoanRequestDto request)
     {

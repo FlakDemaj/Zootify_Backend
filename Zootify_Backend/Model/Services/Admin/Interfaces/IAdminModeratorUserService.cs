@@ -16,6 +16,7 @@ public interface IAdminModeratorUserService
     /// </summary>
     /// <param name="guid">The GUID of the user to retrieve.</param>
     /// <returns>A detailed user response DTO.</returns>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     Task<GetUserResponseDto> GetUserByGuidAsync(Guid guid);
 
     /// <summary>
@@ -31,6 +32,9 @@ public interface IAdminModeratorUserService
     /// <param name="authentication">The authentication context of the requesting admin.</param>
     /// <param name="userToUpdateGuid">The GUID of the user to update.</param>
     /// <param name="updateUserRequestDto">The new data to apply to the user.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     Task UpdateUserAsync(
         IAuthentication authentication,
         Guid userToUpdateGuid,
@@ -41,6 +45,7 @@ public interface IAdminModeratorUserService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting admin.</param>
     /// <param name="userToActivateGuid">The GUID of the deleted user to activate.</param>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     Task ActivateUserAsync(
         IAuthentication authentication,
         Guid userToActivateGuid);

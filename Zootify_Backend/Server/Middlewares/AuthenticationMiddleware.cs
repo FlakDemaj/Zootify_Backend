@@ -27,6 +27,7 @@ public class AuthenticationMiddleware
     /// then passes the request to the next middleware.
     /// </summary>
     /// <param name="context">The current HTTP context.</param>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
     public async Task Invoke(HttpContext context)
     {
         var authentication = TryBuildAuthentication(context);

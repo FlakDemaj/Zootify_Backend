@@ -30,6 +30,7 @@ public class BrevoProvider : IBrevoProvider
     /// <param name="firstname">The recipient's first name.</param>
     /// <param name="lastname">The recipient's last name.</param>
     /// <returns><c>true</c> if the email was sent successfully.</returns>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
     public async Task<bool> SendRegistrationEmail(
         string token,
         string email,
@@ -109,6 +110,7 @@ public class BrevoProvider : IBrevoProvider
     /// <param name="lastname">The recipient's last name.</param>
     /// <param name="email">The recipient's email address.</param>
     /// <returns><c>true</c> if the email was sent successfully.</returns>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
     public async Task<bool> SendConfirmationResetPasswordEmail(
         string firstname,
         string lastname,
@@ -461,6 +463,7 @@ public class BrevoProvider : IBrevoProvider
     /// Prefers the language-specific variant (e.g. RegistrationEmail.en.html) when available,
     /// and falls back to the default German template.
     /// </summary>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
     private static async Task<string> LoadTemplateAsync(string templateName)
     {
         var assembly = typeof(BrevoProvider).Assembly;

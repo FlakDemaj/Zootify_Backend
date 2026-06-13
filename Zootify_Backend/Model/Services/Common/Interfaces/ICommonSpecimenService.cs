@@ -29,6 +29,7 @@ public interface ICommonSpecimenService
     /// <param name="specimenGuid">The GUID of the specimen to retrieve.</param>
     /// <param name="collectionGuid">The GUID of the collection context to validate membership against.</param>
     /// <returns>A detailed specimen response DTO including taxonomy path and audit information.</returns>
+    /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
     Task<GetSpecimenDetailResponseDto> GetSpecimenInCollectionByGuidAsync(
         IAuthentication? authentication,
         Guid specimenGuid,
@@ -47,6 +48,8 @@ public interface ICommonSpecimenService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="specimenGuid">The GUID of the specimen to update.</param>
     /// <param name="request">The new data to apply to the specimen.</param>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     Task UpdateSpecimenAsync(
         IAuthentication authentication,
         Guid specimenGuid,
@@ -58,6 +61,8 @@ public interface ICommonSpecimenService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="specimenGuid">The GUID of the specimen whose image to update.</param>
     /// <param name="request">The new Base64 image data.</param>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
+    /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     Task UpdateSpecimenImageAsync(
         IAuthentication authentication,
         Guid specimenGuid,
@@ -69,6 +74,7 @@ public interface ICommonSpecimenService
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="specimenGuid">The GUID of the specimen whose tags to update.</param>
     /// <param name="request">The new set of tags, which may include both existing and new tags.</param>
+    /// <exception cref="ZootifyException">Thrown when the object is not in active status.</exception>
     Task UpdateSpecimenTagsAsync(
         IAuthentication authentication,
         Guid specimenGuid,
@@ -95,5 +101,6 @@ public interface ICommonSpecimenService
     /// <param name="authentication">The optional authentication context used to enforce visibility rules.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to search under.</param>
     /// <returns>A list of specimen DTOs matching the taxonomy subtree.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     Task<List<SpecimenDto>> GetSpecimensByTaxonomyNodeGuidAsync(IAuthentication? authentication, Guid taxonomyGuid);
 }
