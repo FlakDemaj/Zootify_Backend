@@ -16,6 +16,7 @@ public class BrevoProvider : IBrevoProvider
     /// <summary>
     /// Initializes a new <see cref="BrevoProvider"/> with the configured Brevo client.
     /// </summary>
+    /// <param name="brevoClient">The Brevo client used to send transactional emails.</param>
     public BrevoProvider(BrevoClient brevoClient)
     {
         BrevoClient = brevoClient;
@@ -24,6 +25,11 @@ public class BrevoProvider : IBrevoProvider
     /// <summary>
     /// Sends a registration confirmation email containing the activation link.
     /// </summary>
+    /// <param name="token">The registration token embedded in the confirmation link.</param>
+    /// <param name="email">The recipient's email address.</param>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendRegistrationEmail(
         string token,
         string email,
@@ -64,6 +70,11 @@ public class BrevoProvider : IBrevoProvider
     /// <summary>
     /// Sends a password-reset email containing the reset link.
     /// </summary>
+    /// <param name="resetToken">The reset token embedded in the reset link.</param>
+    /// <param name="email">The recipient's email address.</param>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendResetPasswordEmail(
         string resetToken,
         string email,
@@ -94,6 +105,10 @@ public class BrevoProvider : IBrevoProvider
     /// <summary>
     /// Sends a confirmation email notifying the user that their password was successfully reset.
     /// </summary>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <param name="email">The recipient's email address.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendConfirmationResetPasswordEmail(
         string firstname,
         string lastname,
@@ -131,6 +146,8 @@ public class BrevoProvider : IBrevoProvider
     /// <summary>
     /// Builds the frontend URL for the password-reset page with the token as a query parameter.
     /// </summary>
+    /// <param name="resetToken">The reset token to embed as a query parameter.</param>
+    /// <returns>The full reset-password URL string.</returns>
     private static string BuildResetLink(string resetToken)
     {
         var baseUrl = ZootifyConfiguration.FrontendBaseUrl.TrimEnd('/');
@@ -141,6 +158,9 @@ public class BrevoProvider : IBrevoProvider
     /// Builds the frontend URL for the registration confirmation page with the token as a query parameter.
     /// Throws if the configured frontend base URL is missing.
     /// </summary>
+    /// <param name="token">The registration token to embed as a query parameter.</param>
+    /// <returns>The full confirmation URL string.</returns>
+    /// <exception cref="ZootifyException">Thrown when the frontend base URL is not configured.</exception>
     private string BuildConfirmationLink(string token)
     {
         var frontendBaseUrl = ZootifyConfiguration.FrontendBaseUrl;
@@ -158,6 +178,10 @@ public class BrevoProvider : IBrevoProvider
     /// Creates the sender and a single-recipient list using the configured Zootify sender address.
     /// Throws if sender name or address are not configured.
     /// </summary>
+    /// <param name="recipientName">The recipient's full name.</param>
+    /// <param name="recipientEmail">The recipient's email address.</param>
+    /// <returns>A tuple containing the sender and the single-recipient list.</returns>
+    /// <exception cref="ZootifyException">Thrown when the sender name or address configuration is missing.</exception>
     private (Sender Sender, List<Recipient> Recipients) CreateSenderAndRecipient(
         string recipientName,
         string recipientEmail)
@@ -180,6 +204,15 @@ public class BrevoProvider : IBrevoProvider
         return (sender, recipients);
     }
 
+    /// <summary>
+    /// Sends an email notifying the user that a taxonomy node they created has been approved.
+    /// </summary>
+    /// <param name="email">The recipient's email address.</param>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <param name="taxonomyName">The name of the approved taxonomy node.</param>
+    /// <param name="rank">The rank of the approved taxonomy node.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendTaxonomyApprovedEmail(
         string email,
         string firstname,
@@ -204,6 +237,16 @@ public class BrevoProvider : IBrevoProvider
         return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
     }
 
+    /// <summary>
+    /// Sends an email notifying the user that a taxonomy node they created has been rejected.
+    /// </summary>
+    /// <param name="email">The recipient's email address.</param>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <param name="taxonomyName">The name of the rejected taxonomy node.</param>
+    /// <param name="rank">The rank of the rejected taxonomy node.</param>
+    /// <param name="comment">The rejection comment provided by the moderator or admin.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendTaxonomyRejectedEmail(
         string email,
         string firstname,
@@ -230,6 +273,18 @@ public class BrevoProvider : IBrevoProvider
         return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
     }
 
+    /// <summary>
+    /// Sends a loan confirmation email to the borrower with all loan details.
+    /// </summary>
+    /// <param name="borrowerEmail">The borrower's email address.</param>
+    /// <param name="borrowerName">The borrower's full name.</param>
+    /// <param name="lenderName">The lender's full name.</param>
+    /// <param name="specimenName">The common name of the loaned specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the loaned specimen.</param>
+    /// <param name="loanDate">The date the loan was created.</param>
+    /// <param name="dueDate">The date by which the specimen must be returned.</param>
+    /// <param name="notes">Optional notes attached to the loan.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendLoanConfirmationEmail(
         string borrowerEmail,
         string borrowerName,
@@ -262,6 +317,17 @@ public class BrevoProvider : IBrevoProvider
         return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
     }
 
+    /// <summary>
+    /// Sends a return confirmation email to the borrower confirming the specimen has been returned.
+    /// </summary>
+    /// <param name="borrowerEmail">The borrower's email address.</param>
+    /// <param name="borrowerName">The borrower's full name.</param>
+    /// <param name="specimenName">The common name of the returned specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the returned specimen.</param>
+    /// <param name="loanDate">The original loan date.</param>
+    /// <param name="returnDate">The date the specimen was returned.</param>
+    /// <param name="notes">Optional notes attached to the loan.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendLoanReturnConfirmationEmail(
         string borrowerEmail,
         string borrowerName,
@@ -290,6 +356,17 @@ public class BrevoProvider : IBrevoProvider
         return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
     }
 
+    /// <summary>
+    /// Sends a due-date reminder email to either the borrower or lender of a loan.
+    /// </summary>
+    /// <param name="recipientEmail">The recipient's email address.</param>
+    /// <param name="recipientName">The recipient's full name.</param>
+    /// <param name="specimenName">The common name of the loaned specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the loaned specimen.</param>
+    /// <param name="daysUntilDue">The number of days remaining until the loan is due (negative if overdue).</param>
+    /// <param name="dueDate">The due date of the loan.</param>
+    /// <param name="isBorrower">Whether the recipient is the borrower (<c>true</c>) or the lender (<c>false</c>).</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public async Task<bool> SendLoanDueReminderEmail(
         string recipientEmail,
         string recipientName,

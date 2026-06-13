@@ -47,6 +47,15 @@ public interface IBrevoProvider
         string firstname,
         string lastname);
 
+    /// <summary>
+    /// Sends an email notifying the user that a taxonomy node they created has been approved.
+    /// </summary>
+    /// <param name="email">The recipient's email address.</param>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <param name="taxonomyName">The name of the approved taxonomy node.</param>
+    /// <param name="rank">The rank of the approved taxonomy node.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public Task<bool> SendTaxonomyApprovedEmail(
         string email,
         string firstname,
@@ -54,6 +63,16 @@ public interface IBrevoProvider
         string taxonomyName,
         TaxonomyRank rank);
 
+    /// <summary>
+    /// Sends an email notifying the user that a taxonomy node they created has been rejected.
+    /// </summary>
+    /// <param name="email">The recipient's email address.</param>
+    /// <param name="firstname">The recipient's first name.</param>
+    /// <param name="lastname">The recipient's last name.</param>
+    /// <param name="taxonomyName">The name of the rejected taxonomy node.</param>
+    /// <param name="rank">The rank of the rejected taxonomy node.</param>
+    /// <param name="comment">The rejection comment provided by the moderator or admin.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public Task<bool> SendTaxonomyRejectedEmail(
         string email,
         string firstname,
@@ -62,6 +81,18 @@ public interface IBrevoProvider
         TaxonomyRank rank,
         string comment);
 
+    /// <summary>
+    /// Sends a loan confirmation email to the borrower with all loan details.
+    /// </summary>
+    /// <param name="borrowerEmail">The borrower's email address.</param>
+    /// <param name="borrowerName">The borrower's full name.</param>
+    /// <param name="lenderName">The lender's full name.</param>
+    /// <param name="specimenName">The common name of the loaned specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the loaned specimen.</param>
+    /// <param name="loanDate">The date the loan was created.</param>
+    /// <param name="dueDate">The date by which the specimen must be returned.</param>
+    /// <param name="notes">Optional notes attached to the loan.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public Task<bool> SendLoanConfirmationEmail(
         string borrowerEmail,
         string borrowerName,
@@ -72,6 +103,17 @@ public interface IBrevoProvider
         DateTime dueDate,
         string? notes);
 
+    /// <summary>
+    /// Sends a return confirmation email to the borrower confirming the specimen has been returned.
+    /// </summary>
+    /// <param name="borrowerEmail">The borrower's email address.</param>
+    /// <param name="borrowerName">The borrower's full name.</param>
+    /// <param name="specimenName">The common name of the returned specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the returned specimen.</param>
+    /// <param name="loanDate">The original loan date.</param>
+    /// <param name="returnDate">The date the specimen was returned.</param>
+    /// <param name="notes">Optional notes attached to the loan.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public Task<bool> SendLoanReturnConfirmationEmail(
         string borrowerEmail,
         string borrowerName,
@@ -81,6 +123,17 @@ public interface IBrevoProvider
         DateTime returnDate,
         string? notes);
 
+    /// <summary>
+    /// Sends a due-date reminder email to either the borrower or lender of a loan.
+    /// </summary>
+    /// <param name="recipientEmail">The recipient's email address.</param>
+    /// <param name="recipientName">The recipient's full name.</param>
+    /// <param name="specimenName">The common name of the loaned specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the loaned specimen.</param>
+    /// <param name="daysUntilDue">The number of days remaining until the loan is due (negative if overdue).</param>
+    /// <param name="dueDate">The due date of the loan.</param>
+    /// <param name="isBorrower">Whether the recipient is the borrower (<c>true</c>) or the lender (<c>false</c>).</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
     public Task<bool> SendLoanDueReminderEmail(
         string recipientEmail,
         string recipientName,

@@ -16,6 +16,7 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Initializes a new <see cref="BaseRepository{T}"/> with the given database context.
     /// </summary>
+    /// <param name="context">The database context to use for persistence operations.</param>
     public BaseRepository(ZootifyDbContext context)
         : base(context)
     {
@@ -24,6 +25,8 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Persists a new entity to the database and returns the saved instance.
     /// </summary>
+    /// <param name="objectToCreate">The entity to persist.</param>
+    /// <returns>The saved entity instance.</returns>
     public async Task<T> CreateAsync(T objectToCreate)
     {
         return await Context.CreateAsync(objectToCreate);
@@ -32,6 +35,8 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Persists a Set of new entitys to the database and returns the saved instance.
     /// </summary>
+    /// <param name="objectsToCreate">The list of entities to persist.</param>
+    /// <returns>The saved entity instances.</returns>
     public async Task<List<T>> MassCreateAsync(List<T> objectsToCreate)
     {
         return await Context.MassCreateAsync(objectsToCreate);
@@ -40,6 +45,7 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Removes the given entity from the database.
     /// </summary>
+    /// <param name="objectToDelete">The entity to remove.</param>
     public async Task DeleteAsync(T objectToDelete)
     {
         await Context.DeleteAsync(objectToDelete);
@@ -48,6 +54,7 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Removes the a set of entitys from the database.
     /// </summary>
+    /// <param name="objectsToDelete">The list of entities to remove.</param>
     public async Task MassDeleteAsync(List<T> objectsToDelete)
     {
         Context.Set<T>().RemoveRange(objectsToDelete);
@@ -57,6 +64,7 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Saves changes made to the given tracked entity back to the database.
     /// </summary>
+    /// <param name="objectToUpdate">The entity to update.</param>
     public async Task UpdateAsync(T objectToUpdate)
     {
         await Context.UpdateAndSaveChangesAsync(objectToUpdate);
@@ -65,6 +73,7 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     /// <summary>
     /// Saves changes made to a set of tracked entities back to the database.
     /// </summary>
+    /// <param name="objectsToUpdate">The list of entities to update.</param>
     public async Task MassUpdateAsync(List<T> objectsToUpdate)
     {
         try

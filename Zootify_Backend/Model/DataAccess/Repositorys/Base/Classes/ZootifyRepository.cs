@@ -13,6 +13,7 @@ public class ZootifyRepository : IZootifyRepository
     /// <summary>
     /// Initializes a new <see cref="ZootifyRepository"/> with the given database context.
     /// </summary>
+    /// <param name="context">The database context to use for persistence operations.</param>
     public ZootifyRepository(ZootifyDbContext context)
     {
         Context = context;

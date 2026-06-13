@@ -62,6 +62,7 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Hashes the given plain-text password and stores the result.
     /// </summary>
+    /// <param name="password">The plain-text password to hash and store.</param>
     public void SetPassword(string password)
     {
         PasswordHash = PasswordHasher.Hash(password);
@@ -112,6 +113,7 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Verifies the given plain-text password against the stored hash.
     /// </summary>
+    /// <param name="password">The plain-text password to verify.</param>
     /// <returns><c>true</c> if the password matches; otherwise <c>false</c>.</returns>
     public bool CheckPassword(string password)
     {
@@ -121,6 +123,7 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Increments the failed-login counter. Blocks the user once the counter reaches 5.
     /// </summary>
+    /// <param name="resetPasswordAttempts">The number of failed attempts after which the user is blocked.</param>
     public void IncrementLoginAttempts(
         int resetPasswordAttempts)
     {

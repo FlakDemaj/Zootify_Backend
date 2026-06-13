@@ -20,6 +20,8 @@ public class Authentication : IAuthentication
     /// <summary>
     /// Initializes a new <see cref="Authentication"/> with the user's GUID and authentication type.
     /// </summary>
+    /// <param name="userGuid">The unique identifier of the authenticated user.</param>
+    /// <param name="role">The role assigned to the authenticated user.</param>
     public Authentication(Guid userGuid, UserRole role)
     {
         UserGuid = userGuid;

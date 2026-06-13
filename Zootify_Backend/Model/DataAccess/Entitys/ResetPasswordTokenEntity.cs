@@ -34,6 +34,7 @@ public class ResetPasswordTokenEntity : BaseGuidEntity
     /// <summary>
     /// Returns true if this token has passed its expiration date.
     /// </summary>
+    /// <returns><see langword="true"/> if the current UTC time is past <see cref="ExpiresAt"/>; otherwise <see langword="false"/>.</returns>
     public bool IsExpired()
     {
         return DateTime.UtcNow > ExpiresAt;
