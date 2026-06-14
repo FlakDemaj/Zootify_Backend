@@ -7,33 +7,106 @@ public class UserSettingsEntityTests
     [Fact]
     public void CheckChanges_DarkModeChanged_ReturnsTrue()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = false, Language = "de" };
-
-        settings.CheckChanges(darkMode: true, language: "de").Should().BeTrue();
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
+        
+        settings.CheckChanges(
+            darkMode: true, 
+            language: "de",
+            sendPushNotification: false,
+            sendEmail: true)
+            .Should()
+            .BeTrue();
     }
 
     [Fact]
     public void CheckChanges_LanguageChanged_ReturnsTrue()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = false, Language = "de" };
-
-        settings.CheckChanges(darkMode: false, language: "en").Should().BeTrue();
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
+        
+        settings.CheckChanges(
+            darkMode: false,
+            language: "en",
+            sendPushNotification: false,
+            sendEmail: true)
+            .Should()
+            .BeTrue();
     }
 
     [Fact]
-    public void CheckChanges_BothChanged_ReturnsTrue()
+    public void CheckChanges_AllChanged_ReturnsTrue()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = false, Language = "de" };
-
-        settings.CheckChanges(darkMode: true, language: "en").Should().BeTrue();
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
+        
+        settings.CheckChanges(
+                darkMode: true,
+                language: "en",
+                sendPushNotification: true,
+                sendEmail: false)
+            .Should()
+            .BeTrue();
+    }
+    
+    [Fact]
+    public void CheckChanges_ChangeNotification_ReturnsFalse()
+    {
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
+        
+        settings.CheckChanges(
+                darkMode: false,
+                language: "de",
+                sendPushNotification: true,
+                sendEmail: false)
+            .Should()
+            .BeTrue();
     }
 
     [Fact]
     public void CheckChanges_NothingChanged_ReturnsFalse()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = true, Language = "en" };
-
-        settings.CheckChanges(darkMode: true, language: "en").Should().BeFalse();
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
+        
+        settings.CheckChanges(
+                darkMode: false,
+                language: "de",
+                sendPushNotification: false,
+                sendEmail: true)
+            .Should()
+            .BeFalse();
     }
 
     #endregion
@@ -43,9 +116,16 @@ public class UserSettingsEntityTests
     [Fact]
     public void Apply_UpdatesDarkMode()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = false, Language = "de" };
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
 
-        settings.Apply(darkMode: true, language: "de");
+        settings.Apply(darkMode: true, language: "de", sendPushNotification: false, sendEmail: true);
 
         settings.DarkMode.Should().BeTrue();
     }
@@ -53,22 +133,57 @@ public class UserSettingsEntityTests
     [Fact]
     public void Apply_UpdatesLanguage()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = false, Language = "de" };
-
-        settings.Apply(darkMode: false, language: "en");
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = false,
+            Language = "de",
+            SendEmail = true,
+            SendPushNotification = false
+        };
+        
+        settings.Apply(darkMode: false, language: "en", sendPushNotification: false, sendEmail: true);
 
         settings.Language.Should().Be("en");
     }
 
     [Fact]
-    public void Apply_UpdatesBothValues()
+    public void Apply_UpdatesAllValues()
     {
-        var settings = new UserSettingsEntity { UserGuid = Guid.NewGuid(), DarkMode = false, Language = "de" };
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = true,
+            Language = "de",
+            SendEmail = false,
+            SendPushNotification = true
+        };
+        
+        settings.Apply(darkMode: false, language: "en", sendPushNotification: false, sendEmail: true);
 
-        settings.Apply(darkMode: true, language: "en");
-
-        settings.DarkMode.Should().BeTrue();
+        settings.DarkMode.Should().BeFalse();
         settings.Language.Should().Be("en");
+        settings.SendEmail.Should().BeTrue();
+        settings.SendPushNotification.Should().BeFalse();
+    }
+    
+    [Fact]
+    public void Apply_UpdatesNotification()
+    {
+        var settings = new UserSettingsEntity
+        {
+            UserGuid = Guid.NewGuid(),
+            DarkMode = true,
+            Language = "de",
+            SendEmail = false,
+            SendPushNotification = true
+        };
+
+        settings.Apply(darkMode: true, language: "de", sendPushNotification: false, sendEmail: true);
+
+        settings.SendPushNotification.Should().BeFalse();
+        settings.SendEmail.Should().BeTrue();
+
     }
 
     #endregion

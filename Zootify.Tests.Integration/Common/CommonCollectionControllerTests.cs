@@ -899,7 +899,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task AddSpecimenToCollection_SpecimenNotFound_ReturnsNoSpecimenWithThisGuid()
+    public async Task AddSpecimenToCollection_SpecimenNotFound_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(createdByUserGuid: user.Guid);
@@ -910,7 +910,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
             $"{Routings.CommonCollectionRouting}/{collection.Guid}/specimen/{Guid.CreateVersion7()}", null);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]

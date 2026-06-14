@@ -7,6 +7,7 @@ using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Model.Services.Admin.Interfaces;
 using Zootify_Backend.Transaction;
 
@@ -21,6 +22,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
+    private readonly INotificationProvider _notificationProvider;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -30,18 +32,21 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     /// <param name="specimenRepository">Repository for specimen persistence operations.</param>
     /// <param name="userRepository">Repository for user lookups.</param>
     /// <param name="brevoProvider">Email provider for sending taxonomy notification emails.</param>
+    /// <param name="notificationProvider">Provider for sending in-app push notifications.</param>
     /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminTaxonomyService(
         ITaxonomyRepository taxonomyRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
         IBrevoProvider brevoProvider,
+        INotificationProvider notificationProvider,
         IMapper mapper)
     {
         _taxonomyRepository = taxonomyRepository;
         _specimenRepository = specimenRepository;
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
+        _notificationProvider = notificationProvider;
         _mapper = mapper;
     }
 
@@ -78,7 +83,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
 
         if (node == null)
         {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
         }
 
         if (node.ApprovalStatus == ApprovalStatus.Approved)
@@ -140,8 +145,22 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
         foreach (var user in users)
         {
-            await _brevoProvider.SendTaxonomyApprovedEmail(
-                user.Email, user.FirstName, user.LastName, node.Name, node.Rank);
+            // Each affected user is notified by email and/or in-app push depending on their settings,
+            // each in their own preferred language.
+            if (user.Settings.SendEmail)
+            {
+                await _brevoProvider.SendTaxonomyApprovedEmail(
+                    user.Email, user.FirstName, user.LastName, node.Name, node.Rank,
+                    user.Settings.Language);
+            }
+
+            if (user.Settings.SendPushNotification)
+            {
+                await _notificationProvider.SendNotificationAsync(
+                    user,
+                    $"Ihre Taxonomie \"{node.Name}\" wurde genehmigt.",
+                    $"Your taxonomy \"{node.Name}\" has been approved.");
+            }
         }
     }
 
@@ -162,7 +181,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
 
         if (node == null)
         {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
         }
 
         var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
@@ -210,8 +229,22 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
         foreach (var user in users)
         {
-            await _brevoProvider.SendTaxonomyRejectedEmail(
-                user.Email, user.FirstName, user.LastName, node.Name, node.Rank, request.Comment);
+            // Each affected user is notified by email and/or in-app push depending on their settings,
+            // each in their own preferred language.
+            if (user.Settings.SendEmail)
+            {
+                await _brevoProvider.SendTaxonomyRejectedEmail(
+                    user.Email, user.FirstName, user.LastName, node.Name, node.Rank, request.Comment,
+                    user.Settings.Language);
+            }
+
+            if (user.Settings.SendPushNotification)
+            {
+                await _notificationProvider.SendNotificationAsync(
+                    user,
+                    $"Ihre Taxonomie \"{node.Name}\" wurde abgelehnt.",
+                    $"Your taxonomy \"{node.Name}\" has been rejected.");
+            }
         }
     }
 

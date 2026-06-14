@@ -45,7 +45,7 @@ public class AdminModeratorUserService : IAdminModeratorUserService
 
         if (user == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         return _mapper.Map<GetUserResponseDto>(user);
@@ -92,14 +92,14 @@ public class AdminModeratorUserService : IAdminModeratorUserService
 
         if (requester == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         var oldUser = await _userRepository.GetActiveUserByGuid(userToUpdateGuid);
 
         if (oldUser == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         var mappedUser = _mapper.Map<UserEntity>(updateUserRequestDto);
@@ -129,7 +129,7 @@ public class AdminModeratorUserService : IAdminModeratorUserService
 
         if (userToActivate == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         userToActivate.Status = UserStatus.Active;

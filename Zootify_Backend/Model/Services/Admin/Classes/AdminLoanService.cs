@@ -7,6 +7,7 @@ using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Model.Services.Admin.Interfaces;
 using Zootify_Backend.Transaction;
 
@@ -21,6 +22,7 @@ public class AdminLoanService : IAdminLoanService
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
+    private readonly INotificationProvider _notificationProvider;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -30,18 +32,21 @@ public class AdminLoanService : IAdminLoanService
     /// <param name="specimenRepository">Repository for specimen lookups.</param>
     /// <param name="userRepository">Repository for user lookups.</param>
     /// <param name="brevoProvider">Email provider for sending loan notification emails.</param>
+    /// <param name="notificationProvider">Provider for sending in-app push notifications.</param>
     /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminLoanService(
         ILoanRepository loanRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
         IBrevoProvider brevoProvider,
+        INotificationProvider notificationProvider,
         IMapper mapper)
     {
         _loanRepository = loanRepository;
         _specimenRepository = specimenRepository;
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
+        _notificationProvider = notificationProvider;
         _mapper = mapper;
     }
 
@@ -74,20 +79,20 @@ public class AdminLoanService : IAdminLoanService
         var specimen = await _specimenRepository.GetSpecimenByGuidAsync(request.SpecimenGuid);
         if (specimen == null)
         {
-            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoSpecimenFound);
         }
 
         var borrower = await _userRepository.GetActiveUserByGuid(request.BorrowerGuid);
         if (borrower == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         var lender = await _userRepository.GetActiveUserByGuid(authentication.UserGuid);
 
         if (lender == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         var loan = LoanEntity.CreateLoanEntity(
@@ -101,15 +106,29 @@ public class AdminLoanService : IAdminLoanService
 
         var lenderName = $"{lender.FirstName} {lender.LastName}".Trim();
 
-        await _brevoProvider.SendLoanConfirmationEmail(
-            borrower.Email,
-            $"{borrower.FirstName} {borrower.LastName}".Trim(),
-            lenderName,
-            specimen.Name,
-            specimen.LatinName,
-            loan.LoanDate,
-            loan.DueDate,
-            loan.Notes);
+        // The borrower is notified by email and/or in-app push depending on their settings,
+        // each in the borrower's preferred language.
+        if (borrower.Settings.SendEmail)
+        {
+            await _brevoProvider.SendLoanConfirmationEmail(
+                borrower.Email,
+                $"{borrower.FirstName} {borrower.LastName}".Trim(),
+                lenderName,
+                specimen.Name,
+                specimen.LatinName,
+                loan.LoanDate,
+                loan.DueDate,
+                loan.Notes,
+                borrower.Settings.Language);
+        }
+
+        if (borrower.Settings.SendPushNotification)
+        {
+            await _notificationProvider.SendNotificationAsync(
+                borrower,
+                $"Eine neue Ausleihe für \"{specimen.Name}\" wurde erstellt.",
+                $"A new loan for \"{specimen.Name}\" has been created.");
+        }
 
         return new CreatedObjectResponseDto { CreatedObjectGuid = loan.Guid };
     }
@@ -148,13 +167,27 @@ public class AdminLoanService : IAdminLoanService
 
         var borrowerName = $"{loan.Borrower.FirstName} {loan.Borrower.LastName}".Trim();
 
-        await _brevoProvider.SendLoanReturnConfirmationEmail(
-            loan.Borrower.Email,
-            borrowerName,
-            loan.Specimen.Name,
-            loan.Specimen.LatinName,
-            loan.LoanDate,
-            loan.ReturnDate.Value,
-            loan.Notes);
+        // The borrower is notified by email and/or in-app push depending on their settings,
+        // each in the borrower's preferred language.
+        if (loan.Borrower.Settings.SendEmail)
+        {
+            await _brevoProvider.SendLoanReturnConfirmationEmail(
+                loan.Borrower.Email,
+                borrowerName,
+                loan.Specimen.Name,
+                loan.Specimen.LatinName,
+                loan.LoanDate,
+                loan.ReturnDate.Value,
+                loan.Notes,
+                loan.Borrower.Settings.Language);
+        }
+
+        if (loan.Borrower.Settings.SendPushNotification)
+        {
+            await _notificationProvider.SendNotificationAsync(
+                loan.Borrower,
+                $"Die Ausleihe für \"{loan.Specimen.Name}\" wurde als zurückgegeben markiert.",
+                $"The loan for \"{loan.Specimen.Name}\" has been marked as returned.");
+        }
     }
 }

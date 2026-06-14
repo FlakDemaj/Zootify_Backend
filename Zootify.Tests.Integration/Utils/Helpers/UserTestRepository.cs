@@ -49,7 +49,8 @@ public class UserTestRepository
         Guid? updater = null,
         DateTime? updateDateTime = null,
         int wrongLoginAttempts = 0,
-        bool withResetToken = false)
+        bool withResetToken = false,
+        bool withSettings = true)
     {
         var user = new UserEntityBuilder()
             .WithEmail(email.ToLower())
@@ -73,6 +74,14 @@ public class UserTestRepository
 
         _dbContext.Add(user);
         await _dbContext.SaveChangesAsync();
+
+        // Every application user has a settings row (created at registration), so test users get one
+        // too by default. This keeps the non-nullable UserEntity.Settings navigation populated.
+        if (withSettings)
+        {
+            _dbContext.Add(new UserSettingsEntity { UserGuid = user.Guid });
+            await _dbContext.SaveChangesAsync();
+        }
 
         if (withResetToken)
         {

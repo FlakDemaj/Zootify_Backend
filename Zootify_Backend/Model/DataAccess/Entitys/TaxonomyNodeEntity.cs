@@ -3,6 +3,9 @@ using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
+/// <summary>
+/// Represents a node in the taxonomy tree (e.g. phylum, class, species) with its approval state and hierarchy links.
+/// </summary>
 public class TaxonomyNodeEntity : BaseCreationEntity
 {
     public string Name { get; set; } = string.Empty;

@@ -368,7 +368,7 @@ public class CommonCollectionService : ICommonCollectionService
 
         if (specimen == null)
         {
-            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoSpecimenFound);
         }
 
         var existing = await _specimenCollectionRepository

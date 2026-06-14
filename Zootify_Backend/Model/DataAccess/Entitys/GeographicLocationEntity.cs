@@ -3,6 +3,9 @@ using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
+/// <summary>
+/// Represents a node in the hierarchical geographic location tree (e.g. country, state, city, street).
+/// </summary>
 public class GeographicLocationEntity : BaseGuidEntity
 {
     public string Name { get; set; } = string.Empty;

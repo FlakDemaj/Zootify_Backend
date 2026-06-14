@@ -95,7 +95,7 @@ public class CommonSpecimenService : ICommonSpecimenService
 
         if (specimen == null)
         {
-            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoSpecimenFound);
         }
 
         CheckSpecimenVisibility(authentication, specimen);
@@ -368,7 +368,7 @@ public class CommonSpecimenService : ICommonSpecimenService
 
         if (taxonomyNode == null)
         {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
         }
 
         var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
@@ -615,7 +615,7 @@ public class CommonSpecimenService : ICommonSpecimenService
 
         if (species == null)
         {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
         }
 
         if (species.Rank != TaxonomyRank.Species)
@@ -868,7 +868,7 @@ public class CommonSpecimenService : ICommonSpecimenService
 
         if (specimen == null)
         {
-            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoSpecimenFound);
         }
         
         if (authentication.Role == UserRole.User

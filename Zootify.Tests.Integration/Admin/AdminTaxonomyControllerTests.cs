@@ -139,7 +139,7 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
     [Fact]

@@ -154,6 +154,7 @@ public class SystemSystemAuthService : ISystemAuthService
 
         await _authRepository.UpdateAsync(user);
 
+        // Auth emails follow the request's Accept-Language header.
         var wasSent = await _brevoProvider.SendRegistrationEmail(
             registrationToken.Token,
             user.Email,
@@ -266,11 +267,12 @@ public class SystemSystemAuthService : ISystemAuthService
 
         await _authRepository.UpdateAsync(user);
 
+        // Auth emails follow the request's Accept-Language header.
         var wasSent = await _brevoProvider.SendConfirmationResetPasswordEmail(
             user.FirstName,
             user.LastName,
             user.Email);
-        
+
         if (!wasSent)
         {
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
@@ -306,12 +308,13 @@ public class SystemSystemAuthService : ISystemAuthService
 
         await _authRepository.UpdateAsync(user);
 
+        // Auth emails follow the request's Accept-Language header.
         var wasSent = await _brevoProvider.SendResetPasswordEmail(
             resetPasswordToken.Token,
             user.Email,
             user.FirstName,
             user.LastName);
-        
+
         if (!wasSent)
         {
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
@@ -335,6 +338,8 @@ public class SystemSystemAuthService : ISystemAuthService
 
         var createdUser = await _authRepository.CreateAsync(user);
 
+        // Auth emails follow the request's Accept-Language header (the user has no settings yet or
+        // is not authenticated), so no per-user culture override is applied here.
         var wasSent = await _brevoProvider.SendRegistrationEmail(
             registrationToken.Token,
             createdUser.Email,
@@ -345,7 +350,7 @@ public class SystemSystemAuthService : ISystemAuthService
         {
             throw new ZootifyException(ErrorCode.DefaultErrorCode);
         }
-        
+
     }
 
     /// <summary>

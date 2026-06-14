@@ -53,7 +53,7 @@ public class CommonUserService : ICommonUserService
 
         if (userToDelete == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
         
         userToDelete.Status = UserStatus.Deleted;
@@ -79,7 +79,7 @@ public class CommonUserService : ICommonUserService
 
         if (requester == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
         
         HelperMethods.CheckEmail(updateOwnUserRequestDto.Email);
@@ -112,7 +112,7 @@ public class CommonUserService : ICommonUserService
 
         if (user == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
         
         return _mapper.Map<GetOwnUserDataResponse>(user);

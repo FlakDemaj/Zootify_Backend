@@ -30,6 +30,18 @@ public class UserSettingsEntityConfiguration : BaseGuidEntityConfiguration<UserS
             .Property(s => s.DarkMode)
             .HasColumnName("dark_mode")
             .IsRequired();
+        
+        builder
+            .Property(s => s.SendPushNotification)
+            .HasColumnName("send_push_notifications")
+            .HasDefaultValue(true)
+            .IsRequired();
+
+        builder
+            .Property(s => s.SendEmail)
+            .HasColumnName("send_email_notifications")
+            .HasDefaultValue(true)
+            .IsRequired();
 
         builder
             .Property(s => s.Language)

@@ -3,6 +3,9 @@ using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
+/// <summary>
+/// A single-use, expiring token used to authorize a user's password reset.
+/// </summary>
 public class ResetPasswordTokenEntity : BaseGuidEntity
 {
     public string Token { get; private set; } = string.Empty;

@@ -376,7 +376,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateSpecimen_InvalidSpeciesGuid_ReturnsNoTaxonomyWithThisGuid()
+    public async Task CreateSpecimen_InvalidSpeciesGuid_ReturnsNoTaxonomyFound()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
 
@@ -388,7 +388,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
     [Fact]
@@ -518,7 +518,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task UpdateSpecimen_InvalidSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    public async Task UpdateSpecimen_InvalidSpecimenGuid_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
@@ -536,7 +536,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}", request);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]
@@ -717,7 +717,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task UpdateSpecimenImage_InvalidSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    public async Task UpdateSpecimenImage_InvalidSpecimenGuid_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
@@ -727,7 +727,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}", request);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]
@@ -892,7 +892,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task UpdateSpecimenTags_InvalidSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    public async Task UpdateSpecimenTags_InvalidSpecimenGuid_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("user@test.de");
         AuthenticateAs(user);
@@ -902,7 +902,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}", request);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]
@@ -1238,7 +1238,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetSpecimenDetail_UnknownSpecimenGuid_ReturnsNoSpecimenWithThisGuid()
+    public async Task GetSpecimenDetail_UnknownSpecimenGuid_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
@@ -1247,7 +1247,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/{AllSpecimensGuid}/{Guid.CreateVersion7()}");
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     #endregion
@@ -1318,7 +1318,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task DeleteSpecimen_SpecimenNotFound_ReturnsNoSpecimenWithThisGuid()
+    public async Task DeleteSpecimen_SpecimenNotFound_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
@@ -1327,7 +1327,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}");
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]
@@ -1410,7 +1410,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task ActivateSpecimen_SpecimenNotFound_ReturnsNoSpecimenWithThisGuid()
+    public async Task ActivateSpecimen_SpecimenNotFound_ReturnsNoSpecimenFound()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
@@ -1419,7 +1419,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             $"{Routings.CommonSpecimenRouting}/activate/{Guid.CreateVersion7()}", null);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]
@@ -1633,13 +1633,13 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetSpecimenByTaxonomy_UnknownGuid_ReturnsNoTaxonomyWithThisGuid()
+    public async Task GetSpecimenByTaxonomy_UnknownGuid_ReturnsNoTaxonomyFound()
     {
         var response = await Client.GetAsync(
             $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}");
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
     #endregion

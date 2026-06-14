@@ -67,7 +67,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
 
             if (parent == null)
             {
-                throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+                throw new ZootifyException(ErrorCode.NoTaxonomyFound);
             }
         }
 
@@ -188,7 +188,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
 
         if (parentTaxonomy == null)
         {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
         }
 
         return await GetTaxonomyTreeAsync(parentTaxonomy, taxonomyNodes);

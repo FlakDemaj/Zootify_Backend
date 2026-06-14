@@ -27,7 +27,7 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
     public async Task<LoanEntity?> GetLoanByGuidWithDetailsAsync(Guid guid)
     {
         return await Context.GetTrackingSet<LoanEntity>()
-            .Include(l => l.Borrower)
+            .Include(l => l.Borrower).ThenInclude(b => b.Settings)
             .Include(l => l.Specimen)
             .FirstOrDefaultAsync(l => l.Guid == guid);
     }
@@ -72,14 +72,16 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
     }
 
     /// <summary>
-    /// Builds the base query for unreturned loans with borrower, lender, and specimen eagerly loaded, ordered by due date.
+    /// Builds the base query for unreturned loans with borrower, lender (including their settings),
+    /// and specimen eagerly loaded, ordered by due date. The settings are needed so each reminder
+    /// can be sent in the recipient's preferred language.
     /// </summary>
     /// <returns>The base <see cref="IQueryable{LoanEntity}"/> for reminder queries.</returns>
     private IQueryable<LoanEntity> ReminderQuery()
     {
         return Context.GetTrackingSet<LoanEntity>()
-            .Include(l => l.Borrower)
-            .Include(l => l.Lender)
+            .Include(l => l.Borrower).ThenInclude(b => b.Settings)
+            .Include(l => l.Lender).ThenInclude(l => l.Settings)
             .Include(l => l.Specimen)
             .Where(l => l.ReturnDate == null)
             .OrderBy(l => l.DueDate);

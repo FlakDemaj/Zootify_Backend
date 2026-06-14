@@ -44,6 +44,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     public async Task<UserEntity?> GetActiveUserByGuid(Guid guid)
     {
         return await Context.GetTrackingSet<UserEntity>()
+            .Include(u => u.Settings)
             .FirstOrDefaultAsync(u => u.Guid == guid
                                       && u.Status == UserStatus.Active);
     }
@@ -107,6 +108,7 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     public async Task<List<UserEntity>> GetUsersByGuidsAsync(List<Guid> guids)
     {
         return await Context.GetTrackingSet<UserEntity>()
+            .Include(u => u.Settings)
             .Where(u => guids.Contains(u.Guid))
             .ToListAsync();
     }
