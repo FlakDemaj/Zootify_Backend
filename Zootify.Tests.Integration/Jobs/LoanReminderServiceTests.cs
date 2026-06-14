@@ -16,7 +16,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
         Fixture.BrevoMock
             .Setup(b => b.SendLoanDueReminderEmail(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()))
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()))
             .ReturnsAsync(true);
     }
 
@@ -55,7 +55,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
 
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Exactly(2));
     }
 
@@ -91,7 +91,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
 
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Never);
     }
 
@@ -112,7 +112,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
 
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Exactly(2));
     }
 
@@ -152,7 +152,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
 
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Exactly(2));
     }
 
@@ -192,7 +192,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
 
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Never);
     }
 
@@ -225,7 +225,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
         // 3 loans × 2 recipients (borrower + lender) = 6 emails
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Exactly(6));
         sent.Should().Be(3);
     }
@@ -241,7 +241,7 @@ public class LoanReminderServiceTests : IntegrationTestBase
         sent.Should().Be(0);
         Fixture.BrevoMock.Verify(b => b.SendLoanDueReminderEmail(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>()),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<string?>()),
             Times.Never);
     }
 }

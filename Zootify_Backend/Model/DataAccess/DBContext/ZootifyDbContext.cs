@@ -17,12 +17,14 @@ public class ZootifyDbContext : DbContext
     /// <summary>
     /// Initializes the context with the provided EF Core options (used in production and tests).
     /// </summary>
+    /// <param name="options">The EF Core options containing the database provider configuration.</param>
     public ZootifyDbContext(DbContextOptions<ZootifyDbContext> options) : base(options) { }
 
     /// <summary>
     /// Configures the SQL Server connection when no options have been supplied externally.
     /// Falls back to the override connection string if the default is not set.
     /// </summary>
+    /// <param name="optionsBuilder">The builder used to configure EF Core options.</param>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (optionsBuilder.IsConfigured)
@@ -49,6 +51,7 @@ public class ZootifyDbContext : DbContext
     /// Discovers and applies all <see cref="IEntityTypeConfiguration{TEntity}"/> classes
     /// found in the executing assembly.
     /// </summary>
+    /// <param name="modelBuilder">The builder used to construct the model for the database context.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

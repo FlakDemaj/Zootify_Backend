@@ -185,7 +185,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
     [Fact]

@@ -23,6 +23,7 @@ public class ExceptionMiddleware
     /// <summary>
     /// Initializes a new <see cref="ExceptionMiddleware"/> with the next middleware delegate.
     /// </summary>
+    /// <param name="next">The next middleware in the request pipeline.</param>
     public ExceptionMiddleware(RequestDelegate next)
     {
         _next = next;
@@ -32,6 +33,7 @@ public class ExceptionMiddleware
     /// Invokes the next middleware and intercepts any <see cref="ZootifyException"/> thrown downstream.
     /// The culture is already set by <c>UseRequestLocalization</c> before this runs.
     /// </summary>
+    /// <param name="context">The current HTTP context.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -49,6 +51,9 @@ public class ExceptionMiddleware
     /// and sets the HTTP status code.
     /// Infrastructure errors (DatabaseError, None, DefaultErrorCode) return 500; all others return 400.
     /// </summary>
+    /// <param name="context">The current HTTP context used to write the response.</param>
+    /// <param name="e">The caught <see cref="ZootifyException"/> to handle.</param>
+    /// <returns>A task that completes once the error response has been written.</returns>
     private static Task HandleException(HttpContext context, ZootifyException e)
     {
         context.Response.ContentType = "application/json";

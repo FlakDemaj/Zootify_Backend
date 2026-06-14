@@ -41,15 +41,6 @@ jobs:
       - name: Build
         run: dotnet build Zootify_Backend.sln --no-restore --configuration Release
 
-      - name: Upload build output
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: |
-            Zootify.Tests.Unit/bin/Release/
-            Zootify.Tests.Integration/bin/Release/
-          retention-days: 1
-
   # ─────────────────────────────────────────────────────────────────────
   unit-tests:
     name: Unit Tests
@@ -64,15 +55,16 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Download build output
-        uses: actions/download-artifact@v4
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
         with:
-          name: build-output
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
 
       - name: Run Unit Tests
         run: |
           dotnet test Zootify.Tests.Unit/Zootify.Tests.Unit.csproj \
-            --no-build \
             --configuration Release \
             --logger "trx;LogFileName=unit-results.trx" \
             --results-directory ./test-results
@@ -99,15 +91,16 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Download build output
-        uses: actions/download-artifact@v4
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
         with:
-          name: build-output
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
 
       - name: Run Integration Tests
         run: |
           dotnet test Zootify.Tests.Integration/Zootify.Tests.Integration.csproj \
-            --no-build \
             --configuration Release \
             --logger "trx;LogFileName=integration-results.trx" \
             --results-directory ./test-results

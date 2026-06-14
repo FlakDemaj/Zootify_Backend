@@ -17,6 +17,7 @@ public class ZootifyException : Exception
     /// Initializes a <see cref="ZootifyException"/> using only an error code.
     /// The exception message is the enum member name, used for server-side logging.
     /// </summary>
+    /// <param name="errorCode">The error code identifying the specific failure.</param>
     public ZootifyException(ErrorCode errorCode)
         : base(errorCode.ToString())
     {
@@ -27,6 +28,8 @@ public class ZootifyException : Exception
     /// Initializes a <see cref="ZootifyException"/> wrapping an inner exception.
     /// Used when a lower-level exception is the root cause.
     /// </summary>
+    /// <param name="errorCode">The error code identifying the specific failure.</param>
+    /// <param name="exception">The inner exception that caused this error.</param>
     public ZootifyException(ErrorCode errorCode, Exception? exception)
         : base(errorCode.ToString(), exception)
     {
@@ -37,6 +40,8 @@ public class ZootifyException : Exception
     /// Initializes a <see cref="ZootifyException"/> from a JSON-deserialized error string.
     /// Required for deserializing error responses back into this type.
     /// </summary>
+    /// <param name="errorCode">The error code identifying the specific failure.</param>
+    /// <param name="exception">The serialized exception string from the JSON payload.</param>
     [JsonConstructor]
     public ZootifyException(ErrorCode errorCode, string exception)
         : base(errorCode.ToString())

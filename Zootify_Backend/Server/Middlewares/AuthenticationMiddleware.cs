@@ -5,15 +5,29 @@ using Zootify_Backend.Model.Auth;
 
 namespace Zootify_Backend.Server.Middlewares;
 
+/// <summary>
+/// Middleware that builds an <see cref="IAuthentication"/> object from the JWT claims and stores it in the HTTP context,
+/// or throws if the endpoint requires authentication but no valid claims are present.
+/// </summary>
 public class AuthenticationMiddleware
 {
     private RequestDelegate Next { get; }
 
+    /// <summary>
+    /// Initializes a new <see cref="AuthenticationMiddleware"/> with the next middleware delegate.
+    /// </summary>
+    /// <param name="next">The next middleware in the pipeline.</param>
     public AuthenticationMiddleware(RequestDelegate next)
     {
         Next = next;
     }
 
+    /// <summary>
+    /// Attempts to build an <see cref="IAuthentication"/> from the request claims and adds it to the context items,
+    /// then passes the request to the next middleware.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
     public async Task Invoke(HttpContext context)
     {
         var authentication = TryBuildAuthentication(context);
@@ -30,6 +44,11 @@ public class AuthenticationMiddleware
         await Next(context);
     }
 
+    /// <summary>
+    /// Attempts to extract the user GUID and role from the JWT claims and construct an <see cref="Authentication"/> object.
+    /// </summary>
+    /// <param name="context">The current HTTP context containing the user's claims principal.</param>
+    /// <returns>An <see cref="Authentication"/> instance if claims are valid; otherwise <c>null</c>.</returns>
     private static Authentication? TryBuildAuthentication(HttpContext context)
     {
         var userGuidString = context.User.Claims
@@ -52,6 +71,11 @@ public class AuthenticationMiddleware
         return new Authentication(userGuid, userRole);
     }
 
+    /// <summary>
+    /// Checks whether the matched endpoint is decorated with <see cref="AllowAnonymousAttribute"/>.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <returns><c>true</c> if the endpoint allows anonymous access or no endpoint is matched; otherwise <c>false</c>.</returns>
     private static bool CheckIfAllowAnonymousExists(HttpContext context)
     {
         var endpoint = context.GetEndpoint();

@@ -17,6 +17,7 @@ public class ZootifyModule : Module
     /// <summary>
     /// Registers the transaction interceptor, all services and repositories, and the email provider.
     /// </summary>
+    /// <param name="builder">The Autofac container builder.</param>
     protected override void Load(ContainerBuilder builder)
     {
         builder.RegisterType<TransactionInterceptor>()
@@ -31,6 +32,7 @@ public class ZootifyModule : Module
     /// Registers the <see cref="BrevoClient"/> singleton and the <see cref="BrevoProvider"/>
     /// scoped to a per-lifetime-scope instance.
     /// </summary>
+    /// <param name="builder">The Autofac container builder.</param>
     private void LoadProviders(ContainerBuilder builder)
     {
         builder.RegisterInstance(new BrevoClient(ZootifyConfiguration.BrevoApiKey))

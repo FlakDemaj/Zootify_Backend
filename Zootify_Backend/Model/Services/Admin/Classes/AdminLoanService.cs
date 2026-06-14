@@ -7,33 +7,54 @@ using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Interfaces;
 using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Model.Services.Admin.Interfaces;
 using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Admin.Classes;
 
+/// <summary>
+/// Handles business logic for creating and returning specimen loans.
+/// </summary>
 public class AdminLoanService : IAdminLoanService
 {
     private readonly ILoanRepository _loanRepository;
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
+    private readonly INotificationProvider _notificationProvider;
     private readonly IMapper _mapper;
 
+    /// <summary>
+    /// Initializes a new <see cref="AdminLoanService"/> with its required dependencies.
+    /// </summary>
+    /// <param name="loanRepository">Repository for loan persistence operations.</param>
+    /// <param name="specimenRepository">Repository for specimen lookups.</param>
+    /// <param name="userRepository">Repository for user lookups.</param>
+    /// <param name="brevoProvider">Email provider for sending loan notification emails.</param>
+    /// <param name="notificationProvider">Provider for sending in-app push notifications.</param>
+    /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminLoanService(
         ILoanRepository loanRepository,
         ISpecimenRepository specimenRepository,
         IUserRepository userRepository,
-        IBrevoProvider brevoProvider, 
+        IBrevoProvider brevoProvider,
+        INotificationProvider notificationProvider,
         IMapper mapper)
     {
         _loanRepository = loanRepository;
         _specimenRepository = specimenRepository;
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
+        _notificationProvider = notificationProvider;
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Returns a list of active users whose names start with the given prefix, for use in borrower picker controls.
+    /// </summary>
+    /// <param name="startsWith">The prefix to filter user names by.</param>
+    /// <returns>A list of matching borrower picker DTOs.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<List<BorrowerPickerDto>> GetBorrowersAsync(string startsWith)
     {
@@ -42,6 +63,14 @@ public class AdminLoanService : IAdminLoanService
         return _mapper.Map<List<BorrowerPickerDto>>(users);
     }
 
+    /// <summary>
+    /// Creates a new loan record, verifies the specimen and borrower exist, and sends a confirmation email to the borrower.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the lending user.</param>
+    /// <param name="request">The loan creation data including specimen, borrower, due date, and notes.</param>
+    /// <returns>A DTO containing the GUID of the newly created loan.</returns>
+    /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
     [Transaction(ReadOnly = false)]
     public async Task<CreatedObjectResponseDto> CreateLoanAsync(
         IAuthentication authentication,
@@ -50,20 +79,20 @@ public class AdminLoanService : IAdminLoanService
         var specimen = await _specimenRepository.GetSpecimenByGuidAsync(request.SpecimenGuid);
         if (specimen == null)
         {
-            throw new ZootifyException(ErrorCode.NoSpecimenWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoSpecimenFound);
         }
 
         var borrower = await _userRepository.GetActiveUserByGuid(request.BorrowerGuid);
         if (borrower == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         var lender = await _userRepository.GetActiveUserByGuid(authentication.UserGuid);
 
         if (lender == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
         var loan = LoanEntity.CreateLoanEntity(
@@ -77,19 +106,40 @@ public class AdminLoanService : IAdminLoanService
 
         var lenderName = $"{lender.FirstName} {lender.LastName}".Trim();
 
-        await _brevoProvider.SendLoanConfirmationEmail(
-            borrower.Email,
-            $"{borrower.FirstName} {borrower.LastName}".Trim(),
-            lenderName,
-            specimen.Name,
-            specimen.LatinName,
-            loan.LoanDate,
-            loan.DueDate,
-            loan.Notes);
+        // The borrower is notified by email and/or in-app push depending on their settings,
+        // each in the borrower's preferred language.
+        if (borrower.Settings.SendEmail)
+        {
+            await _brevoProvider.SendLoanConfirmationEmail(
+                borrower.Email,
+                $"{borrower.FirstName} {borrower.LastName}".Trim(),
+                lenderName,
+                specimen.Name,
+                specimen.LatinName,
+                loan.LoanDate,
+                loan.DueDate,
+                loan.Notes,
+                borrower.Settings.Language);
+        }
+
+        if (borrower.Settings.SendPushNotification)
+        {
+            await _notificationProvider.SendNotificationAsync(
+                borrower,
+                $"Eine neue Ausleihe für \"{specimen.Name}\" wurde erstellt.",
+                $"A new loan for \"{specimen.Name}\" has been created.");
+        }
 
         return new CreatedObjectResponseDto { CreatedObjectGuid = loan.Guid };
     }
 
+    /// <summary>
+    /// Marks a loan as returned, appends optional notes, and sends a return confirmation email to the borrower.
+    /// </summary>
+    /// <param name="loanGuid">The GUID of the loan to mark as returned.</param>
+    /// <param name="request">Optional notes to append to the loan record.</param>
+    /// <exception cref="ZootifyException">Thrown when no loan with the given GUID is found.</exception>
+    /// <exception cref="ZootifyException">Thrown when the loan has already been returned.</exception>
     [Transaction(ReadOnly = false)]
     public async Task ReturnLoanAsync(Guid loanGuid, ReturnLoanRequestDto request)
     {
@@ -117,13 +167,27 @@ public class AdminLoanService : IAdminLoanService
 
         var borrowerName = $"{loan.Borrower.FirstName} {loan.Borrower.LastName}".Trim();
 
-        await _brevoProvider.SendLoanReturnConfirmationEmail(
-            loan.Borrower.Email,
-            borrowerName,
-            loan.Specimen.Name,
-            loan.Specimen.LatinName,
-            loan.LoanDate,
-            loan.ReturnDate.Value,
-            loan.Notes);
+        // The borrower is notified by email and/or in-app push depending on their settings,
+        // each in the borrower's preferred language.
+        if (loan.Borrower.Settings.SendEmail)
+        {
+            await _brevoProvider.SendLoanReturnConfirmationEmail(
+                loan.Borrower.Email,
+                borrowerName,
+                loan.Specimen.Name,
+                loan.Specimen.LatinName,
+                loan.LoanDate,
+                loan.ReturnDate.Value,
+                loan.Notes,
+                loan.Borrower.Settings.Language);
+        }
+
+        if (loan.Borrower.Settings.SendPushNotification)
+        {
+            await _notificationProvider.SendNotificationAsync(
+                loan.Borrower,
+                $"Die Ausleihe für \"{loan.Specimen.Name}\" wurde als zurückgegeben markiert.",
+                $"The loan for \"{loan.Specimen.Name}\" has been marked as returned.");
+        }
     }
 }

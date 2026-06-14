@@ -13,6 +13,7 @@ public class BaseRestController : ControllerBase
     /// <summary>
     /// Gets the authentication, out of the httpContext, from the user who requested
     /// </summary>
+    /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
     protected IAuthentication Authentication
     {
         get
@@ -27,6 +28,9 @@ public class BaseRestController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Tries to get the authentication from the HTTP context, returning <c>null</c> if no authenticated user is present.
+    /// </summary>
     protected IAuthentication? OptionalAuthentication
     {
         get

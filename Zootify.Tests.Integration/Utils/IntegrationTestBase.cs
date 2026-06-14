@@ -154,15 +154,26 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
     protected async Task CreateUserSettingsInDbAsync(Guid userGuid,
         bool darkMode = false,
+        bool sendEmail = true,
+        bool sendPush = true,
         string language = "de")
     {
-        var settings = new UserSettingsEntity
+        // Users created via UserTestRepository already have a default settings row, so update it when
+        // present (one settings row per user is enforced by a unique constraint) and insert otherwise.
+        var settings = await _dbContext.Set<UserSettingsEntity>()
+            .FirstOrDefaultAsync(s => s.UserGuid == userGuid);
+
+        if (settings == null)
         {
-            UserGuid = userGuid,
-            DarkMode = darkMode,
-            Language = language
-        };
-        _dbContext.Add(settings);
+            settings = new UserSettingsEntity { UserGuid = userGuid };
+            _dbContext.Add(settings);
+        }
+
+        settings.DarkMode = darkMode;
+        settings.Language = language;
+        settings.SendEmail = sendEmail;
+        settings.SendPushNotification = sendPush;
+
         await _dbContext.SaveChangesAsync();
         _dbContext.ChangeTracker.Clear();
     }
@@ -206,6 +217,36 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         Client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
     }
+
+    /// <summary>
+    /// Sets the <c>Accept-Language</c> header for subsequent requests, which the localization
+    /// middleware translates into <see cref="System.Globalization.CultureInfo.CurrentUICulture"/>.
+    /// Headers are cleared before each test, so this does not leak between tests.
+    /// </summary>
+    protected void SetAcceptLanguage(string language)
+    {
+        Client.DefaultRequestHeaders.Remove("Accept-Language");
+        Client.DefaultRequestHeaders.Add("Accept-Language", language);
+    }
+
+    /// <summary>
+    /// Verifies that an in-app push notification whose message contains the given text was sent the
+    /// expected number of times via SignalR.
+    /// </summary>
+    /// <param name="messageContains">A substring expected in the notification message (e.g. a language-specific word).</param>
+    /// <param name="times">The expected number of matching sends.</param>
+    protected void VerifyPushNotificationSent(string messageContains, Times times) =>
+        Fixture.HubClientProxyMock.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(),
+            It.Is<object[]>(args => args.Length >= 1 && ((string)args[0]).Contains(messageContains)),
+            It.IsAny<CancellationToken>()), times);
+
+    /// <summary>
+    /// Verifies that no in-app push notification was sent via SignalR.
+    /// </summary>
+    protected void VerifyNoPushNotificationSent() =>
+        Fixture.HubClientProxyMock.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()), Times.Never);
     
     private static string GenerateTestToken(UserRole role, Guid userGuid)
     {

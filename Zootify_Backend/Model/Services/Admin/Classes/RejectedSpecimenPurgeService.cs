@@ -5,15 +5,26 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Admin.Classes;
 
+/// <summary>
+/// Purges rejected specimens that have exceeded the configured retention period.
+/// </summary>
 public class RejectedSpecimenPurgeService : IRejectedSpecimenPurgeService
 {
     private readonly ISpecimenRepository _specimenRepository;
 
+    /// <summary>
+    /// Initializes a new <see cref="RejectedSpecimenPurgeService"/> with its required repository.
+    /// </summary>
+    /// <param name="specimenRepository">Repository for specimen persistence operations.</param>
     public RejectedSpecimenPurgeService(ISpecimenRepository specimenRepository)
     {
         _specimenRepository = specimenRepository;
     }
 
+    /// <summary>
+    /// Hard-deletes a batch of rejected specimens that have passed the configured retention cutoff.
+    /// </summary>
+    /// <returns>The number of specimens deleted in this batch.</returns>
     [Transaction(ReadOnly = false)]
     public async Task<int> PurgeBatchAsync()
     {

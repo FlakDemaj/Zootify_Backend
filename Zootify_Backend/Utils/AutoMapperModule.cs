@@ -19,7 +19,7 @@ public class AutoMapperModule : Module
     /// <summary>
     /// Configures AutoMapper and registers it in the DI container.
     /// </summary>
-    /// <param name="builder">The Autofac ContainerBuilder.</param>
+    /// <param name="builder">The Autofac container builder.</param>
     protected override void Load(ContainerBuilder builder)
     {
         var expression = new MapperConfigurationExpression();

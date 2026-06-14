@@ -7,13 +7,21 @@ namespace Zootify_Backend.Model.Auth;
 /// </summary>
 public class Authentication : IAuthentication
 {
+    /// <summary>
+    /// Gets the unique identifier of the authenticated user.
+    /// </summary>
     public Guid UserGuid { get; }
 
+    /// <summary>
+    /// Gets the role assigned to the authenticated user.
+    /// </summary>
     public UserRole Role { get; }
 
     /// <summary>
     /// Initializes a new <see cref="Authentication"/> with the user's GUID and authentication type.
     /// </summary>
+    /// <param name="userGuid">The unique identifier of the authenticated user.</param>
+    /// <param name="role">The role assigned to the authenticated user.</param>
     public Authentication(Guid userGuid, UserRole role)
     {
         UserGuid = userGuid;

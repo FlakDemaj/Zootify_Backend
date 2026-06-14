@@ -23,7 +23,7 @@ public class UserEntity : BaseDeletionEntity
 
     public int LoginAttempts { get; private set; }
     
-    public UserSettingsEntity? Settings { get; set; }
+    public UserSettingsEntity Settings { get; set; } = null!;
 
     public ICollection<SpecimenEntity> CreatedSpecimens { get; set; } = new List<SpecimenEntity>();
 
@@ -62,6 +62,7 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Hashes the given plain-text password and stores the result.
     /// </summary>
+    /// <param name="password">The plain-text password to hash and store.</param>
     public void SetPassword(string password)
     {
         PasswordHash = PasswordHasher.Hash(password);
@@ -112,6 +113,7 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Verifies the given plain-text password against the stored hash.
     /// </summary>
+    /// <param name="password">The plain-text password to verify.</param>
     /// <returns><c>true</c> if the password matches; otherwise <c>false</c>.</returns>
     public bool CheckPassword(string password)
     {
@@ -121,6 +123,7 @@ public class UserEntity : BaseDeletionEntity
     /// <summary>
     /// Increments the failed-login counter. Blocks the user once the counter reaches 5.
     /// </summary>
+    /// <param name="resetPasswordAttempts">The number of failed attempts after which the user is blocked.</param>
     public void IncrementLoginAttempts(
         int resetPasswordAttempts)
     {
@@ -148,16 +151,24 @@ public class UserEntity : BaseDeletionEntity
         ResetPasswordToken = null;
     }
 
+    /// <summary>
+    /// Creates a default settings entity for this user and attaches it to the entity.
+    /// </summary>
     public void CreateUserSettings()
     {
         var userSettings = new UserSettingsEntity
         {
             UserGuid = Guid,
         };
-        
+
         Settings = userSettings;
     }
 
+    /// <summary>
+    /// Determines whether the editable user fields differ from the given data.
+    /// </summary>
+    /// <param name="newUserData">The candidate data to compare against the current values.</param>
+    /// <returns><c>true</c> if first name, last name, email, or role differ; otherwise <c>false</c>.</returns>
     public bool CheckChanges(UserEntity newUserData)
     {
         return FirstName != newUserData.FirstName
@@ -166,6 +177,11 @@ public class UserEntity : BaseDeletionEntity
                || Role != newUserData.Role;
     }
 
+    /// <summary>
+    /// Applies the given user data to this entity and records the requester as the updater.
+    /// </summary>
+    /// <param name="newUserData">The new data to apply.</param>
+    /// <param name="requesterGuid">The GUID of the user performing the update.</param>
     public void UpdateUserData(
         UserEntity newUserData,
         Guid requesterGuid)

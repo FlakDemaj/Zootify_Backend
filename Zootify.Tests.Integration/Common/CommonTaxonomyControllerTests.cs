@@ -241,7 +241,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateTaxonomyNode_WithInvalidParentGuid_ReturnsNoTaxonomyWithThisGuid()
+    public async Task CreateTaxonomyNode_WithInvalidParentGuid_ReturnsNoTaxonomyFound()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
@@ -255,7 +255,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         var response = await Client.PostAsJsonAsync(Routings.CommonTaxonomyRouting, request);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
     [Fact]

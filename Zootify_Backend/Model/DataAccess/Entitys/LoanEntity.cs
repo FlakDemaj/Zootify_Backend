@@ -2,6 +2,9 @@ using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
+/// <summary>
+/// Represents a loan of a specimen from a lender to a borrower, with due-date and reminder tracking.
+/// </summary>
 public class LoanEntity : BaseGuidEntity
 {
     public Guid SpecimenGuid { get; set; }
@@ -30,6 +33,15 @@ public class LoanEntity : BaseGuidEntity
 
     public DateTime? Stage3ReminderSentAt { get; set; }
 
+    /// <summary>
+    /// Creates a new loan with the loan date set to now.
+    /// </summary>
+    /// <param name="specimenGuid">The GUID of the loaned specimen.</param>
+    /// <param name="lenderGuid">The GUID of the lending user.</param>
+    /// <param name="borrowerGuid">The GUID of the borrowing user.</param>
+    /// <param name="dueDate">The date by which the specimen must be returned.</param>
+    /// <param name="notes">Optional notes attached to the loan.</param>
+    /// <returns>The newly created <see cref="LoanEntity"/>.</returns>
     public static LoanEntity CreateLoanEntity(
         Guid specimenGuid,
         Guid lenderGuid,

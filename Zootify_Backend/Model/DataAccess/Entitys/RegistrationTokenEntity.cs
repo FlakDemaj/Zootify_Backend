@@ -3,6 +3,9 @@ using Zootify_Backend.Model.DataAccess.Entitys.Base;
 
 namespace Zootify_Backend.Model.DataAccess.Entitys;
 
+/// <summary>
+/// A single-use, expiring token used to confirm a user's registration.
+/// </summary>
 public class RegistrationTokenEntity : BaseGuidEntity
 {
     public string Token { get; private set; } = string.Empty;
@@ -34,6 +37,7 @@ public class RegistrationTokenEntity : BaseGuidEntity
     /// <summary>
     /// Returns true if this token has passed its expiration date.
     /// </summary>
+    /// <returns><see langword="true"/> if the current UTC time is past <see cref="ExpiresAt"/>; otherwise <see langword="false"/>.</returns>
     public bool IsExpired()
     {
         return DateTime.UtcNow > ExpiresAt;

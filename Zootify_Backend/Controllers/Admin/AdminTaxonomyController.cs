@@ -8,22 +8,37 @@ using Zootify_Backend.Model.Services.Admin.Interfaces;
 
 namespace Zootify_Backend.Controllers.Admin;
 
+/// <summary>
+/// Exposes taxonomy approval and rejection endpoints restricted to Admin and Moderator roles.
+/// </summary>
 [Authorize(Roles = $"{Roles.Admin},{Roles.Moderator}")]
 public class AdminTaxonomyController : BaseRestController
 {
     private readonly IAdminTaxonomyService _adminTaxonomyService;
 
+    /// <summary>
+    /// Initializes a new <see cref="AdminTaxonomyController"/> with its required service.
+    /// </summary>
+    /// <param name="adminTaxonomyService">The service used to manage taxonomy approval operations.</param>
     public AdminTaxonomyController(IAdminTaxonomyService adminTaxonomyService)
     {
         _adminTaxonomyService = adminTaxonomyService;
     }
 
+    /// <summary>
+    /// Returns the taxonomy tree filtered to only include subtrees that contain at least one pending node.
+    /// </summary>
+    /// <returns>A taxonomy tree response DTO containing all pending subtrees.</returns>
     [HttpGet("for-approval")]
     public async Task<ActionResult<GetTaxonomyTreeResponseDto>> GetTaxonomiesForApprovalAsync()
     {
         return Ok(await _adminTaxonomyService.GetTaxonomiesForApprovalAsync());
     }
 
+    /// <summary>
+    /// Approves a pending taxonomy node and activates any specimens whose full taxonomy chain is now approved.
+    /// </summary>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node to approve.</param>
     [HttpPost("{taxonomyGuid:guid}/approve")]
     public async Task<IActionResult> ApproveTaxonomyAsync(Guid taxonomyGuid)
     {
@@ -31,6 +46,11 @@ public class AdminTaxonomyController : BaseRestController
         return Ok();
     }
 
+    /// <summary>
+    /// Rejects a taxonomy node, hard-deletes its entire subtree, and rejects all associated specimens.
+    /// </summary>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node to reject.</param>
+    /// <param name="request">Contains the rejection comment to send to affected users.</param>
     [HttpPost("{taxonomyGuid:guid}/reject")]
     public async Task<IActionResult> RejectTaxonomyAsync(
         Guid taxonomyGuid,

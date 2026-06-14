@@ -83,8 +83,8 @@
   <data name="NoUserWithThisToken" xml:space="preserve">
     <value>This user does not exist.</value>
   </data>
-  <data name="NoUserWithThisGuid" xml:space="preserve">
-    <value>A user with this token does not exists.</value>
+  <data name="NoUserFound" xml:space="preserve">
+    <value>The user was not found.</value>
   </data>
   <data name="NoUpdatedData" xml:space="preserve">
     <value>Please provide changes.</value>
@@ -95,8 +95,8 @@
   <data name="NoTagsFound" xml:space="preserve">
     <value>No tags were found with the following IDs.</value>
   </data>
-  <data name="NoTaxonomyWithThisGuid" xml:space="preserve">
-    <value>A taxonomy with this token does not exists.</value>
+  <data name="NoTaxonomyFound" xml:space="preserve">
+    <value>The taxonomy was not found.</value>
   </data>
   <data name="SpeciesNotFound" xml:space="preserve">
     <value>The species was not found.</value>
@@ -110,8 +110,8 @@
   <data name="CollectionNotFound" xml:space="preserve">
     <value>The specified collection was not found.</value>
   </data>
-  <data name="NoSpecimenWithThisGuid" xml:space="preserve">
-    <value>No specimen was found with the given ID.</value>
+  <data name="NoSpecimenFound" xml:space="preserve">
+    <value>The specimen was not found.</value>
   </data>
   <data name="SpecimenAlreadyInCollection" xml:space="preserve">
     <value>The specimen is already part of this collection.</value>
@@ -133,5 +133,14 @@
   </data>
   <data name="ImageNotFound" xml:space="preserve">
     <value>The image could not be found.</value>
+  </data>
+  <data name="ObjectIsNotActive" xml:space="preserve">
+    <value>The object is not active. Only active objects can be edited.</value>
+  </data>
+  <data name="OneNotificationNeedsToBeActivated" xml:space="preserve">
+    <value>One Notification needs to be active.</value>
+  </data>
+  <data name="UserSettingsNotFound" xml:space="preserve">
+    <value>No settings were found for this user.</value>
   </data>
 </root>

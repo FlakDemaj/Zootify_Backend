@@ -251,7 +251,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         var error = await ReadErrorAsync(response);
 
         error.Should().NotBeNull();
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
     [Fact]
@@ -720,7 +720,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             requestDto);
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
     [Fact]
@@ -833,7 +833,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
 
         var error = await ReadErrorAsync(response);
 
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
     #endregion

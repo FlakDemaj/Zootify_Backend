@@ -83,8 +83,8 @@
   <data name="ResetPasswordTokenExpired" xml:space="preserve">
     <value>Ihr Link zum Passwort zurücksetzen ist abgelaufen. Bitte fordern Sie einen neuen an.</value>
   </data>
-  <data name="NoUserWithThisGuid" xml:space="preserve">
-    <value>Ein User mit dieser Guid existiert nicht.</value>
+  <data name="NoUserFound" xml:space="preserve">
+    <value>Der Benutzer wurde nicht gefunden.</value>
   </data>
   <data name="NoUpdatedData" xml:space="preserve">
     <value>Bitte geben Sie änderungen mit.</value>
@@ -95,8 +95,8 @@
   <data name="NoTagsFound" xml:space="preserve">
     <value>Es wurden keine Tags gefunden mit den Ids.</value>
   </data>
-  <data name="NoTaxonomyWithThisGuid" xml:space="preserve">
-    <value>Eine Taxonomie mit dieser Guid existiert nicht.</value>
+  <data name="NoTaxonomyFound" xml:space="preserve">
+    <value>Die Taxonomie wurde nicht gefunden.</value>
   </data>
   <data name="SpeciesNotFound" xml:space="preserve">
     <value>Die Spezies wurde nicht gefunden.</value>
@@ -110,8 +110,8 @@
   <data name="CollectionNotFound" xml:space="preserve">
     <value>Die angegebene Sammlung wurde nicht gefunden.</value>
   </data>
-  <data name="NoSpecimenWithThisGuid" xml:space="preserve">
-    <value>Es wurde kein Exemplar mit dieser ID gefunden.</value>
+  <data name="NoSpecimenFound" xml:space="preserve">
+    <value>Das Exemplar wurde nicht gefunden.</value>
   </data>
   <data name="SpecimenAlreadyInCollection" xml:space="preserve">
     <value>Das Exemplar befindet sich bereits in dieser Sammlung.</value>
@@ -133,5 +133,14 @@
   </data>
   <data name="ImageNotFound" xml:space="preserve">
     <value>Das Bild wurde nicht gefunden.</value>
+  </data>
+  <data name="ObjectIsNotActive" xml:space="preserve">
+    <value>Das Objekt ist nicht aktiv. Nur aktive Objekte können bearbeitet werden.</value>
+  </data>
+  <data name="OneNotificationNeedsToBeActivated" xml:space="preserve">
+    <value>Eine Notifikation muss aktiviert sein.</value>
+  </data>
+  <data name="UserSettingsNotFound" xml:space="preserve">
+    <value>Es wurden keine Einstellungen für diesen Benutzer gefunden.</value>
   </data>
 </root>

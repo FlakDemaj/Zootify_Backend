@@ -13,6 +13,9 @@ using Zootify_Backend.Transaction;
 
 namespace Zootify_Backend.Model.Services.Common.Classes;
 
+/// <summary>
+/// Handles business logic for creating and querying taxonomy nodes.
+/// </summary>
 public class CommonTaxonomyService : ICommonTaxonomyNodeService
 {
     private readonly ITaxonomyRepository  _taxonomyRepository;
@@ -23,10 +26,17 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
     
     private readonly IMapper _mapper;
 
+    /// <summary>
+    /// Initializes a new <see cref="CommonTaxonomyService"/> with its required dependencies.
+    /// </summary>
+    /// <param name="taxonomyRepository">Repository for taxonomy node persistence operations.</param>
+    /// <param name="mapper">AutoMapper instance for object mapping.</param>
+    /// <param name="userRepository">Repository for user lookups used for notification targeting.</param>
+    /// <param name="notificationProvider">Provider for sending real-time notifications to admins and moderators.</param>
     public CommonTaxonomyService(
             ITaxonomyRepository taxonomyRepository,
             IMapper mapper,
-            IUserRepository userRepository, 
+            IUserRepository userRepository,
             INotificationProvider notificationProvider)
     {
         _taxonomyRepository = taxonomyRepository;
@@ -35,6 +45,13 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         _notificationProvider = notificationProvider;
     }
 
+    /// <summary>
+    /// Creates one or more taxonomy nodes in a chain, optionally rooted under an existing parent node, and notifies admins if approval is needed.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the creating user.</param>
+    /// <param name="requestDto">The taxonomy node chain to create, including an optional parent GUID.</param>
+    /// <returns>A list of DTOs containing the GUIDs of the created nodes.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = false)]
     public async Task<List<CreatedObjectResponseDto>> CreateTaxonomyNodeAsync(
         IAuthentication authentication,
@@ -50,7 +67,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
 
             if (parent == null)
             {
-                throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+                throw new ZootifyException(ErrorCode.NoTaxonomyFound);
             }
         }
 
@@ -63,6 +80,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
             var node = _mapper.Map<TaxonomyNodeEntity>(taxonomyNode);
             node.SetCreatedBy(authentication.UserGuid);
             node.ParentGuid = parentGuid;
+            // Each newly created node becomes the parent of the next, building a linear chain.
             parentGuid = node.Guid;
 
             if (!needsApproval)
@@ -80,6 +98,12 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         return _mapper.Map<List<CreatedObjectResponseDto>>(createdNodes);
     }
 
+    /// <summary>
+    /// Returns all taxonomy nodes of the specified rank that match the given name prefix, each accompanied by their ancestor path.
+    /// </summary>
+    /// <param name="startsWith">Optional name prefix to filter nodes by.</param>
+    /// <param name="rank">The taxonomy rank to filter by.</param>
+    /// <returns>A list of taxonomy chains, where each chain runs from root to the matching node.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<List<List<GetAllTaxonomyNodesByFilterDto>>> GetAllTaxonomyNodesAsync(
         string? startsWith,
@@ -110,6 +134,11 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         return taxonomyTrees;
     }
     
+    /// <summary>
+    /// Returns the full taxonomy tree, optionally filtered by a root-node name fragment.
+    /// </summary>
+    /// <param name="filterByName">Optional name fragment to filter root nodes by.</param>
+    /// <returns>A hierarchical taxonomy tree response DTO.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<GetTaxonomyTreeResponseDto> GetAllTaxonomyNodesAsTreeAsync(string? filterByName)
     {
@@ -135,6 +164,13 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         };
     }
 
+    /// <summary>
+    /// Recursively walks up the parent chain from the given node to the root, collecting all ancestor nodes.
+    /// </summary>
+    /// <param name="taxonomyNode">The starting taxonomy node.</param>
+    /// <param name="taxonomyNodes">The accumulator list that will contain the full ancestor chain.</param>
+    /// <returns>The accumulated list of <see cref="TaxonomyNodeEntity"/> instances from leaf to root.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
     public async Task<List<TaxonomyNodeEntity>> GetTaxonomyTreeAsync(
         TaxonomyNodeEntity taxonomyNode,
@@ -152,12 +188,16 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
 
         if (parentTaxonomy == null)
         {
-            throw new ZootifyException(ErrorCode.NoTaxonomyWithThisGuid);
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
         }
 
         return await GetTaxonomyTreeAsync(parentTaxonomy, taxonomyNodes);
     }
     
+    /// <summary>
+    /// Sends a real-time notification to all admins and moderators if the newly created nodes require approval.
+    /// </summary>
+    /// <param name="needsApproval">Whether the created nodes require moderator approval.</param>
     private async Task SendNotificationAsync(bool needsApproval)
     {
         if (!needsApproval)
@@ -170,6 +210,12 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         _ = _notificationProvider.SendNotificationAsync(users);
     }
     
+    /// <summary>
+    /// Recursively builds a <see cref="GetTaxonomyTreeNodeDto"/> for the given node and all its descendants.
+    /// </summary>
+    /// <param name="node">The taxonomy node to build a tree DTO for.</param>
+    /// <param name="byParent">Lookup of nodes keyed by their parent GUID.</param>
+    /// <returns>A populated <see cref="GetTaxonomyTreeNodeDto"/> including all child nodes.</returns>
     private static GetTaxonomyTreeNodeDto BuildTreeNode(
         TaxonomyNodeEntity node,
         ILookup<Guid?, TaxonomyNodeEntity> byParent) => new()

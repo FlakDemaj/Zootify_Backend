@@ -45,7 +45,7 @@ public enum ErrorCode
 
     UserPending = -1002006,
     
-    NoUserWithThisGuid = -1002007,
+    NoUserFound = -1002007,
     
     NoUpdatedData = -1002008,
 
@@ -59,7 +59,7 @@ public enum ErrorCode
     
     NoTagsFound = -1005001,
     
-    NoTaxonomyWithThisGuid = -1006001,
+    NoTaxonomyFound = -1006001,
     
     SpeciesNotFound =  -1006002,
     
@@ -69,7 +69,7 @@ public enum ErrorCode
 
     CollectionNotFound = -1007001,
 
-    NoSpecimenWithThisGuid = -1007002,
+    NoSpecimenFound = -1007002,
 
     SpecimenAlreadyInCollection = -1007003,
 
@@ -83,5 +83,11 @@ public enum ErrorCode
 
     LoanAlreadyReturned = -1009002,
     
-    ImageNotFound = -1010001
+    ImageNotFound = -1010001,
+
+    ObjectIsNotActive = -1011001,
+
+    OneNotificationNeedsToBeActivated = -1011002,
+
+    UserSettingsNotFound = -1012001
 }

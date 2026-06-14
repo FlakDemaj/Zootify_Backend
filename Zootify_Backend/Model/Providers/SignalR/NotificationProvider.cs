@@ -29,6 +29,22 @@ public class NotificationProvider : INotificationProvider
             await _hubContext.Clients
                 .User(user.Guid.ToString())
                 .SendAsync("ReceiveNotification", message);
-        }       
+        }
+    }
+
+    /// <summary>
+    /// Sends a localized push notification to a single user over SignalR, selecting the message
+    /// variant based on the user's language preference (German by default).
+    /// </summary>
+    /// <param name="user">The recipient; their <c>Settings.Language</c> selects the message variant.</param>
+    /// <param name="germanMessage">The German message text.</param>
+    /// <param name="englishMessage">The English message text.</param>
+    public async Task SendNotificationAsync(UserEntity user, string germanMessage, string englishMessage)
+    {
+        var message = user.Settings.Language == "en" ? englishMessage : germanMessage;
+
+        await _hubContext.Clients
+            .User(user.Guid.ToString())
+            .SendAsync("ReceiveNotification", message);
     }
 }

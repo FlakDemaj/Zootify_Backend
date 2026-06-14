@@ -40,6 +40,7 @@ public class AuthRepository : BaseRepository<UserEntity>, IAuthRepository
     /// Returns the user with the given email, eagerly loading their reset-password token.
     /// Always uses change tracking so the token can be modified.
     /// </summary>
+    /// <param name="email">The email address to search for.</param>
     public async Task<UserEntity?> GetUserByEmailWithResetPassword(
         string email)
     {
@@ -55,6 +56,7 @@ public class AuthRepository : BaseRepository<UserEntity>, IAuthRepository
     /// Returns the user whose reset-password token matches the given token string,
     /// eagerly loading the token. Always uses change tracking.
     /// </summary>
+    /// <param name="token">The reset-password token string to search for.</param>
     public async Task<UserEntity?> GetUserByResetPasswordTokenWithResetPassword(
         string token)
     {
@@ -71,6 +73,7 @@ public class AuthRepository : BaseRepository<UserEntity>, IAuthRepository
     /// Returns the user with the given email, eagerly loading their registration token.
     /// Always uses change tracking so the token can be replaced.
     /// </summary>
+    /// <param name="email">The email address to search for.</param>
     public async Task<UserEntity?> GetUserByEmailWithRegistrationToken(string email)
     {
         return await
@@ -85,6 +88,7 @@ public class AuthRepository : BaseRepository<UserEntity>, IAuthRepository
     /// Returns the user whose registration token matches the given token string,
     /// eagerly loading the token. Always uses change tracking.
     /// </summary>
+    /// <param name="token">The registration token string to search for.</param>
     public async Task<UserEntity?> GetUserByRegistrationTokenAsync(string token)
     {
         return await

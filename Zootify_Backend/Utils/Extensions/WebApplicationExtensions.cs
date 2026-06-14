@@ -10,6 +10,7 @@ public static class WebApplicationExtensions
     /// <summary>
     /// Resolves the <see cref="MigrationManager"/> from the DI container and runs all pending migrations.
     /// </summary>
+    /// <param name="webApplication">The running web application whose DI container is used to resolve the migrator.</param>
     public static void Migrate(this WebApplication webApplication)
     {
         using var scope = webApplication.Services.CreateScope();

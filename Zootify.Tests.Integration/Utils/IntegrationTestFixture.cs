@@ -39,6 +39,12 @@ public class IntegrationTestFixture : IAsyncLifetime
     public Mock<IHubContext<NotificationHub>> HubContextMock { get; } = new();
     private readonly Mock<IHubClients> _hubClientsMock = new();
     private readonly Mock<IClientProxy> _hubClientProxyMock = new();
+
+    /// <summary>
+    /// The mocked SignalR client proxy. Tests can verify <c>SendCoreAsync</c> on it to assert which
+    /// push notifications were sent (the message text is the first entry of the args array).
+    /// </summary>
+    public Mock<IClientProxy> HubClientProxyMock => _hubClientProxyMock;
     public ZootifyDbContext DbContext { get; private set; } = null!;
 
     /// <summary>
@@ -87,6 +93,8 @@ public class IntegrationTestFixture : IAsyncLifetime
         BrevoMock.Reset();
         NominatimMock.Reset();
         HubContextMock.Reset();
+        _hubClientsMock.Reset();
+        _hubClientProxyMock.Reset();
         SetupHubContextMock();
     }
 

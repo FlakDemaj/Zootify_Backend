@@ -27,6 +27,7 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Intercepts a method invocation and manages transaction handling.
         /// </summary>
+        /// <param name="invocation">The method invocation being intercepted.</param>
         public void Intercept(IInvocation invocation)
         {
             var method = GetTargetMethod(invocation);
@@ -54,6 +55,8 @@ namespace Zootify_Backend.Transaction
             // Handle async methods appropriately
             if (IsAsyncMethod(method))
             {
+                // The `dynamic` cast lets the runtime resolve the correct generic overload
+                // (Task vs Task<T>) so both void-async and value-returning-async methods are handled.
                 invocation.ReturnValue = InterceptAsync((dynamic)invocation.ReturnValue!, isReadonly);
             }
             else
@@ -66,6 +69,8 @@ namespace Zootify_Backend.Transaction
         /// Starts a new database transaction and executes the given function.
         /// Rolls back the transaction in case of failure.
         /// </summary>
+        /// <param name="function">The action to execute within the transaction.</param>
+        /// <exception cref="ZootifyException">Thrown when a database operation fails.</exception>
         private void StartTransaction(Action function)
         {
             DbContextTransaction = Context.Database.BeginTransaction();
@@ -101,6 +106,8 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Executes post-transaction actions such as committing or rolling back.
         /// </summary>
+        /// <param name="isReadonly">If <see langword="true"/>, the transaction is rolled back instead of committed.</param>
+        /// <exception cref="ZootifyException">Thrown when a database operation fails.</exception>
         private async Task RunAfter(bool isReadonly)
         {
             try
@@ -139,8 +146,11 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Executes any registered post-transaction actions.
         /// </summary>
+        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
         private async Task InvokeAfterTransactionActions()
         {
+            // Snapshot and clear before iterating so that actions added by other callbacks
+            // during execution are not processed in the same pass (avoids re-entrancy).
             var actions = AfterTransactionActions.ToList();
             AfterTransactionActions.Clear();
 
@@ -166,6 +176,9 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Handles asynchronous method interception and transaction management.
         /// </summary>
+        /// <param name="task">The asynchronous task returned by the intercepted method.</param>
+        /// <param name="isReadonly">If <see langword="true"/>, the transaction is rolled back instead of committed.</param>
+        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
         private async Task InterceptAsync(Task task, bool isReadonly)
         {
             try
@@ -189,6 +202,10 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Handles asynchronous method interception for methods returning a value.
         /// </summary>
+        /// <param name="task">The asynchronous task returned by the intercepted method.</param>
+        /// <param name="isReadonly">If <see langword="true"/>, the transaction is rolled back instead of committed.</param>
+        /// <returns>The result produced by the intercepted method.</returns>
+        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
         private async Task<T> InterceptAsync<T>(Task<T> task, bool isReadonly)
         {
             T result;
@@ -214,6 +231,8 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Determines whether a method is asynchronous.
         /// </summary>
+        /// <param name="method">The method to inspect.</param>
+        /// <returns><see langword="true"/> if the method returns <see cref="Task"/> or <see cref="ValueTask{T}"/>; otherwise <see langword="false"/>.</returns>
         private static bool IsAsyncMethod(MethodInfo method)
         {
             return typeof(Task).IsAssignableFrom(method.ReturnType)
@@ -224,6 +243,8 @@ namespace Zootify_Backend.Transaction
         /// <summary>
         /// Retrieves the target method from an invocation, resolving interface-to-implementation mapping.
         /// </summary>
+        /// <param name="invocation">The intercepted invocation to inspect.</param>
+        /// <returns>The concrete implementation <see cref="MethodInfo"/>, or the interface method if no match is found.</returns>
         private static MethodInfo GetTargetMethod(IInvocation invocation)
         {
             var interfaceMethod = invocation.Method;

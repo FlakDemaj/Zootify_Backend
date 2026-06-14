@@ -31,6 +31,7 @@ public class Startup
     /// <summary>
     /// Registers Autofac modules including the main application module and the AutoMapper module.
     /// </summary>
+    /// <param name="builder">The Autofac container builder.</param>
     public void ConfigureContainer(ContainerBuilder builder)
     {
         builder.RegisterModule<ZootifyModule>();
@@ -45,6 +46,7 @@ public class Startup
     /// <summary>
     /// Configures all application services (Dependency Injection container).
     /// </summary>
+    /// <param name="builder">The web application builder used to register services.</param>
     public void ConfigureServices(WebApplicationBuilder builder)
     {
         EnableCors(builder.Services);
@@ -69,6 +71,7 @@ public class Startup
     /// <summary>
     /// Configures the HTTP request pipeline (middleware order).
     /// </summary>
+    /// <param name="app">The web application instance to configure middleware on.</param>
     public void ConfigureMiddleware(WebApplication app)
     {
         if (app.Environment.IsDevelopment())
@@ -105,6 +108,7 @@ public class Startup
     /// <summary>
     /// Registers the <see cref="ZootifyDbContext"/> and the <see cref="MigrationManager"/> with the DI container.
     /// </summary>
+    /// <param name="services">The service collection to register into.</param>
     private void AddDatabase(IServiceCollection services)
     {
         services.AddScoped<MigrationManager>();
@@ -114,6 +118,7 @@ public class Startup
     /// <summary>
     /// Adds Swagger configuration including JWT authentication support.
     /// </summary>
+    /// <param name="services">The service collection to register into.</param>
     private void AddSwagger(IServiceCollection services)
     {
         services.AddSwaggerGen(options =>
@@ -141,6 +146,7 @@ public class Startup
     /// <summary>
     /// Configures JWT authentication (issuer, audience, signing key).
     /// </summary>
+    /// <param name="services">The service collection to register into.</param>
     private void AddAuthentication(
         IServiceCollection services)
     {
@@ -162,6 +168,7 @@ public class Startup
     /// <summary>
     /// Configures logging providers and log formatting.
     /// </summary>
+    /// <param name="builder">The web application builder to configure logging on.</param>
     private void ConfigureLogger(WebApplicationBuilder builder)
     {
         builder.Logging.ClearProviders();
@@ -182,17 +189,20 @@ public class Startup
     /// <summary>
     /// Adds CORS policy configuration.
     /// </summary>
+    /// <param name="service">The service collection to register the CORS policy into.</param>
     private void EnableCors(IServiceCollection service)
     {
         service.AddCors(option => option.AddPolicy("AllowOrigin",
-            policy => policy.AllowAnyOrigin()
+            policy => policy.WithOrigins("http://localhost:4200")
                             .AllowAnyMethod()
-                            .AllowAnyHeader()));
+                            .AllowAnyHeader()
+                            .AllowCredentials()));
     }
 
     /// <summary>
     /// Registers custom middleware components.
     /// </summary>
+    /// <param name="builder">The application builder to register middleware on.</param>
     private void EnableMiddlewares(IApplicationBuilder builder)
     {
         builder.UseMiddleware<ExceptionMiddleware>();
@@ -202,6 +212,7 @@ public class Startup
     /// <summary>
     /// Registers internal singleton services such as <see cref="ITokenManager"/>.
     /// </summary>
+    /// <param name="services">The service collection to register into.</param>
     private static void AddInternalServices(IServiceCollection services)
     {
         services.AddScoped<ITokenManager, TokenManager>();

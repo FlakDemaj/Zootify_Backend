@@ -37,6 +37,16 @@ public class UserMapper : Profile
             .ForMember(d => d.DarkMode,
                 o => o.MapFrom(s => s.DarkMode));
 
+        CreateMap<UserSettingsEntity, GetUserSettingsResponseDto>()
+            .ForMember(d => d.DarkMode,
+                o => o.MapFrom(s => s.DarkMode))
+            .ForMember(d => d.SendPushNotification,
+                o => o.MapFrom(s => s.SendPushNotification))
+            .ForMember(d => d.SendEmail,
+                o => o.MapFrom(s => s.SendEmail))
+            .ForMember(d => d.Language,
+                o => o.MapFrom(s => s.Language));
+
         CreateMap<(UserEntity, TokenResult), LoginUserResponseDto>()
             .ForMember(d => d.FirstName,
                 o => o.MapFrom(s => s.Item1.FirstName))

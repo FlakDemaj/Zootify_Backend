@@ -150,7 +150,7 @@ public class CommonUserControllerTests : IntegrationTestBase
             $"{Routings.CommonUserRouting}/{userToDelete.Guid}");
 
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserWithThisGuid);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
     [Fact]
