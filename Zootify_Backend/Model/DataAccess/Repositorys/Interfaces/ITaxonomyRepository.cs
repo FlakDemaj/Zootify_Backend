@@ -16,13 +16,12 @@ public interface ITaxonomyRepository : IBaseRepository<TaxonomyNodeEntity>
     Task<TaxonomyNodeEntity?> GetTaxonomyNodeByGuidAsync(Guid guid);
 
     /// <summary>
-    /// Returns all taxonomy nodes of the given rank whose names start with the given prefix.
+    /// Returns all taxonomy nodes of the given rank whose names contain the given fragment.
     /// </summary>
-    /// <param name="startsWithName">Optional name prefix to filter nodes by.</param>
+    /// <param name="filter">Optional name fragment to filter nodes by.</param>
     /// <param name="rank">The taxonomy rank to filter by.</param>
-    Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(
-        string? startsWithName,
-        TaxonomyRank rank);
+    Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByNameFilterAsync(
+        string? filter);
 
     /// <summary>
     /// Returns all taxonomy nodes ordered by rank and name, used to build the full taxonomy tree.

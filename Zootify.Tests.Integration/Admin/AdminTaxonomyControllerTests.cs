@@ -454,4 +454,94 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
     }
 
     #endregion
+
+    #region GetSimilarTaxonomies
+
+    [Fact]
+    public async Task GetSimilar_ReturnsApprovedSameRankSimilarNodes()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var reviewed = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera leo", TaxonomyRank.Species, ApprovalStatus.Pending);
+        var similar = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera leon", TaxonomyRank.Species, ApprovalStatus.Approved);
+        // Different rank → excluded.
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus, ApprovalStatus.Approved);
+        // Completely different name → below the similarity threshold.
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Loxodonta africana", TaxonomyRank.Species, ApprovalStatus.Approved);
+
+        var response = await Client.GetAsync($"{Routings.AdminTaxonomyRouting}/{reviewed.Guid}/similar");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<GetSimilarTaxonomiesResponseDto>();
+        dto!.TaxonomyGuid.Should().Be(reviewed.Guid);
+        dto.Similar.Should().ContainSingle();
+        dto.Similar.Single().TaxonomyGuid.Should().Be(similar.Guid);
+        dto.Similar.Single().Similarity.Should().BeGreaterThan(0.5);
+    }
+
+    [Fact]
+    public async Task GetSimilar_IncludesAncestorPath()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera", TaxonomyRank.Genus, ApprovalStatus.Approved);
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera leon", TaxonomyRank.Species, ApprovalStatus.Approved, parentGuid: genus.Guid);
+        var reviewed = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera leo", TaxonomyRank.Species, ApprovalStatus.Pending);
+
+        var response = await Client.GetAsync($"{Routings.AdminTaxonomyRouting}/{reviewed.Guid}/similar");
+
+        var dto = await response.Content.ReadFromJsonAsync<GetSimilarTaxonomiesResponseDto>();
+        dto!.Similar.Single().Path.Should().Be("Panthera");
+    }
+
+    [Fact]
+    public async Task GetSimilar_ExcludesPendingCandidates()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var reviewed = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera leo", TaxonomyRank.Species, ApprovalStatus.Pending);
+        // A near-identical name but still pending → not offered as an existing taxonomy.
+        await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Panthera leon", TaxonomyRank.Species, ApprovalStatus.Pending);
+
+        var response = await Client.GetAsync($"{Routings.AdminTaxonomyRouting}/{reviewed.Guid}/similar");
+
+        var dto = await response.Content.ReadFromJsonAsync<GetSimilarTaxonomiesResponseDto>();
+        dto!.Similar.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSimilar_NodeNotFound_ReturnsNoTaxonomyFound()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.AdminTaxonomyRouting}/{Guid.NewGuid()}/similar");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
+    }
+
+    [Fact]
+    public async Task GetSimilar_NormalUser_ReturnsForbidden()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync($"{Routings.AdminTaxonomyRouting}/{Guid.NewGuid()}/similar");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    #endregion
 }

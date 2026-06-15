@@ -27,6 +27,13 @@ internal static class Routings
     internal const string CommonTaxonomyRouting = "/rest/CommonTaxonomy";
     internal const string CommonTaxonomyTreeRouting = "/rest/CommonTaxonomy/tree";
     internal const string CommonUserSettingsRouting = "/rest/CommonUserSettings";
+    internal const string CommonSpecimenImportExportRouting = "/rest/CommonSpecimenImportExport";
+
+    #endregion
+
+    #region Home
+
+    internal const string HomeAnimalsRouting = "/rest/Home/animals";
 
     #endregion
 

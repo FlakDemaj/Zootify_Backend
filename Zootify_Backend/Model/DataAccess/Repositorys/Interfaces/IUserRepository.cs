@@ -28,6 +28,13 @@ public interface IUserRepository : IBaseRepository<UserEntity>
     Task<UserEntity?> GetDeletedUserByGuid(Guid guid);
 
     /// <summary>
+    /// Returns an active or blocked user with the given GUID, or <c>null</c> if not found, pending, or deleted.
+    /// Used by management operations that may edit, block, or reactivate a user.
+    /// </summary>
+    /// <param name="guid">The GUID of the user to retrieve.</param>
+    Task<UserEntity?> GetActiveOrBlockedUserByGuid(Guid guid);
+
+    /// <summary>
     /// Returns a filtered and paged list of all users in the system.
     /// </summary>
     /// <param name="query">Filter, sorting, and paging parameters.</param>
@@ -46,10 +53,10 @@ public interface IUserRepository : IBaseRepository<UserEntity>
     Task<List<UserEntity>> GetUsersByGuidsAsync(List<Guid> guids);
 
     /// <summary>
-    /// Returns all active users whose full name starts with the given prefix, ordered by first then last name.
+    /// Returns all active users whose full name contains the given fragment, ordered by first then last name.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter user names by.</param>
-    Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith);
+    /// <param name="filter">The name fragment to filter user names by.</param>
+    Task<List<UserEntity>> GetActiveUsersByNameFilterAsync(string filter);
 
     /// <summary>
     /// Returns a batch of soft-deleted users whose deletion date is older than the given cutoff.

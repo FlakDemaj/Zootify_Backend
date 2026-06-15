@@ -24,14 +24,14 @@ public class CommonTagController : BaseRestController
     }
 
     /// <summary>
-    /// Returns all tags whose names start with the given prefix, ordered alphabetically.
+    /// Returns all tags whose names contain the given fragment, ordered alphabetically.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter tag names by.</param>
+    /// <param name="filter">The name fragment to filter tag names by.</param>
     /// <returns>A list of matching tag DTOs.</returns>
     [HttpGet]
     public async Task<ActionResult> GetAllTagsByFilter(
-        [FromQuery] string startsWith)
+        [FromQuery] string filter)
     {
-        return Ok(await _commonSpecimenService.GetAllTagsAsync(startsWith));
+        return Ok(await _commonSpecimenService.GetAllTagsAsync(filter));
     }
 }

@@ -86,7 +86,7 @@ public class CommonSpecimenController : BaseRestController
     /// Restores a previously soft-deleted specimen to active status.
     /// </summary>
     /// <param name="specimenGuid">The GUID of the specimen to activate.</param>
-    [HttpPost("activate/{specimenGuid:guid}")]
+    [HttpPost("{specimenGuid:guid}/activate")]
     public async Task<IActionResult> ActivateSpecimenAsync(Guid specimenGuid)
     {
         await _commonSpecimenService.ActivateSpecimenAsync(Authentication, specimenGuid);
@@ -112,7 +112,7 @@ public class CommonSpecimenController : BaseRestController
     /// </summary>
     /// <param name="specimenGuid">The GUID of the specimen whose image to update.</param>
     /// <param name="request">The new Base64 image data.</param>
-    [HttpPatch("image/{specimenGuid:guid}")]
+    [HttpPatch("{specimenGuid:guid}/image")]
     public async Task<IActionResult> UpdateSpecimenImageAsync(
         Guid specimenGuid,
         [FromBody] UpdateSpecimenImageRequestDto request)
@@ -126,7 +126,7 @@ public class CommonSpecimenController : BaseRestController
     /// </summary>
     /// <param name="specimenGuid">The GUID of the specimen whose tags to update.</param>
     /// <param name="request">The new set of tags, which may include both existing and new tags.</param>
-    [HttpPatch("tags/{specimenGuid:guid}")]
+    [HttpPatch("{specimenGuid:guid}/tags")]
     public async Task<IActionResult> UpdateSpecimenTagsAsync(
         Guid specimenGuid,
         [FromBody] UpdateSpecimenTagsRequestDto request)

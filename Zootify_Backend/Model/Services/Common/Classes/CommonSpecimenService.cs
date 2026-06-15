@@ -231,16 +231,16 @@ public class CommonSpecimenService : ICommonSpecimenService
     }
 
     /// <summary>
-    /// Returns all tags whose names start with the given prefix, ordered alphabetically.
+    /// Returns all tags whose names contain the given fragment, ordered alphabetically.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter tag names by.</param>
+    /// <param name="filter">The name fragment to filter tag names by.</param>
     /// <returns>A list of matching tag filter DTOs.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(
-        string startsWith)
+        string filter)
     {
         var tags = await _tagRepository
-            .GetTagsByStartsWithNameAsync(startsWith);
+            .GetTagsByNameFilterAsync(filter);
         
         var mappedTags = _mapper.Map<List<GetAllTagsByFilterDto>>(tags);
         

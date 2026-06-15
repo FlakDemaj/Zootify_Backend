@@ -43,6 +43,7 @@ public interface ICommonCollectionService
     Task<GetAllSpecimenInCollectionResponseDto> GetAllSpecimensInCollectionAsync(
         IAuthentication? authentication,
         Guid collectionGuid,
+        string? filterByName,
         BaseSortAndPagingDto paging);
 
     /// <summary>

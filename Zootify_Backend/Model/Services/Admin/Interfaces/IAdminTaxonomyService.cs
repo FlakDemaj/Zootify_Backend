@@ -16,6 +16,15 @@ public interface IAdminTaxonomyService
     Task<GetTaxonomyTreeResponseDto> GetTaxonomiesForApprovalAsync();
 
     /// <summary>
+    /// Returns existing approved taxonomies of the same rank whose name sounds similar to the node
+    /// under review, as a decision aid when approving or rejecting it.
+    /// </summary>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node being reviewed.</param>
+    /// <returns>The reviewed node together with its most similar existing approved taxonomies.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
+    Task<GetSimilarTaxonomiesResponseDto> GetSimilarTaxonomiesAsync(Guid taxonomyGuid);
+
+    /// <summary>
     /// Approves a pending taxonomy node and activates any specimens whose full taxonomy chain is now approved.
     /// </summary>
     /// <param name="authentication">The authentication context of the approving moderator or admin.</param>

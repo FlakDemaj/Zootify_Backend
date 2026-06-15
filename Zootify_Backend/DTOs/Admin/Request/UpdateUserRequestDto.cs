@@ -4,10 +4,12 @@ namespace Zootify_Backend.DTOs.Admin.Request;
 
 public class UpdateUserRequestDto
 {
-    public required string FirstName { get; set; }
+    public required string FirstName { get; init; }
     
-    public required string LastName { get; set; }
+    public required string LastName { get; init; }
     
-    public required UserRole Role { get; set; }
+    public required UserRole Role { get; init; }
+    
+    public UserStatus Status { get; init; }
     
 }

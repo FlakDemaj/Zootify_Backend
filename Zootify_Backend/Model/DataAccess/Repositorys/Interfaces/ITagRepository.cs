@@ -15,8 +15,8 @@ public interface ITagRepository : IBaseRepository<TagEntity>
     Task<List<TagEntity>> GetTagByGuidAsync(List<Guid> guids);
 
     /// <summary>
-    /// Returns all tags whose names start with the given prefix, or all tags if the prefix is null or whitespace.
+    /// Returns all tags whose names contain the given fragment, or all tags if the filter is null or whitespace.
     /// </summary>
-    /// <param name="startsWith">The optional prefix to filter tag names by.</param>
-    Task<List<TagEntity>> GetTagsByStartsWithNameAsync(string? startsWith);
+    /// <param name="filter">The optional name fragment to filter tag names by.</param>
+    Task<List<TagEntity>> GetTagsByNameFilterAsync(string? filter);
 }

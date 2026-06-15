@@ -143,4 +143,7 @@
   <data name="UserSettingsNotFound" xml:space="preserve">
     <value>No settings were found for this user.</value>
   </data>
+  <data name="InvalidImportFile" xml:space="preserve">
+    <value>The uploaded file could not be read as an Excel sheet.</value>
+  </data>
 </root>

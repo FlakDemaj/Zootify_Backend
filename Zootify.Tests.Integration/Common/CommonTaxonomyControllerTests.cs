@@ -63,7 +63,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetTaxonomyNodes_WithStartsWithFilter_ReturnsMatchingNodes()
+    public async Task GetTaxonomyNodes_WithFilter_ReturnsMatchingNodes()
     {
         var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
         await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus.Guid);
@@ -74,7 +74,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?startsWith=p&rank={(int)TaxonomyRank.Species}");
+            $"{Routings.CommonTaxonomyRouting}?filter=p&rank={(int)TaxonomyRank.Species}");
 
         response.Should().NotBeNull();
         response!.Should().HaveCount(1);
@@ -82,7 +82,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetTaxonomyNodes_WithStartsWithFilter_ReturnsNothing()
+    public async Task GetTaxonomyNodes_WithFilter_ReturnsNothing()
     {
         var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
         await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus.Guid);
@@ -91,7 +91,7 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?startsWith=xyz&rank={(int)TaxonomyRank.Species}");
+            $"{Routings.CommonTaxonomyRouting}?filter=xyz&rank={(int)TaxonomyRank.Species}");
 
         response.Should().NotBeNull();
         response!.Should().BeEmpty();

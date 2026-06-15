@@ -34,23 +34,21 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
     }
 
     /// <summary>
-    /// Returns all taxonomy nodes of the given rank whose name starts with the given prefix, or all nodes of that rank if no prefix is provided.
+    /// Returns all taxonomy nodes of the given rank whose name contains the given fragment, or all nodes of that rank if no filter is provided.
     /// </summary>
-    /// <param name="startsWithName">Optional prefix to filter node names.</param>
-    /// <param name="rank">The taxonomy rank to filter by.</param>
+    /// <param name="filter">Optional name fragment to filter node names.</param>
     /// <returns>The matching <see cref="TaxonomyNodeEntity"/> records.</returns>
-    public async Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByStartsWithNameAsync(
-        string? startsWithName,
-        TaxonomyRank rank)
+    public async Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByNameFilterAsync(
+        string? filter)
     {
         var query = Context
             .GetTrackingSet<TaxonomyNodeEntity>()
-            .Where(tn => tn.Rank == rank);
+            .Where(tn => tn.Rank == TaxonomyRank.Species);
 
-        if (!string.IsNullOrWhiteSpace(startsWithName))
+        if (!string.IsNullOrWhiteSpace(filter))
         {
             query = query
-                .Where(tn => tn.Name.StartsWith(startsWithName));
+                .Where(tn => tn.Name.Contains(filter));
         }
 
         return await query.ToListAsync();

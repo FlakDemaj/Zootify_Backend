@@ -89,5 +89,7 @@ public enum ErrorCode
 
     OneNotificationNeedsToBeActivated = -1011002,
 
-    UserSettingsNotFound = -1012001
+    UserSettingsNotFound = -1012001,
+
+    InvalidImportFile = -1013001
 }

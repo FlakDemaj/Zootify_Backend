@@ -126,6 +126,37 @@ public class AuthControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Verifies that the created UserSettings language follows the request culture
+    /// (Accept-Language header) — registering with English yields English settings.
+    /// </summary>
+    [Fact]
+    public async Task Register_WithEnglishAcceptLanguage_CreatesSettingsInEnglish()
+    {
+        Fixture.BrevoMock
+            .Setup(b => b.SendRegistrationEmail(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        SetAcceptLanguage("en");
+
+        var request = new RegisterUserRequestDto
+        {
+            FirstName = "Max",
+            LastName = "Mustermann",
+            Email = "lang-settings@example.com",
+            Password = "TestPass123!"
+        };
+
+        await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/Register", request);
+
+        var user = await GetUserFromDbByEmailAsync("lang-settings@example.com");
+        var settings = await GetUserSettingsFromDbAsync(user!.Guid);
+
+        settings.Should().NotBeNull();
+        settings!.Language.Should().Be("en");
+    }
+
+    /// <summary>
     /// Verifies that registering with an already existing email returns 400
     /// with the <see cref="ErrorCode.UserWithThisEmailAlreadyExists"/> error code.
     /// </summary>

@@ -74,7 +74,7 @@ public class CommonTagControllerTests : IntegrationTestBase
         var filterBy = "Te";
         
         var response = await Client.GetFromJsonAsync<List<GetAllTagsByFilterDto>>(
-            $"{Routings.CommonTagRouting}?startsWith={filterBy}");
+            $"{Routings.CommonTagRouting}?filter={filterBy}");
         
         response.Should().NotBeNull();
         response!.Count.Should().Be(2);
@@ -105,12 +105,30 @@ public class CommonTagControllerTests : IntegrationTestBase
         
         AuthenticateAs(requester);
 
-        var filterBy = "A";
-        
+        var filterBy = "zzz";
+
         var response = await Client.GetFromJsonAsync<List<GetAllTagsByFilterDto>>(
-            $"{Routings.CommonTagRouting}?startsWith={filterBy}");
-        
+            $"{Routings.CommonTagRouting}?filter={filterBy}");
+
         response.Should().NotBeNull();
         response!.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetAllTags_WithFilter_MatchesSubstringNotOnlyPrefix()
+    {
+        await TagRepo.CreateTagAsync("BTag");
+        await TagRepo.CreateTagAsync("CTag");
+        await TagRepo.CreateTagAsync("SuperE");
+
+        var requester = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(requester);
+
+        // "ag" is contained in "BTag"/"CTag" but is not a prefix of either, proving substring matching.
+        var response = await Client.GetFromJsonAsync<List<GetAllTagsByFilterDto>>(
+            $"{Routings.CommonTagRouting}?filter=ag");
+
+        response.Should().NotBeNull();
+        response!.Select(t => t.TagName).Should().BeEquivalentTo("BTag", "CTag");
     }
 }

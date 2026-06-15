@@ -99,19 +99,18 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
     }
 
     /// <summary>
-    /// Returns all taxonomy nodes of the specified rank that match the given name prefix, each accompanied by their ancestor path.
+    /// Returns all taxonomy nodes of the specified rank that match the given name fragment, each accompanied by their ancestor path.
     /// </summary>
-    /// <param name="startsWith">Optional name prefix to filter nodes by.</param>
+    /// <param name="filter">Optional name fragment to filter nodes by.</param>
     /// <param name="rank">The taxonomy rank to filter by.</param>
     /// <returns>A list of taxonomy chains, where each chain runs from root to the matching node.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<List<List<GetAllTaxonomyNodesByFilterDto>>> GetAllTaxonomyNodesAsync(
-        string? startsWith,
-        TaxonomyRank rank)
+        string? filter)
     {
         var taxonomyNodes = await
             _taxonomyRepository
-                .GetTaxonomyNodeByStartsWithNameAsync(startsWith, rank);
+                .GetTaxonomyNodeByNameFilterAsync(filter);
 
         var taxonomyTrees = new List<List<GetAllTaxonomyNodesByFilterDto>>();
 

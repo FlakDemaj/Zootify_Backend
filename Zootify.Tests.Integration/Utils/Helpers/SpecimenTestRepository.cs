@@ -50,11 +50,12 @@ public class SpecimenTestRepository
         Guid geoLocationGuid,
         SpecimenStatus status = SpecimenStatus.Active,
         bool isPublic = true,
-        Guid? createdByUserGuid = null)
+        Guid? createdByUserGuid = null,
+        string name = "Test Specimen")
     {
         var specimen = new SpecimenEntity
         {
-            Name = "Test Specimen",
+            Name = name,
             LatinName = "Testus specienus",
             TaxonomySpeciesGuid = speciesGuid,
             GeographicLocationGuid = geoLocationGuid,

@@ -648,7 +648,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "newImage" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/image", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
@@ -669,7 +669,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = null };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/image", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
@@ -689,7 +689,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "brandNew" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/image", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var images = await GetImagesForSpecimenFromDbAsync(specimen.Guid);
@@ -710,7 +710,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "same" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/image", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
@@ -724,7 +724,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "data" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}", request);
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}/image", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
@@ -744,7 +744,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "hacked" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/image", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -755,7 +755,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     {
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "data" };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{Guid.CreateVersion7()}", request);
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}/image", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -776,7 +776,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var request = new UpdateSpecimenImageRequestDto { ImageBase64 = "new-image" };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/image/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/image", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
@@ -808,7 +808,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
@@ -838,7 +838,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
@@ -863,7 +863,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
@@ -884,7 +884,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
@@ -899,7 +899,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}", request);
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}/tags", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
@@ -924,7 +924,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -935,7 +935,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     {
         var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{Guid.CreateVersion7()}", request);
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}/tags", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -956,7 +956,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var request = new UpdateSpecimenTagsRequestDto { SpecimenTags = [] };
 
         var response = await Client.PatchAsJsonAsync(
-            $"{Routings.CommonSpecimenRouting}/tags/{specimen.Guid}", request);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
@@ -1355,7 +1355,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         AuthenticateAs(owner);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonSpecimenRouting}/activate/{specimen.Guid}", null);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -1379,7 +1379,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         AuthenticateAs(admin);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonSpecimenRouting}/activate/{specimen.Guid}", null);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -1403,7 +1403,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         AuthenticateAs(other);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonSpecimenRouting}/activate/{specimen.Guid}", null);
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/activate", null);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -1416,7 +1416,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonSpecimenRouting}/activate/{Guid.CreateVersion7()}", null);
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}/activate", null);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
@@ -1426,7 +1426,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     public async Task ActivateSpecimen_NotAuthenticated_ReturnsUnauthorized()
     {
         var response = await Client.PostAsync(
-            $"{Routings.CommonSpecimenRouting}/activate/{Guid.CreateVersion7()}", null);
+            $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

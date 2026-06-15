@@ -34,19 +34,19 @@ public class TagRepository : BaseRepository<TagEntity>, ITagRepository
     }
 
     /// <summary>
-    /// Returns all tags whose name starts with the given prefix, or all tags if no prefix is provided.
+    /// Returns all tags whose name contains the given fragment, or all tags if no filter is provided.
     /// </summary>
-    /// <param name="startsWith">Optional prefix to filter tag names.</param>
+    /// <param name="filter">Optional name fragment to filter tag names.</param>
     /// <returns>The matching <see cref="TagEntity"/> records.</returns>
-    public Task<List<TagEntity>> GetTagsByStartsWithNameAsync(string? startsWith)
+    public Task<List<TagEntity>> GetTagsByNameFilterAsync(string? filter)
     {
         var getAllTagsQuery =  Context
             .GetTrackingSet<TagEntity>();
 
-        if (!string.IsNullOrWhiteSpace(startsWith))
+        if (!string.IsNullOrWhiteSpace(filter))
         {
             getAllTagsQuery = getAllTagsQuery
-                .Where(t => t.Tag.StartsWith(startsWith));
+                .Where(t => t.Tag.Contains(filter));
         }
         
         return getAllTagsQuery.ToListAsync();

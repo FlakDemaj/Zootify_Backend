@@ -1,3 +1,4 @@
+using System.Globalization;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
@@ -156,9 +157,15 @@ public class UserEntity : BaseDeletionEntity
     /// </summary>
     public void CreateUserSettings()
     {
+        var culture = CultureInfo.CurrentUICulture;
+        var language = culture.Equals(CultureInfo.InvariantCulture)
+            ? "de"
+            : culture.TwoLetterISOLanguageName;
+        
         var userSettings = new UserSettingsEntity
         {
             UserGuid = Guid,
+            Language = language
         };
 
         Settings = userSettings;
@@ -174,7 +181,8 @@ public class UserEntity : BaseDeletionEntity
         return FirstName != newUserData.FirstName
                || LastName != newUserData.LastName
                || Email != newUserData.Email
-               || Role != newUserData.Role;
+               || Role != newUserData.Role
+               ||  Status != newUserData.Status;
     }
 
     /// <summary>
@@ -190,6 +198,7 @@ public class UserEntity : BaseDeletionEntity
         LastName = newUserData.LastName;
         Role = newUserData.Role;
         Email = newUserData.Email;
+        Status = newUserData.Status;
         SetUpdatedBy(requesterGuid);
     }
 }
