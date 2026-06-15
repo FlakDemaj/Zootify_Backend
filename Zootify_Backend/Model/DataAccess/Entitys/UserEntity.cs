@@ -157,10 +157,15 @@ public class UserEntity : BaseDeletionEntity
     /// </summary>
     public void CreateUserSettings()
     {
+        var culture = CultureInfo.CurrentUICulture;
+        var language = culture.Equals(CultureInfo.InvariantCulture)
+            ? "de"
+            : culture.TwoLetterISOLanguageName;
+        
         var userSettings = new UserSettingsEntity
         {
             UserGuid = Guid,
-            Language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName
+            Language = language
         };
 
         Settings = userSettings;

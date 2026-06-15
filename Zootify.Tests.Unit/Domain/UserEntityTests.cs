@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Zootify.Tests.Unit.Domain;
 
 /// <summary>
@@ -330,6 +332,8 @@ public class UserEntityTests
     [Fact]
     public void CreateUserSettings_DefaultLanguageIsDe()
     {
+        CultureInfo.CurrentUICulture = new CultureInfo("de");
+
         var user = UserTestData.CreateUser();
 
         user.CreateUserSettings();
