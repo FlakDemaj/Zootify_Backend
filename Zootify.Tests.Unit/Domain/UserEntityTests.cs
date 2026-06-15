@@ -330,7 +330,7 @@ public class UserEntityTests
     }
 
     [Fact]
-    public void CreateUserSettings_DefaultLanguageIsDe()
+    public void CreateUserSettings_CheckLanguage()
     {
         CultureInfo.CurrentUICulture = new CultureInfo("de");
 
