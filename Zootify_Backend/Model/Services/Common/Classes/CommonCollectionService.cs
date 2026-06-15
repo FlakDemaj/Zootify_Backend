@@ -134,11 +134,12 @@ public class CommonCollectionService : ICommonCollectionService
     public async Task<GetAllSpecimenInCollectionResponseDto> GetAllSpecimensInCollectionAsync(
         IAuthentication? authentication,
         Guid collectionGuid,
+        string? filterByName,
         BaseSortAndPagingDto paging)
     {
         if (IsStaticCollection(collectionGuid))
         {
-            return await GetSpecimensFromStaticCollectionAsync(authentication, collectionGuid, paging);
+            return await GetSpecimensFromStaticCollectionAsync(authentication, filterByName, collectionGuid, paging);
         }
 
         var collection = await _collectionRepository.GetCollectionWithAuditAsync(collectionGuid);
@@ -150,7 +151,9 @@ public class CommonCollectionService : ICommonCollectionService
         
         CheckCollectionVisibility(authentication, collection);
 
-        var (items, total) = await _specimenRepository.GetSpecimensInCollectionPagedAsync(collectionGuid, authentication, paging);
+        var (items, total) = await 
+            _specimenRepository
+                .GetSpecimensInCollectionPagedAsync(collectionGuid, filterByName, authentication, paging);
 
         return new GetAllSpecimenInCollectionResponseDto
         {
@@ -178,6 +181,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private async Task<GetAllSpecimenInCollectionResponseDto> GetSpecimensFromStaticCollectionAsync(
         IAuthentication? authentication,
+        string? filterByName,
         Guid collectionGuid,
         BaseSortAndPagingDto paging)
     {
@@ -200,7 +204,13 @@ public class CommonCollectionService : ICommonCollectionService
             _                                          => (authentication.UserGuid,          SpecimenStatus.Rejected),
         };
 
-        var (items, total) = await _specimenRepository.GetSpecimensPagedAsync(userGuid, status, paging);
+        var (items, total) = await 
+            _specimenRepository
+                .GetSpecimensPagedAsync(
+                    userGuid,
+                    filterByName,
+                    status,
+                    paging);
 
         return new GetAllSpecimenInCollectionResponseDto
         {
@@ -270,12 +280,9 @@ public class CommonCollectionService : ICommonCollectionService
             return;
         }
 
-        if (authentication == null)
-        {
-            throw new ZootifyException(ErrorCode.Forbidden);
-        }
-
-        if (authentication.Role == UserRole.User && authentication.UserGuid != collection.CreatedByUserGuid)
+        if (authentication == null ||
+            authentication.Role == UserRole.User
+            && authentication.UserGuid != collection.CreatedByUserGuid)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }

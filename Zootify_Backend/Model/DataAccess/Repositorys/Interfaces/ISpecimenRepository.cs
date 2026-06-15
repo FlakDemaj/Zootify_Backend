@@ -55,6 +55,7 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
     Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensInCollectionPagedAsync(
         Guid collectionGuid,
+        string? filterByName,
         IAuthentication? authentication,
         BaseSortAndPagingDto paging);
 
@@ -67,8 +68,30 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
     Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensPagedAsync(
         Guid? userGuid,
+        string? filterByName,
         SpecimenStatus? status,
         BaseSortAndPagingDto paging);
+
+    /// <summary>
+    /// Returns a paged list of specimens for the public overview, ordered by creation date descending,
+    /// eagerly loading the image, taxonomy chain, and geographic location chain. Non-public specimens
+    /// are only included for moderators and admins; an optional city name filters the result.
+    /// </summary>
+    /// <param name="authentication">The optional authentication context; anonymous or regular users see only public specimens.</param>
+    /// <param name="filterByCity">Optional case-insensitive city name to filter by; <c>null</c> for no filter.</param>
+    /// <param name="paging">Paging parameters (page and page size).</param>
+    /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
+    Task<(List<SpecimenEntity> Items, int TotalCount)> GetPublicOverviewPagedAsync(
+        IAuthentication? authentication,
+        string? filterByCity,
+        BaseSortAndPagingDto paging);
+
+    /// <summary>
+    /// Returns the specimens with the given GUIDs, eagerly loading their species, for export.
+    /// </summary>
+    /// <param name="guids">The GUIDs of the specimens to load.</param>
+    /// <returns>The matching specimens with their species loaded.</returns>
+    Task<List<SpecimenEntity>> GetSpecimensByGuidsWithSpeciesAsync(List<Guid> guids);
 
     /// <summary>
     /// Returns all specimens whose taxonomy species GUID is in the given list, applying optional visibility and status filters.

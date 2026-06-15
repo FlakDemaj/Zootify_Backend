@@ -36,11 +36,11 @@ public interface ICommonSpecimenService
         Guid collectionGuid);
 
     /// <summary>
-    /// Returns all tags whose names start with the given prefix, ordered alphabetically.
+    /// Returns all tags whose names contain the given fragment, ordered alphabetically.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter tag names by.</param>
+    /// <param name="filter">The name fragment to filter tag names by.</param>
     /// <returns>A list of matching tag filter DTOs.</returns>
-    Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(string startsWith);
+    Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(string filter);
 
     /// <summary>
     /// Updates the core fields of an existing specimen, verifying ownership.

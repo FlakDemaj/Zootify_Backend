@@ -18,6 +18,12 @@ namespace Zootify_Backend.Model.Services.Admin.Classes;
 /// </summary>
 public class AdminTaxonomyService : IAdminTaxonomyService
 {
+    /// <summary>The minimum name similarity (0..1) for a taxonomy to be offered as a similar match.</summary>
+    private const double SimilarityThreshold = 0.5;
+
+    /// <summary>The maximum number of similar taxonomies returned as a decision aid.</summary>
+    private const int MaxSimilarResults = 10;
+
     private readonly ITaxonomyRepository _taxonomyRepository;
     private readonly ISpecimenRepository _specimenRepository;
     private readonly IUserRepository _userRepository;
@@ -67,6 +73,56 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             .ToList();
 
         return _mapper.Map<GetTaxonomyTreeResponseDto>(roots);
+    }
+
+    /// <summary>
+    /// Returns existing approved taxonomies of the same rank whose name sounds similar to the node
+    /// under review, as a decision aid when approving or rejecting it.
+    /// </summary>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node being reviewed.</param>
+    /// <returns>The reviewed node together with its most similar existing approved taxonomies.</returns>
+    /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
+    [Transaction(ReadOnly = true)]
+    public async Task<GetSimilarTaxonomiesResponseDto> GetSimilarTaxonomiesAsync(Guid taxonomyGuid)
+    {
+        var node = await _taxonomyRepository.GetTaxonomyNodeByGuidAsync(taxonomyGuid);
+
+        if (node == null)
+        {
+            throw new ZootifyException(ErrorCode.NoTaxonomyFound);
+        }
+
+        var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
+        var byGuid = allNodes.ToDictionary(n => n.Guid);
+
+        // Compare only against already-approved taxonomies of the same rank (a duplicate would sit at
+        // the same level); the reviewed node itself is excluded by GUID.
+        var similar = allNodes
+            .Where(n => n.Guid != node.Guid
+                        && n.Rank == node.Rank
+                        && n.ApprovalStatus == ApprovalStatus.Approved)
+            .Select(n => new SimilarTaxonomyDto
+            {
+                TaxonomyGuid = n.Guid,
+                Name = n.Name,
+                Rank = n.Rank,
+                ApprovalStatus = n.ApprovalStatus,
+                Similarity = Math.Round(FuzzyMatch.Similarity(node.Name, n.Name), 4),
+                Path = BuildAncestorPath(n, byGuid),
+            })
+            .Where(s => s.Similarity >= SimilarityThreshold)
+            .OrderByDescending(s => s.Similarity)
+            .ThenBy(s => s.Name)
+            .Take(MaxSimilarResults)
+            .ToList();
+
+        return new GetSimilarTaxonomiesResponseDto
+        {
+            TaxonomyGuid = node.Guid,
+            Name = node.Name,
+            Rank = node.Rank,
+            Similar = similar,
+        };
     }
 
     /// <summary>
@@ -272,6 +328,33 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// Builds the ancestor path of a node from the root down to its parent, joined by " &gt; ".
+    /// </summary>
+    /// <param name="node">The node whose ancestor path to build.</param>
+    /// <param name="byGuid">Dictionary of all taxonomy nodes keyed by GUID.</param>
+    /// <returns>The parent chain as a single string, or an empty string for a root node.</returns>
+    private static string BuildAncestorPath(
+        TaxonomyNodeEntity node,
+        Dictionary<Guid, TaxonomyNodeEntity> byGuid)
+    {
+        var ancestors = new List<string>();
+        var current = node.ParentGuid.HasValue
+            ? byGuid.GetValueOrDefault(node.ParentGuid.Value)
+            : null;
+
+        while (current != null)
+        {
+            ancestors.Add(current.Name);
+            current = current.ParentGuid.HasValue
+                ? byGuid.GetValueOrDefault(current.ParentGuid.Value)
+                : null;
+        }
+
+        ancestors.Reverse();
+        return string.Join(" > ", ancestors);
     }
 
     /// <summary>

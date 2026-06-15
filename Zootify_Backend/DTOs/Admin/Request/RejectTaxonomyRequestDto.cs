@@ -2,5 +2,5 @@ namespace Zootify_Backend.DTOs.Admin.Request;
 
 public class RejectTaxonomyRequestDto
 {
-    public required string Comment { get; set; }
+    public required string Comment { get; init; }
 }

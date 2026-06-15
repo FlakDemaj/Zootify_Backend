@@ -5,14 +5,14 @@ namespace Zootify_Backend.DTOs.Admin.Request;
 
 public class GetAllUsersFilterDto : BaseSortAndPagingDto
 {
-    public string? FirstName { get; set; }
+    public string? FirstName { get; init; }
     
-    public string? LastName { get; set; }
+    public string? LastName { get; init; }
     
-    public string? Email { get; set; }
+    public string? Email { get; init; }
     
-    public UserRole? Role { get; set; }
+    public UserRole? Role { get; init; }
     
-    public UserStatus? Status { get; set; }
+    public UserStatus? Status { get; init; }
     
 }

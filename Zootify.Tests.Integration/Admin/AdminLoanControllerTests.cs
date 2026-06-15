@@ -23,7 +23,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
         AuthenticateAs(admin);
 
         var result = await Client.GetFromJsonAsync<List<BorrowerPickerDto>>(
-            $"{Routings.AdminLoanRouting}/borrowers?startsWith=Anna");
+            $"{Routings.AdminLoanRouting}/borrowers?filter=Anna");
 
         result.Should().NotBeNull();
         result!.Should().HaveCount(2);
@@ -38,7 +38,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
         AuthenticateAs(admin);
 
         var result = await Client.GetFromJsonAsync<List<BorrowerPickerDto>>(
-            $"{Routings.AdminLoanRouting}/borrowers?startsWith=Xyzzy");
+            $"{Routings.AdminLoanRouting}/borrowers?filter=Xyzzy");
 
         result.Should().NotBeNull();
         result!.Should().BeEmpty();
@@ -53,7 +53,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
         AuthenticateAs(admin);
 
         var result = await Client.GetFromJsonAsync<List<BorrowerPickerDto>>(
-            $"{Routings.AdminLoanRouting}/borrowers?startsWith=Anna");
+            $"{Routings.AdminLoanRouting}/borrowers?filter=Anna");
 
         result.Should().NotBeNull();
         result![0].FullName.Should().Be("Anna Albert");
@@ -67,7 +67,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
-            $"{Routings.AdminLoanRouting}/borrowers?startsWith=A");
+            $"{Routings.AdminLoanRouting}/borrowers?filter=A");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -76,7 +76,7 @@ public class AdminLoanControllerTests : IntegrationTestBase
     public async Task GetBorrowers_Unauthenticated_ReturnsUnauthorized()
     {
         var response = await Client.GetAsync(
-            $"{Routings.AdminLoanRouting}/borrowers?startsWith=A");
+            $"{Routings.AdminLoanRouting}/borrowers?filter=A");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

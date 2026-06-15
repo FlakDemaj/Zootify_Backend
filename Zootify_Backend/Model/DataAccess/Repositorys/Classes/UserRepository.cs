@@ -61,6 +61,19 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     }
 
     /// <summary>
+    /// Returns the user with the given GUID if their status is active or blocked, or <c>null</c> otherwise.
+    /// Used by management operations that may edit, block, or reactivate a user.
+    /// </summary>
+    /// <param name="guid">The GUID of the user to retrieve.</param>
+    public async Task<UserEntity?> GetActiveOrBlockedUserByGuid(Guid guid)
+    {
+        return await Context.GetTrackingSet<UserEntity>()
+            .FirstOrDefaultAsync(u => u.Guid == guid
+                                      && (u.Status == UserStatus.Active
+                                          || u.Status == UserStatus.Blocked));
+    }
+
+    /// <summary>
     /// Returns a filtered and sorted page of users matching the criteria in the given filter DTO.
     /// </summary>
     /// <param name="query">The filter, sort, and paging parameters.</param>
@@ -114,17 +127,17 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     }
 
     /// <summary>
-    /// Returns all active users whose full name or first/last name starts with the given prefix, ordered by first then last name.
+    /// Returns all active users whose full name or first/last name contains the given fragment, ordered by first then last name.
     /// </summary>
-    /// <param name="startsWith">The prefix to search for.</param>
+    /// <param name="filter">The name fragment to search for.</param>
     /// <returns>The matching active <see cref="UserEntity"/> records.</returns>
-    public async Task<List<UserEntity>> GetActiveUsersByNameStartsWithAsync(string startsWith)
+    public async Task<List<UserEntity>> GetActiveUsersByNameFilterAsync(string filter)
     {
         return await Context.GetTrackingSet<UserEntity>()
             .Where(u => u.Status == UserStatus.Active
-                && ((u.FirstName + " " + u.LastName).StartsWith(startsWith)
-                    || u.FirstName.StartsWith(startsWith)
-                    || u.LastName.StartsWith(startsWith)))
+                && ((u.FirstName + " " + u.LastName).Contains(filter)
+                    || u.FirstName.Contains(filter)
+                    || u.LastName.Contains(filter)))
             .OrderBy(u => u.FirstName)
             .ThenBy(u => u.LastName)
             .ToListAsync();

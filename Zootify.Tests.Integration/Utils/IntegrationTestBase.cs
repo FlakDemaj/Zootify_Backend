@@ -211,6 +211,19 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _dbContext.ChangeTracker.Clear();
     }
 
+    /// <summary>
+    /// Overrides the creation_date column for any entity via EF Core's change-tracker API,
+    /// which bypasses the private setter on CreationDate.
+    /// </summary>
+    protected async Task OverrideCreationDateAsync(object entity, DateTime creationDate)
+    {
+        _dbContext.ChangeTracker.Clear();
+        _dbContext.Attach(entity);
+        _dbContext.Entry(entity).Property("CreationDate").CurrentValue = creationDate;
+        await _dbContext.SaveChangesAsync();
+        _dbContext.ChangeTracker.Clear();
+    }
+
     protected void AuthenticateAs(UserEntity user)
     {
         var token = GenerateTestToken(user.Role, user.Guid);

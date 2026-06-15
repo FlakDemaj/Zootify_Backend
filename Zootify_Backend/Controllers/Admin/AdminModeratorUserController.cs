@@ -57,7 +57,7 @@ public class AdminModeratorUserController : BaseRestController
     /// </summary>
     /// <param name="userGuid">The GUID of the user to update.</param>
     /// <param name="updateUserRequestDto">The new data to apply to the user.</param>
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = $"{Roles.Admin},{Roles.Moderator}")]
     [HttpPatch("{userGuid:guid}")]
     public async Task<IActionResult> UpdateUserAsync(
         Guid userGuid,

@@ -784,7 +784,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonCollectionRouting}/activate/{collection.Guid}", null);
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -807,7 +807,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(admin);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonCollectionRouting}/activate/{collection.Guid}", null);
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -830,7 +830,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(otherUser);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonCollectionRouting}/activate/{collection.Guid}", null);
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}/activate", null);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
@@ -843,7 +843,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         AuthenticateAs(user);
 
         var response = await Client.PostAsync(
-            $"{Routings.CommonCollectionRouting}/activate/{Guid.CreateVersion7()}", null);
+            $"{Routings.CommonCollectionRouting}/{Guid.CreateVersion7()}/activate", null);
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
@@ -853,7 +853,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task ActivateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
         var response = await Client.PostAsync(
-            $"{Routings.CommonCollectionRouting}/activate/{Guid.CreateVersion7()}", null);
+            $"{Routings.CommonCollectionRouting}/{Guid.CreateVersion7()}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -1051,6 +1051,30 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     #endregion
 
     #region GetAllSpecimensInCollection
+
+    [Fact]
+    public async Task GetAllSpecimensInCollection_FilterByName_ReturnsOnlyMatchingSpecimens()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+
+        var lion = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, name: "Lion");
+        var tiger = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, name: "Tiger");
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, lion.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, tiger.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens?filterByName=Lion");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == lion.Guid);
+    }
 
     [Fact]
     public async Task GetAllSpecimensInCollection_PublicCollection_ReturnsPublicSpecimens()

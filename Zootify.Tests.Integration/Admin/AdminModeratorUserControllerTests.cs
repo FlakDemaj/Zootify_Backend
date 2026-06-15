@@ -527,7 +527,8 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = "ChangedName",
             LastName = "ChangedLastName",
-            Role = UserRole.Admin
+            Role = UserRole.Admin,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -566,7 +567,8 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = "ChangedName",
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -605,7 +607,8 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = "ChangedLastName",
-            Role = userToUpdate.Role
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -644,7 +647,8 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = UserRole.User
+            Role = UserRole.User,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -683,7 +687,8 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -712,7 +717,8 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -740,14 +746,17 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
         };
 
         var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
     [Fact]
@@ -770,7 +779,136 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             $"{Routings.AdminUserRouting}/{requester.Guid}",
             requestDto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateUser_AsModerator_CanUpdateUser()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "mod@test.de",
+            role: UserRole.Moderator);
+
+        AuthenticateAs(requester);
+
+        var userToUpdate = await UserRepo.CreateUserAsync(
+            "user@test.de",
+            role: UserRole.User);
+
+        var requestDto = new UpdateUserRequestDto
+        {
+            FirstName = "ChangedByModerator",
+            LastName = userToUpdate.LastName,
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
+            requestDto);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updatedUser = await GetUserFromDbByGuidAsync(userToUpdate.Guid);
+        updatedUser!.FirstName.Should().Be("ChangedByModerator");
+        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
+    }
+
+    [Fact]
+    public async Task UpdateUser_AsModerator_OnAdmin_ReturnsForbidden()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "mod@test.de",
+            role: UserRole.Moderator);
+
+        AuthenticateAs(requester);
+
+        var userToUpdate = await UserRepo.CreateUserAsync(
+            "admin@test.de",
+            role: UserRole.Admin);
+
+        var requestDto = new UpdateUserRequestDto
+        {
+            FirstName = "ShouldNotApply",
+            LastName = userToUpdate.LastName,
+            Role = userToUpdate.Role,
+            Status = userToUpdate.Status
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
+            requestDto);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task UpdateUser_BlocksActiveUser_SetsStatusBlocked()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "mod@test.de",
+            role: UserRole.Moderator);
+
+        AuthenticateAs(requester);
+
+        var userToUpdate = await UserRepo.CreateUserAsync(
+            "user@test.de",
+            role: UserRole.User);
+
+        var requestDto = new UpdateUserRequestDto
+        {
+            FirstName = userToUpdate.FirstName,
+            LastName = userToUpdate.LastName,
+            Role = userToUpdate.Role,
+            Status = UserStatus.Blocked
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
+            requestDto);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updatedUser = await GetUserFromDbByGuidAsync(userToUpdate.Guid);
+        updatedUser!.Status.Should().Be(UserStatus.Blocked);
+        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
+    }
+
+    [Fact]
+    public async Task UpdateUser_ReactivatesBlockedUser_SetsStatusActive()
+    {
+        var requester = await UserRepo.CreateUserAsync(
+            "mod@test.de",
+            role: UserRole.Moderator);
+
+        AuthenticateAs(requester);
+
+        var userToUpdate = await UserRepo.CreateUserAsync(
+            "blocked@test.de",
+            status: UserStatus.Blocked,
+            role: UserRole.User);
+
+        var requestDto = new UpdateUserRequestDto
+        {
+            FirstName = userToUpdate.FirstName,
+            LastName = userToUpdate.LastName,
+            Role = userToUpdate.Role,
+            Status = UserStatus.Active
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
+            requestDto);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updatedUser = await GetUserFromDbByGuidAsync(userToUpdate.Guid);
+        updatedUser!.Status.Should().Be(UserStatus.Active);
+        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
     }
 
     #endregion

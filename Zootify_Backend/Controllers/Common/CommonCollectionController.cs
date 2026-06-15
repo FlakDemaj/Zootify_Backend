@@ -66,11 +66,13 @@ public class CommonCollectionController : BaseRestController
     [HttpGet("{collectionGuid:guid}/specimens")]
     public async Task<ActionResult<GetAllSpecimenInCollectionResponseDto>> GetAllSpecimensInCollectionAsync(
         Guid collectionGuid,
+        [FromQuery] string? filterByName,
         [FromQuery] BaseSortAndPagingDto paging)
     {
         return Ok(await _commonCollectionService.GetAllSpecimensInCollectionAsync(
             OptionalAuthentication,
             collectionGuid,
+            filterByName,
             paging));
     }
 
@@ -103,7 +105,7 @@ public class CommonCollectionController : BaseRestController
     /// Restores a previously soft-deleted collection to active status.
     /// </summary>
     /// <param name="collectionGuid">The GUID of the collection to activate.</param>
-    [HttpPost("activate/{collectionGuid:guid}")]
+    [HttpPost("{collectionGuid:guid}/activate")]
     public async Task<IActionResult> ActivateCollectionAsync(Guid collectionGuid)
     {
         await _commonCollectionService.ActivateCollectionAsync(Authentication, collectionGuid);

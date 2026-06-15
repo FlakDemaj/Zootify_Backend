@@ -27,23 +27,21 @@ public class CommonTaxonomyController : BaseRestController
     }
 
     /// <summary>
-    /// Returns all taxonomy nodes of the specified rank that match the given name prefix, each accompanied by their ancestor path.
+    /// Returns all taxonomy nodes of the specified rank that match the given name fragment, each accompanied by their ancestor path.
     /// </summary>
-    /// <param name="startsWith">Optional name prefix to filter nodes by.</param>
+    /// <param name="filter">Optional name fragment to filter nodes by.</param>
     /// <param name="rank">The taxonomy rank to filter by.</param>
     /// <returns>A list of taxonomy chains, where each chain starts from a root node down to the matching node.</returns>
     [HttpGet]
     public async Task<ActionResult<List<List<GetAllTaxonomyNodesByFilterDto>>>> GetTaxonomyNodesForCreation(
-        [FromQuery] string? startsWith,
-        [FromQuery] TaxonomyRank rank)
+        [FromQuery] string? filter)
     {
         return Ok(await _commonTaxonomyNodeService.GetAllTaxonomyNodesAsync(
-            startsWith,
-            rank));
+            filter));
     }
 
     /// <summary>
-    /// Returns the full taxonomy tree, optionally filtered by a root-node name prefix.
+    /// Returns the full taxonomy tree, optionally filtered by a root-node name fragment.
     /// </summary>
     /// <param name="filterByName">Optional name fragment to filter root nodes by.</param>
     /// <returns>A hierarchical taxonomy tree response DTO.</returns>

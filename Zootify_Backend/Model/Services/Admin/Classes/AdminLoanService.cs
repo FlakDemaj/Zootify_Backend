@@ -51,14 +51,14 @@ public class AdminLoanService : IAdminLoanService
     }
 
     /// <summary>
-    /// Returns a list of active users whose names start with the given prefix, for use in borrower picker controls.
+    /// Returns a list of active users whose names contain the given fragment, for use in borrower picker controls.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter user names by.</param>
+    /// <param name="filter">The name fragment to filter user names by.</param>
     /// <returns>A list of matching borrower picker DTOs.</returns>
     [Transaction(ReadOnly = true)]
-    public async Task<List<BorrowerPickerDto>> GetBorrowersAsync(string startsWith)
+    public async Task<List<BorrowerPickerDto>> GetBorrowersAsync(string filter)
     {
-        var users = await _userRepository.GetActiveUsersByNameStartsWithAsync(startsWith);
+        var users = await _userRepository.GetActiveUsersByNameFilterAsync(filter);
 
         return _mapper.Map<List<BorrowerPickerDto>>(users);
     }

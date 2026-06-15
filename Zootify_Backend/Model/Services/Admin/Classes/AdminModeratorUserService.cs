@@ -78,12 +78,8 @@ public class AdminModeratorUserService : IAdminModeratorUserService
         Guid userToUpdateGuid,
         UpdateUserRequestDto updateUserRequestDto)
     {
-        if (authentication.Role != UserRole.Admin)
-        {
-            throw new ZootifyException(ErrorCode.Forbidden);
-        }
-
-        if (authentication.UserGuid == userToUpdateGuid)
+        if (authentication.Role == UserRole.User ||
+            authentication.UserGuid == userToUpdateGuid)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }
@@ -95,11 +91,17 @@ public class AdminModeratorUserService : IAdminModeratorUserService
             throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
-        var oldUser = await _userRepository.GetActiveUserByGuid(userToUpdateGuid);
+        var oldUser = await _userRepository.GetActiveOrBlockedUserByGuid(userToUpdateGuid);
 
         if (oldUser == null)
         {
             throw new ZootifyException(ErrorCode.NoUserFound);
+        }
+        
+        if (authentication.Role <= oldUser.Role
+            && authentication.Role == UserRole.Moderator)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
         }
 
         var mappedUser = _mapper.Map<UserEntity>(updateUserRequestDto);

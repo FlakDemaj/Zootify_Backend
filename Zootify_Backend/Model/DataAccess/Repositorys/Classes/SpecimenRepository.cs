@@ -92,6 +92,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
     public async Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensInCollectionPagedAsync(
         Guid collectionGuid,
+        string? filterByName,
         IAuthentication? authentication,
         BaseSortAndPagingDto paging)
     {
@@ -106,6 +107,11 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         if (authentication != null && authentication.Role == UserRole.User)
         {
             query = query.Where(sp => sp.IsPublic || sp.CreatedByUserGuid == authentication.UserGuid);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterByName))
+        {
+            query = query.Where(sp => sp.Name.Contains(filterByName));
         }
 
         var total = await query.CountAsync();
@@ -127,6 +133,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
     public async Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensPagedAsync(
         Guid? userGuid,
+        string? filterByName,
         SpecimenStatus? status,
         BaseSortAndPagingDto paging)
     {
@@ -146,6 +153,11 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             query = query.Where(sp => sp.Status == status.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(filterByName))
+        {
+            query = query.Where(sp => sp.Name.Contains(filterByName));
+        }
+
         var total = await query.CountAsync();
 
         var items = await ApplySort(query, paging.SortBy, paging.SortDirection)
@@ -154,6 +166,99 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .ToListAsync();
 
         return (items, total);
+    }
+
+    /// <summary>
+    /// Returns a paged list of specimens for the public overview, ordered by creation date descending,
+    /// eagerly loading the image, taxonomy chain, and geographic location chain. Non-public specimens
+    /// are only included for moderators and admins; an optional city name filters the result.
+    /// </summary>
+    /// <param name="authentication">The optional authentication context; anonymous or regular users see only public specimens.</param>
+    /// <param name="filterByCity">Optional case-insensitive city name to filter by; <c>null</c> for no filter.</param>
+    /// <param name="paging">Paging parameters (page and page size).</param>
+    /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
+    public async Task<(List<SpecimenEntity> Items, int TotalCount)> GetPublicOverviewPagedAsync(
+        IAuthentication? authentication,
+        string? filterByCity,
+        BaseSortAndPagingDto paging)
+    {
+        // AsNoTracking (read-only); only to-one navigations are included, so paging stays a single query.
+        var query = Context.GetTrackingSet<SpecimenEntity>()
+            .Include(sp => sp.Image)
+            // Five levels of Parent cover the full taxonomy depth (Phylum → … → Species),
+            // so the order-rank ancestor is always loaded.
+            .Include(sp => sp.Species)
+                .ThenInclude(t => t!.Parent)
+                .ThenInclude(t => t!.Parent)
+                .ThenInclude(t => t!.Parent)
+                .ThenInclude(t => t!.Parent)
+                .ThenInclude(t => t!.Parent)
+            // Five levels of Parent cover the full geographic hierarchy depth
+            // (Country → State → City → Postcode → Street → HouseNumber).
+            .Include(sp => sp.GeographicLocation)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+                .ThenInclude(g => g.Parent)
+            .AsQueryable();
+
+        // Not logged in: only public. Regular users: public plus their own. Moderators and admins: everything.
+        if (authentication == null)
+        {
+            query = query.Where(sp => sp.IsPublic);
+        }
+        else if (authentication.Role == UserRole.User)
+        {
+            query = query.Where(sp => sp.IsPublic
+                                      || sp.CreatedByUserGuid == authentication.UserGuid);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterByCity))
+        {
+            var city = filterByCity.ToLower();
+
+            // The city node may sit anywhere in the chain (intermediate levels can be missing), so the
+            // leaf and its ancestors are checked. ToLower keeps the comparison case-insensitive.
+            query = query.Where(sp =>
+                (sp.GeographicLocation.Level == GeographicLevel.City
+                 && sp.GeographicLocation.Name.ToLower() == city)
+                || (sp.GeographicLocation.Parent!.Level == GeographicLevel.City
+                    && sp.GeographicLocation.Parent!.Name.ToLower() == city)
+                || (sp.GeographicLocation.Parent!.Parent!.Level == GeographicLevel.City
+                    && sp.GeographicLocation.Parent!.Parent!.Name.ToLower() == city)
+                || (sp.GeographicLocation.Parent!.Parent!.Parent!.Level == GeographicLevel.City
+                    && sp.GeographicLocation.Parent!.Parent!.Parent!.Name.ToLower() == city)
+                || (sp.GeographicLocation.Parent!.Parent!.Parent!.Parent!.Level == GeographicLevel.City
+                    && sp.GeographicLocation.Parent!.Parent!.Parent!.Parent!.Name.ToLower() == city)
+                || (sp.GeographicLocation.Parent!.Parent!.Parent!.Parent!.Parent!.Level == GeographicLevel.City
+                    && sp.GeographicLocation.Parent!.Parent!.Parent!.Parent!.Parent!.Name.ToLower() == city));
+        }
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(sp => sp.CreationDate)
+            .Skip((paging.Page - 1) * paging.PageSize)
+            .Take(paging.PageSize)
+            .ToListAsync();
+
+        return (items, total);
+    }
+
+    /// <summary>
+    /// Returns the specimens with the given GUIDs, eagerly loading their species and tags, for export.
+    /// </summary>
+    /// <param name="guids">The GUIDs of the specimens to load.</param>
+    /// <returns>The matching specimens with their species and tags loaded.</returns>
+    public async Task<List<SpecimenEntity>> GetSpecimensByGuidsWithSpeciesAsync(List<Guid> guids)
+    {
+        return await Context.GetTrackingSet<SpecimenEntity>()
+            .Include(sp => sp.Species)
+            .Include(sp => sp.SpecimensTags)
+                .ThenInclude(st => st.Tag)
+            .Where(sp => guids.Contains(sp.Guid))
+            .ToListAsync();
     }
 
     /// <summary>

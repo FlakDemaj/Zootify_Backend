@@ -85,6 +85,7 @@ public class CommonUserService : ICommonUserService
         HelperMethods.CheckEmail(updateOwnUserRequestDto.Email);
 
         var mappedUser = _mapper.Map<UserEntity>(updateOwnUserRequestDto);
+        mappedUser.Status = requester.Status;
 
         mappedUser.FormatEmail();
 

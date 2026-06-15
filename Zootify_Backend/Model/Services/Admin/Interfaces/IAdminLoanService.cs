@@ -11,11 +11,11 @@ namespace Zootify_Backend.Model.Services.Admin.Interfaces;
 public interface IAdminLoanService
 {
     /// <summary>
-    /// Returns a list of active users whose names start with the given prefix, for use in borrower picker controls.
+    /// Returns a list of active users whose names contain the given fragment, for use in borrower picker controls.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter user names by.</param>
+    /// <param name="filter">The name fragment to filter user names by.</param>
     /// <returns>A list of matching borrower picker DTOs.</returns>
-    Task<List<BorrowerPickerDto>> GetBorrowersAsync(string startsWith);
+    Task<List<BorrowerPickerDto>> GetBorrowersAsync(string filter);
 
     /// <summary>
     /// Creates a new loan record and sends a confirmation email to the borrower.

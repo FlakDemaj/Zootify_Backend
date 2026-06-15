@@ -27,15 +27,15 @@ public class AdminLoanController : BaseRestController
     }
 
     /// <summary>
-    /// Returns a list of active users whose names start with the given prefix, for use in borrower picker controls.
+    /// Returns a list of active users whose names contain the given fragment, for use in borrower picker controls.
     /// </summary>
-    /// <param name="startsWith">The prefix to filter user names by.</param>
+    /// <param name="filter">The name fragment to filter user names by.</param>
     /// <returns>A list of matching borrower picker DTOs.</returns>
     [HttpGet("borrowers")]
     public async Task<ActionResult<List<BorrowerPickerDto>>> GetBorrowersAsync(
-        [FromQuery] string startsWith)
+        [FromQuery] string filter)
     {
-        return Ok(await _adminLoanService.GetBorrowersAsync(startsWith));
+        return Ok(await _adminLoanService.GetBorrowersAsync(filter));
     }
 
     /// <summary>

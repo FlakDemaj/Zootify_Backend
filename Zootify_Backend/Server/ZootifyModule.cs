@@ -3,6 +3,7 @@ using SendWithBrevo;
 using Zootify_Backend.Configuration;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.Providers.Brevo;
+using Zootify_Backend.Model.Providers.Excel;
 using Zootify_Backend.Model.Providers.Nominatim;
 using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Transaction;
@@ -48,6 +49,10 @@ public class ZootifyModule : Module
         
         builder.RegisterType<NotificationProvider>()
             .As<INotificationProvider>()
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<SpecimenExcelProvider>()
+            .As<ISpecimenExcelProvider>()
             .InstancePerLifetimeScope();
     }
 }

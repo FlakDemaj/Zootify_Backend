@@ -36,6 +36,18 @@ public class AdminTaxonomyController : BaseRestController
     }
 
     /// <summary>
+    /// Returns existing approved taxonomies of the same rank whose name sounds similar to the node
+    /// under review, as a decision aid when approving or rejecting it.
+    /// </summary>
+    /// <param name="taxonomyGuid">The GUID of the taxonomy node being reviewed.</param>
+    /// <returns>The reviewed node together with its most similar existing approved taxonomies.</returns>
+    [HttpGet("{taxonomyGuid:guid}/similar")]
+    public async Task<ActionResult<GetSimilarTaxonomiesResponseDto>> GetSimilarTaxonomiesAsync(Guid taxonomyGuid)
+    {
+        return Ok(await _adminTaxonomyService.GetSimilarTaxonomiesAsync(taxonomyGuid));
+    }
+
+    /// <summary>
     /// Approves a pending taxonomy node and activates any specimens whose full taxonomy chain is now approved.
     /// </summary>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to approve.</param>
