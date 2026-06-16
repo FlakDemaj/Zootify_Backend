@@ -140,11 +140,15 @@ dotnet run --project Zootify_Backend
 
 ### Erreichbarkeit
 
-| | Variante A (Docker) | Variante B (lokal) |
-|--|---------------------|--------------------|
+| | Variante A (Docker) | Variante B (lokal, `dotnet run`) |
+|--|---------------------|----------------------------------|
 | HTTP | `http://localhost:5138` | `http://localhost:5138` |
-| HTTPS | – | `https://localhost:7227` |
+| HTTPS | – | – (siehe Hinweis) |
 | Swagger UI | `http://localhost:5138/swagger` | `http://localhost:5138/swagger` |
+
+> **HTTPS lokal:** `dotnet run` nutzt standardmäßig das erste Launch-Profil `http` (nur Port 5138). Für
+> HTTPS auf `https://localhost:7227` das `https`-Profil wählen:
+> `dotnet run --project Zootify_Backend --launch-profile https`.
 
 Beim Start führt Evolve automatisch alle ausstehenden Migrationen gegen die Uni-Datenbank aus.
 
@@ -250,7 +254,7 @@ Zootify_Backend/
 ├── Persistance/
 │   ├── MigrationManager.cs              # Evolve-Integration
 │   └── Migrations/                      # SQL-Migrationsskripte
-├── Properties/launchSettings.json       # Ports: HTTP 5138, HTTPS 7227
+├── Properties/launchSettings.json       # Profile: http (5138, Standard), https (7227)
 ├── Server/
 │   ├── Program.cs                       # Einstiegspunkt
 │   ├── Startup.cs                       # Service-Registrierung, Middleware-Pipeline
