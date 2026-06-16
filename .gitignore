@@ -17,3 +17,7 @@ obj/
 # Secrets
 appsettings.Development.json
 *.pfx
+
+
+# Lokale Konfiguration (Docker/lokal)
+.env

@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Jobs;
 
+/// <summary>
+/// Tests for User Purge Service.
+/// </summary>
 public class UserPurgeServiceTests : IntegrationTestBase
 {
     // Default RetentionYears = 3; cutoff = now - 3 years
@@ -15,6 +18,9 @@ public class UserPurgeServiceTests : IntegrationTestBase
     {
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted User Beyond Retention – Is Hard Deleted.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedUserBeyondRetention_IsHardDeleted()
     {
@@ -30,6 +36,9 @@ public class UserPurgeServiceTests : IntegrationTestBase
         inDb.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted User Within Retention – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedUserWithinRetention_IsNotPurged()
     {
@@ -45,6 +54,9 @@ public class UserPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Active User – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_ActiveUser_IsNotPurged()
     {
@@ -59,6 +71,9 @@ public class UserPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – No Eligible Users – Returns Zero.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_NoEligibleUsers_ReturnsZero()
     {
@@ -68,6 +83,55 @@ public class UserPurgeServiceTests : IntegrationTestBase
         purged.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Purge Batch – User With Specimen And Loans – Anonymizes Content And Purges.
+    /// </summary>
+    [Fact]
+    public async Task PurgeBatch_UserWithSpecimenAndLoans_AnonymizesContentAndPurges()
+    {
+        var purgedUser = await UserRepo.CreateUserAsync("authored@test.de", status: UserStatus.Deleted);
+        await OverrideDeletionDateAsync(purgedUser, OldEnough);
+
+        var otherUser = await UserRepo.CreateUserAsync("other@test.de", status: UserStatus.Active);
+
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        // A (non-deleted) specimen the purged user created — it must survive, only anonymized.
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, createdByUserGuid: purgedUser.Guid);
+
+        // Loans where the purged user is lender / borrower — both must be removed.
+        var lenderLoan = await LoanRepo.CreateLoanAsync(
+            specimen.Guid, purgedUser.Guid, otherUser.Guid, dueDate: DateTime.UtcNow.AddDays(7));
+        var borrowerLoan = await LoanRepo.CreateLoanAsync(
+            specimen.Guid, otherUser.Guid, purgedUser.Guid, dueDate: DateTime.UtcNow.AddDays(7));
+
+        using var scope = CreateScope();
+        var purged = await scope.ServiceProvider.GetRequiredService<IUserPurgeService>().PurgeBatchAsync();
+
+        purged.Should().Be(1);
+
+        // The user is hard-deleted despite having authored a specimen and being in loans.
+        (await Fixture.DbContext.Set<UserEntity>().AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Guid == purgedUser.Guid)).Should().BeNull();
+
+        // The specimen survives with its creator anonymized (set to null).
+        var specimenInDb = await Fixture.DbContext.Set<SpecimenEntity>().AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Guid == specimen.Guid);
+        specimenInDb.Should().NotBeNull();
+        specimenInDb!.CreatedByUserGuid.Should().BeNull();
+
+        // Both loans referencing the purged user are gone.
+        var remainingLoanGuids = await Fixture.DbContext.Set<LoanEntity>().AsNoTracking()
+            .Select(l => l.Guid)
+            .ToListAsync();
+        remainingLoanGuids.Should().NotContain(lenderLoan.Guid);
+        remainingLoanGuids.Should().NotContain(borrowerLoan.Guid);
+    }
+
+    /// <summary>
+    /// Tests Purge Batch – Multiple Eligible – All Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_MultipleEligible_AllPurged()
     {

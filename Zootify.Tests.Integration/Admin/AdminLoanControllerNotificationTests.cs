@@ -41,6 +41,9 @@ public class AdminLoanControllerNotificationTests : IntegrationTestBase
         return (admin, borrower, specimen);
     }
 
+    /// <summary>
+    /// Tests Create Loan – Sends Push To Borrower In Borrower Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "created")]
     [InlineData("de", "erstellt")]
@@ -62,6 +65,9 @@ public class AdminLoanControllerNotificationTests : IntegrationTestBase
         VerifyPushNotificationSent(keyword, Times.Once());
     }
 
+    /// <summary>
+    /// Tests Create Loan – Email Disabled – Sends Push But No Email.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_EmailDisabled_SendsPushButNoEmail()
     {
@@ -85,6 +91,9 @@ public class AdminLoanControllerNotificationTests : IntegrationTestBase
             It.IsAny<string?>(), It.IsAny<string?>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests Create Loan – Push Disabled – Sends Email But No Push.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_PushDisabled_SendsEmailButNoPush()
     {
@@ -108,6 +117,9 @@ public class AdminLoanControllerNotificationTests : IntegrationTestBase
             It.IsAny<string?>(), It.IsAny<string?>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Sends Push To Borrower In Borrower Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "returned")]
     [InlineData("de", "zurückgegeben")]

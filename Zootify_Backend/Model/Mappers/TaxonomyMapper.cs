@@ -7,8 +7,15 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
 
+/// <summary>
+/// AutoMapper profile defining the mappings between taxonomy DTOs and <see cref="TaxonomyNodeEntity"/>,
+/// including the rank/name pair used when creating a node chain.
+/// </summary>
 public class TaxonomyMapper : Profile
 {
+    /// <summary>
+    /// Registers the filter, species-for-creation, create, and tree mappings for taxonomy nodes.
+    /// </summary>
     public TaxonomyMapper()
     {
         CreateMap<TaxonomyNodeEntity, GetAllTaxonomyNodesByFilterDto>(MemberList.None)
@@ -21,6 +28,17 @@ public class TaxonomyMapper : Profile
             .ForMember(dest => dest.Rank,
                 opt =>
                     opt.MapFrom(src => src.Rank))
+            .ForMember(dest => dest.ApprovalStatus,
+                opt =>
+                    opt.MapFrom(src => src.ApprovalStatus));
+
+        CreateMap<TaxonomyNodeEntity, GetSpeciesForCreationDto>(MemberList.None)
+            .ForMember(dest => dest.TaxonomyGuid,
+                opt =>
+                    opt.MapFrom(src => src.Guid))
+            .ForMember(dest => dest.Name,
+                opt =>
+                    opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.ApprovalStatus,
                 opt =>
                     opt.MapFrom(src => src.ApprovalStatus));

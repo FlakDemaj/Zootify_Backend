@@ -61,6 +61,16 @@ public class UserEntity : BaseDeletionEntity
     }
 
     /// <summary>
+    /// Sets the user's status to <see cref="UserStatus.Blocked"/> and records the requester as the updater.
+    /// </summary>
+    /// <param name="updaterGuid">The GUID of the user performing the block.</param>
+    public void BlockUser(Guid updaterGuid)
+    {
+        Status = UserStatus.Blocked;
+        SetUpdatedBy(updaterGuid);
+    }
+
+    /// <summary>
     /// Hashes the given plain-text password and stores the result.
     /// </summary>
     /// <param name="password">The plain-text password to hash and store.</param>
@@ -181,8 +191,7 @@ public class UserEntity : BaseDeletionEntity
         return FirstName != newUserData.FirstName
                || LastName != newUserData.LastName
                || Email != newUserData.Email
-               || Role != newUserData.Role
-               ||  Status != newUserData.Status;
+               || Role != newUserData.Role;
     }
 
     /// <summary>
@@ -198,7 +207,6 @@ public class UserEntity : BaseDeletionEntity
         LastName = newUserData.LastName;
         Role = newUserData.Role;
         Email = newUserData.Email;
-        Status = newUserData.Status;
         SetUpdatedBy(requesterGuid);
     }
 }

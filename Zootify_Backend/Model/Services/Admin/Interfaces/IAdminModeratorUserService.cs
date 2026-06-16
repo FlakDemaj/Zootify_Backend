@@ -27,13 +27,15 @@ public interface IAdminModeratorUserService
     Task<List<GetAllUserResponseDto>> GetAllUsersAsync(GetAllUsersFilterDto query);
 
     /// <summary>
-    /// Updates the data of an existing user. Only Admins may perform this action and cannot update themselves.
+    /// Updates the data of an existing (active) user. A moderator may only edit regular users; an admin
+    /// may edit any user. No caller may update themselves (self-edit goes through the own-profile route).
     /// </summary>
-    /// <param name="authentication">The authentication context of the requesting admin.</param>
+    /// <param name="authentication">The authentication context of the requesting admin or moderator.</param>
     /// <param name="userToUpdateGuid">The GUID of the user to update.</param>
     /// <param name="updateUserRequestDto">The new data to apply to the user.</param>
     /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the target user is not active.</exception>
     /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     Task UpdateUserAsync(
         IAuthentication authentication,
@@ -41,12 +43,24 @@ public interface IAdminModeratorUserService
         UpdateUserRequestDto updateUserRequestDto);
 
     /// <summary>
-    /// Re-activates a previously deleted user account.
+    /// Re-activates a user account that is currently blocked or deleted, setting it back to active.
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting admin.</param>
-    /// <param name="userToActivateGuid">The GUID of the deleted user to activate.</param>
+    /// <param name="userToActivateGuid">The GUID of the blocked or deleted user to activate.</param>
     /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the user is already active.</exception>
     Task ActivateUserAsync(
         IAuthentication authentication,
         Guid userToActivateGuid);
+
+    /// <summary>
+    /// Blocks an active user account. A user cannot block themselves.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the requesting admin.</param>
+    /// <param name="userToBlockGuid">The GUID of the active user to block.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller tries to block themselves.</exception>
+    /// <exception cref="ZootifyException">Thrown when no active user with the given GUID exists.</exception>
+    Task BlockUserAsync(
+        IAuthentication authentication,
+        Guid userToBlockGuid);
 }

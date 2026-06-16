@@ -5,16 +5,27 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
+/// <summary>
+/// EF Core configuration mapping <see cref="UserSettingsEntity"/> to the <c>zootify.user_settings</c> table.
+/// </summary>
 public class UserSettingsEntityConfiguration : BaseGuidEntityConfiguration<UserSettingsEntity>
 {
+    /// <summary>The database table name the entity is mapped to.</summary>
     private string Table { get; }
 
+    /// <summary>
+    /// Initializes the configuration with the user-settings table and zootify schema.
+    /// </summary>
     public UserSettingsEntityConfiguration()
     {
         Table = "user_settings";
         Schema = "zootify";
     }
 
+    /// <summary>
+    /// Configures the table mapping, columns, the one-to-one relationship to the user, and the unique index.
+    /// </summary>
+    /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<UserSettingsEntity> builder)
     {
         builder.ToTable(Table, Schema);

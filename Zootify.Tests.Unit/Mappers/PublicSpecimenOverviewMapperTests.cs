@@ -9,6 +9,9 @@ using Zootify_Backend.Model.Mappers;
 
 namespace Zootify.Tests.Unit.Mappers;
 
+/// <summary>
+/// Tests for Public Specimen Overview Mapper.
+/// </summary>
 public class PublicSpecimenOverviewMapperTests
 {
     private readonly IMapper _mapper;
@@ -55,6 +58,9 @@ public class PublicSpecimenOverviewMapperTests
         };
     }
 
+    /// <summary>
+    /// Tests Map – Populates All Required Fields.
+    /// </summary>
     [Fact]
     public void Map_PopulatesAllRequiredFields()
     {
@@ -66,13 +72,16 @@ public class PublicSpecimenOverviewMapperTests
         dto.LatinName.Should().Be(specimen.LatinName);
         dto.Latitude.Should().Be(specimen.Latitude);
         dto.Longitude.Should().Be(specimen.Longitude);
-        dto.City.Should().Be("Siegen");
+        dto.LocationPath.Should().Contain(n => n.Level == GeographicLevel.City && n.Name == "Siegen");
         dto.TaxonGroup.Should().Be("Lepidoptera");
         dto.ImageGuid.Should().Be(specimen.Image!.Guid);
         dto.CreatedAt.Should().Be(specimen.CreationDate);
         dto.LocationPath.Should().NotBeEmpty();
     }
 
+    /// <summary>
+    /// Tests Map – Taxon Group – Contains Taxonomic Order.
+    /// </summary>
     [Theory]
     [InlineData("Papilio machaon", "Lepidoptera")]
     [InlineData("Vanessa atalanta", "Lepidoptera")]
@@ -86,6 +95,9 @@ public class PublicSpecimenOverviewMapperTests
         dto.TaxonGroup.Should().Be(expectedOrder);
     }
 
+    /// <summary>
+    /// Tests Map – Taxon Group – No Order Ancestor – Returns Empty.
+    /// </summary>
     [Fact]
     public void Map_TaxonGroup_NoOrderAncestor_ReturnsEmpty()
     {
@@ -98,6 +110,9 @@ public class PublicSpecimenOverviewMapperTests
         dto.TaxonGroup.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Map – Location Path – Returns Full Chain Root To Leaf.
+    /// </summary>
     [Fact]
     public void Map_LocationPath_ReturnsFullChainRootToLeaf()
     {
@@ -111,6 +126,9 @@ public class PublicSpecimenOverviewMapperTests
             .ContainInOrder(GeographicLevel.Country, GeographicLevel.State, GeographicLevel.City, GeographicLevel.HouseNumber);
     }
 
+    /// <summary>
+    /// Tests Map – Latitude And Longitude – Are Copied.
+    /// </summary>
     [Fact]
     public void Map_LatitudeAndLongitude_AreCopied()
     {
@@ -122,6 +140,9 @@ public class PublicSpecimenOverviewMapperTests
         dto.Longitude.Should().Be(56.78);
     }
 
+    /// <summary>
+    /// Tests Map – Image Guid – Is Returned.
+    /// </summary>
     [Fact]
     public void Map_ImageGuid_IsReturned()
     {
@@ -132,6 +153,9 @@ public class PublicSpecimenOverviewMapperTests
         dto.ImageGuid.Should().Be(specimen.Image!.Guid);
     }
 
+    /// <summary>
+    /// Tests Map – No Image – Image Guid Is Null.
+    /// </summary>
     [Fact]
     public void Map_NoImage_ImageGuidIsNull()
     {
@@ -142,13 +166,16 @@ public class PublicSpecimenOverviewMapperTests
         dto.ImageGuid.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Map – Location Path – Contains City Level Node.
+    /// </summary>
     [Fact]
-    public void Map_City_ReturnsCityLevelNodeName()
+    public void Map_LocationPath_ContainsCityLevelNode()
     {
         var specimen = BuildSpecimen();
 
         var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
 
-        dto.City.Should().Be("Siegen");
+        dto.LocationPath.Should().Contain(n => n.Level == GeographicLevel.City && n.Name == "Siegen");
     }
 }

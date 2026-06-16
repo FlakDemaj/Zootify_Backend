@@ -1,14 +1,20 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Common.Request;
-using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
 
+/// <summary>
+/// AutoMapper profile defining the mappings between specimen DTOs and <see cref="SpecimenEntity"/>,
+/// including the root-to-leaf geographic path projection for the detail view.
+/// </summary>
 public class SpecimenMapper : Profile
 {
+    /// <summary>
+    /// Registers the create/update request, list, and detail mappings for specimens.
+    /// </summary>
     public SpecimenMapper()
     {
         CreateMap<CreateSpecimenRequestDto, SpecimenEntity>(MemberList.None)
@@ -129,9 +135,6 @@ public class SpecimenMapper : Profile
                     opt.MapFrom(src => src.DateOfDiscovery))
             .ForMember(d => d.IsPublic,
                 opt =>
-                    opt.MapFrom(src => src.IsPublic))
-            .ForMember(d => d.Status,
-                opt =>
-                    opt.MapFrom(src => src.Status));
+                    opt.MapFrom(src => src.IsPublic));
     }
 }

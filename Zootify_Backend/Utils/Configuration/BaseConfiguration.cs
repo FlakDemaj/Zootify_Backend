@@ -2,9 +2,16 @@ using Newtonsoft.Json;
 
 namespace Zootify_Backend.Configuration;
 
+/// <summary>
+/// Base class for strongly-typed configuration accessors. Holds the shared <see cref="IConfiguration"/>
+/// instance and provides safe (defaulting, warning-on-miss) readers for string and parsed value types.
+/// </summary>
 public abstract class BaseConfiguration
 {
+    /// <summary>The ASP.NET Core configuration instance set during initialization.</summary>
     private static IConfiguration? _configuration;
+
+    /// <summary>Logger used for missing-key warnings and parse errors.</summary>
     private static ILogger? _logger;
 
     /// <summary>
@@ -66,6 +73,14 @@ public abstract class BaseConfiguration
         return SafeGetParsedInternal(key, (T?)@default, warn) ?? @default;
     }
 
+    /// <summary>
+    /// Reads and parses a nullable value type, returning <paramref name="default"/> when missing or unparseable.
+    /// </summary>
+    /// <typeparam name="T">The target value type.</typeparam>
+    /// <param name="key">The configuration key to look up.</param>
+    /// <param name="default">Fallback value used when the key is missing or parsing fails.</param>
+    /// <param name="warn">Whether to log a warning when the key is missing.</param>
+    /// <returns>The parsed value, or the default.</returns>
     private static T? SafeGetParsedInternal<T>(string key, T? @default, bool warn = true)
         where T : struct
     {
@@ -88,6 +103,10 @@ public abstract class BaseConfiguration
 
     #region Logging
 
+    /// <summary>
+    /// Logs a warning that configuration was accessed before initialization, noting the default used.
+    /// </summary>
+    /// <param name="default">The default value being returned instead.</param>
     private static void LogConfigurationNotInitialized(object @default)
     {
         _logger?.LogWarning(
@@ -95,6 +114,11 @@ public abstract class BaseConfiguration
             JsonConvert.SerializeObject(@default));
     }
 
+    /// <summary>
+    /// Logs a warning that a configuration key was not found, noting the default used.
+    /// </summary>
+    /// <param name="key">The missing configuration key.</param>
+    /// <param name="default">The default value being returned instead.</param>
     private static void LogNotFound(string key, object @default)
     {
         _logger?.LogWarning(
@@ -107,6 +131,14 @@ public abstract class BaseConfiguration
 
     #region TryParse
 
+    /// <summary>
+    /// Attempts to parse the raw string into the supported value type <typeparamref name="T"/>
+    /// (double, float, int, long, or bool).
+    /// </summary>
+    /// <typeparam name="T">The target value type.</typeparam>
+    /// <param name="value">The raw string to parse.</param>
+    /// <param name="result">The parsed value when successful; otherwise the type default.</param>
+    /// <returns><c>true</c> if parsing succeeded; otherwise <c>false</c>.</returns>
     private static bool TryParse<T>(string value, out T? result)
         where T : struct
     {

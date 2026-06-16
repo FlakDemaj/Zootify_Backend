@@ -5,16 +5,27 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
+/// <summary>
+/// EF Core configuration mapping <see cref="CollectionEntity"/> to the <c>zootify.collections</c> table.
+/// </summary>
 public class CollectionEntityConfiguration : BaseDeletionEntityConfiguration<CollectionEntity>
 {
+    /// <summary>The database table name the entity is mapped to.</summary>
     private string Table { get; }
 
+    /// <summary>
+    /// Initializes the configuration with the collections table and zootify schema.
+    /// </summary>
     public CollectionEntityConfiguration()
     {
         Table = "collections";
         Schema = "zootify";
     }
 
+    /// <summary>
+    /// Configures the table mapping and the collection-specific column mappings.
+    /// </summary>
+    /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<CollectionEntity> builder)
     {
         builder.ToTable(Table, Schema);

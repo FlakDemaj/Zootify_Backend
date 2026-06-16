@@ -29,7 +29,7 @@ public class CommonTagController : BaseRestController
     /// <param name="filter">The name fragment to filter tag names by.</param>
     /// <returns>A list of matching tag DTOs.</returns>
     [HttpGet]
-    public async Task<ActionResult> GetAllTagsByFilter(
+    public async Task<ActionResult> GetAllTagsByFilterAsync(
         [FromQuery] string filter)
     {
         return Ok(await _commonSpecimenService.GetAllTagsAsync(filter));

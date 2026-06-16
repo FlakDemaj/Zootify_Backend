@@ -5,16 +5,27 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
+/// <summary>
+/// EF Core configuration mapping <see cref="RegistrationTokenEntity"/> to the <c>zootify.registration_tokens</c> table.
+/// </summary>
 public class RegistrationTokenEntityConfiguration : BaseGuidEntityConfiguration<RegistrationTokenEntity>
 {
+    /// <summary>The database table name the entity is mapped to.</summary>
     private string Table { get; }
 
+    /// <summary>
+    /// Initializes the configuration with the registration-tokens table and zootify schema.
+    /// </summary>
     public RegistrationTokenEntityConfiguration()
     {
         Table = "registration_tokens";
         Schema = "zootify";
     }
-    
+
+    /// <summary>
+    /// Configures the table mapping, columns, and the one-to-one relationship to the user.
+    /// </summary>
+    /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<RegistrationTokenEntity> builder)
     {
         builder.ToTable(Table, Schema);

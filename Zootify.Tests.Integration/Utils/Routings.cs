@@ -1,5 +1,8 @@
 namespace Zootify.Tests.Integration.Utils;
 
+/// <summary>
+/// Routings — test support type.
+/// </summary>
 internal static class Routings
 {
     #region System

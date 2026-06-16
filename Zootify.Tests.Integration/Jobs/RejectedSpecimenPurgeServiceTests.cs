@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Jobs;
 
+/// <summary>
+/// Tests for Rejected Specimen Purge Service.
+/// </summary>
 public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
 {
     private static readonly DateTime OldEnough = DateTime.UtcNow.AddYears(-4);
@@ -32,6 +35,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
 
     #region Happy Path
 
+    /// <summary>
+    /// Tests Purge Batch – Rejected Specimen Beyond Retention – Is Hard Deleted.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_RejectedSpecimenBeyondRetention_IsHardDeleted()
     {
@@ -50,6 +56,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Rejected Specimen Beyond Retention – Returns Correct Count.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_RejectedSpecimenBeyondRetention_ReturnsCorrectCount()
     {
@@ -70,6 +79,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
         s3InDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – No Eligible Specimens – Returns Zero.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_NoEligibleSpecimens_ReturnsZero()
     {
@@ -84,6 +96,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
 
     #region Retention Window
 
+    /// <summary>
+    /// Tests Purge Batch – Rejected Specimen Within Retention – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_RejectedSpecimenWithinRetention_IsNotPurged()
     {
@@ -102,6 +117,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Only Old Rejected Purged – Recent Rejected Survives.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_OnlyOldRejectedPurged_RecentRejectedSurvives()
     {
@@ -125,6 +143,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
 
     #region Guard: Wrong Status or Missing Date
 
+    /// <summary>
+    /// Tests Purge Batch – Active Specimen – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_ActiveSpecimen_IsNotPurged()
     {
@@ -141,6 +162,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted Specimen – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedSpecimen_IsNotPurged()
     {
@@ -159,6 +183,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Rejected Specimen With Null Rejected At – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_RejectedSpecimenWithNullRejectedAt_IsNotPurged()
     {
@@ -181,6 +208,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
 
     #region Cascade Deletes
 
+    /// <summary>
+    /// Tests Purge Batch – Specimen With Image – Image Is Also Deleted.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_SpecimenWithImage_ImageIsAlsoDeleted()
     {
@@ -197,6 +227,9 @@ public class RejectedSpecimenPurgeServiceTests : IntegrationTestBase
         images.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Specimen With Tags – Tag Relations Are Also Deleted.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_SpecimenWithTags_TagRelationsAreAlsoDeleted()
     {

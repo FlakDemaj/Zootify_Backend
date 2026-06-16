@@ -6,7 +6,7 @@ using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Admin.Interfaces;
 
-namespace Zootify_Backend.Controllers.Admin;
+namespace Zootify_Backend.Controllers.AdminAndModerator;
 
 /// <summary>
 /// Exposes taxonomy approval and rejection endpoints restricted to Admin and Moderator roles.

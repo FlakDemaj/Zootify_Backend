@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Jobs;
 
+/// <summary>
+/// Tests for Collection Purge Service.
+/// </summary>
 public class CollectionPurgeServiceTests : IntegrationTestBase
 {
     private static readonly DateTime OldEnough = DateTime.UtcNow.AddYears(-4);
@@ -14,6 +17,9 @@ public class CollectionPurgeServiceTests : IntegrationTestBase
     {
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted Collection Beyond Retention – Is Hard Deleted.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedCollectionBeyondRetention_IsHardDeleted()
     {
@@ -30,6 +36,9 @@ public class CollectionPurgeServiceTests : IntegrationTestBase
         inDb.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted Collection Within Retention – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedCollectionWithinRetention_IsNotPurged()
     {
@@ -46,6 +55,9 @@ public class CollectionPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Active Collection – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_ActiveCollection_IsNotPurged()
     {
@@ -57,6 +69,9 @@ public class CollectionPurgeServiceTests : IntegrationTestBase
         purged.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Purge Batch – No Eligible Collections – Returns Zero.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_NoEligibleCollections_ReturnsZero()
     {
@@ -66,6 +81,9 @@ public class CollectionPurgeServiceTests : IntegrationTestBase
         purged.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Multiple Eligible – All Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_MultipleEligible_AllPurged()
     {

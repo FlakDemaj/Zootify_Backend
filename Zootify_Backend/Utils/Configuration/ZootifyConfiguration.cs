@@ -1,7 +1,17 @@
 namespace Zootify_Backend.Configuration;
 
+/// <summary>
+/// Strongly-typed accessors for all Zootify configuration values (general settings, connection strings,
+/// access-token, email, and background-job options), each backed by the safe readers in
+/// <see cref="BaseConfiguration"/> with sensible defaults.
+/// </summary>
 public class ZootifyConfiguration : BaseConfiguration
 {
+    /// <summary>
+    /// Initializes the configuration from the host's configuration and logger; must be called once at startup.
+    /// </summary>
+    /// <param name="configuration">The ASP.NET Core configuration instance.</param>
+    /// <param name="logger">Logger used for missing-key warnings and parse errors.</param>
     public static void InitializeFromHost(
         IConfiguration configuration,
         ILogger<BaseConfiguration> logger)

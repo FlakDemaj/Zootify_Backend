@@ -34,21 +34,27 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
     }
 
     /// <summary>
-    /// Returns all taxonomy nodes of the given rank whose name contains the given fragment, or all nodes of that rank if no filter is provided.
+    /// Returns all active or pending species-rank taxonomy nodes whose
+    /// name contains the given fragment, or all species if no filter is provided.
     /// </summary>
     /// <param name="filter">Optional name fragment to filter node names.</param>
     /// <returns>The matching <see cref="TaxonomyNodeEntity"/> records.</returns>
-    public async Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByNameFilterAsync(
+    public async Task<List<TaxonomyNodeEntity>> GetActiveOPendingSpeciesNodeByNameFilterAsync(
         string? filter)
     {
         var query = Context
             .GetTrackingSet<TaxonomyNodeEntity>()
-            .Where(tn => tn.Rank == TaxonomyRank.Species);
+            .Where(tn => tn.Rank == TaxonomyRank.Species
+            && (tn.ApprovalStatus == ApprovalStatus.Approved 
+                || tn.ApprovalStatus == ApprovalStatus.Pending));
 
         if (!string.IsNullOrWhiteSpace(filter))
         {
+            // Trim so stray leading/trailing whitespace doesn't break the match; spaces inside the
+            // filter are kept, so e.g. "Panthera leo" matches the full binomial name.
+            var trimmedFilter = filter.Trim();
             query = query
-                .Where(tn => tn.Name.Contains(filter));
+                .Where(tn => tn.Name.Contains(trimmedFilter));
         }
 
         return await query.ToListAsync();

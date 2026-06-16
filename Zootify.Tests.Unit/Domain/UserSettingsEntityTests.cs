@@ -1,9 +1,15 @@
 namespace Zootify.Tests.Unit.Domain;
 
+/// <summary>
+/// Tests for User Settings Entity.
+/// </summary>
 public class UserSettingsEntityTests
 {
     #region CheckChanges
 
+    /// <summary>
+    /// Tests Check Changes – Dark Mode Changed – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DarkModeChanged_ReturnsTrue()
     {
@@ -25,6 +31,9 @@ public class UserSettingsEntityTests
             .BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Language Changed – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_LanguageChanged_ReturnsTrue()
     {
@@ -46,6 +55,9 @@ public class UserSettingsEntityTests
             .BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – All Changed – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_AllChanged_ReturnsTrue()
     {
@@ -67,6 +79,9 @@ public class UserSettingsEntityTests
             .BeTrue();
     }
     
+    /// <summary>
+    /// Tests Check Changes – Change Notification – Returns False.
+    /// </summary>
     [Fact]
     public void CheckChanges_ChangeNotification_ReturnsFalse()
     {
@@ -88,6 +103,9 @@ public class UserSettingsEntityTests
             .BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Nothing Changed – Returns False.
+    /// </summary>
     [Fact]
     public void CheckChanges_NothingChanged_ReturnsFalse()
     {
@@ -113,6 +131,9 @@ public class UserSettingsEntityTests
 
     #region Apply
 
+    /// <summary>
+    /// Tests Apply – Updates Dark Mode.
+    /// </summary>
     [Fact]
     public void Apply_UpdatesDarkMode()
     {
@@ -130,6 +151,9 @@ public class UserSettingsEntityTests
         settings.DarkMode.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Apply – Updates Language.
+    /// </summary>
     [Fact]
     public void Apply_UpdatesLanguage()
     {
@@ -147,6 +171,9 @@ public class UserSettingsEntityTests
         settings.Language.Should().Be("en");
     }
 
+    /// <summary>
+    /// Tests Apply – Updates All Values.
+    /// </summary>
     [Fact]
     public void Apply_UpdatesAllValues()
     {
@@ -167,6 +194,9 @@ public class UserSettingsEntityTests
         settings.SendPushNotification.Should().BeFalse();
     }
     
+    /// <summary>
+    /// Tests Apply – Updates Notification.
+    /// </summary>
     [Fact]
     public void Apply_UpdatesNotification()
     {

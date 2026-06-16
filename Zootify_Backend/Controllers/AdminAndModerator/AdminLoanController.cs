@@ -7,7 +7,7 @@ using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Admin.Interfaces;
 
-namespace Zootify_Backend.Controllers.Admin;
+namespace Zootify_Backend.Controllers.AdminAndModerator;
 
 /// <summary>
 /// Exposes loan management endpoints restricted to Admin and Moderator roles.

@@ -4,6 +4,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Admin;
 
+/// <summary>
+/// Tests for Admin Taxonomy Controller.
+/// </summary>
 public class AdminTaxonomyControllerTests : IntegrationTestBase
 {
     public AdminTaxonomyControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -12,6 +15,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
     #region ApproveTaxonomy
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Success – Node Status Changes To Approved.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_Success_NodeStatusChangesToApproved()
     {
@@ -31,6 +37,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         updated!.ApprovalStatus.Should().Be(ApprovalStatus.Approved);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Full Chain Approved – Activates Pending Specimens.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_FullChainApproved_ActivatesPendingSpecimens()
     {
@@ -55,6 +64,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         updatedSpecimen!.Status.Should().Be(SpecimenStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Partial Chain – Specimen Stays Pending.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_PartialChain_SpecimenStaysPending()
     {
@@ -82,6 +94,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         updatedSpecimen!.Status.Should().Be(SpecimenStatus.Pending);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Approving Parent Node – Activates Specimens Under All Children.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_ApprovingParentNode_ActivatesSpecimensUnderAllChildren()
     {
@@ -112,6 +127,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         updated2!.Status.Should().Be(SpecimenStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Already Approved – Returns Error.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_AlreadyApproved_ReturnsError()
     {
@@ -128,6 +146,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.TaxonomyAlreadyApproved);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Not Found – Returns Error.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_NotFound_ReturnsError()
     {
@@ -142,6 +163,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Moderator – Success.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_Moderator_Success()
     {
@@ -156,6 +180,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_NormalUser_ReturnsForbidden()
     {
@@ -170,6 +197,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_Unauthenticated_ReturnsUnauthorized()
     {
@@ -185,6 +215,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
     #region RejectTaxonomy
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Success – Node Is Hard Deleted.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_Success_NodeIsHardDeleted()
     {
@@ -203,6 +236,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         deleted.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Rejects All Specimens In Subtree.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_RejectsAllSpecimensInSubtree()
     {
@@ -234,6 +270,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         updatedPending!.Status.Should().Be(SpecimenStatus.Rejected);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Already Rejected Specimens Not Affected.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_AlreadyRejectedSpecimensNotAffected()
     {
@@ -259,6 +298,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         updated!.Status.Should().Be(SpecimenStatus.Rejected);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Not Found – Returns Error.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_NotFound_ReturnsError()
     {
@@ -274,6 +316,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Moderator – Success.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_Moderator_Success()
     {
@@ -289,6 +334,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_NormalUser_ReturnsForbidden()
     {
@@ -304,6 +352,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task RejectTaxonomy_Unauthenticated_ReturnsUnauthorized()
     {
@@ -320,6 +371,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
     #region GetTaxonomiesForApproval
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – Returns Trees With Pending Nodes.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_ReturnsTreesWithPendingNodes()
     {
@@ -345,6 +399,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Should().NotContain(n => n.TaxonomyGuid == fullyApprovedPhylum.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – Pending Root Included.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_PendingRootIncluded()
     {
@@ -366,6 +423,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         result!.Nodes.Should().NotContain(n => n.TaxonomyGuid == pendingRoot.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – Includes Full Subtree For Matching Root.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_IncludesFullSubtreeForMatchingRoot()
     {
@@ -393,6 +453,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         classNode.Children.Should().ContainSingle(n => n.TaxonomyGuid == order.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – Nodes Ordered Alphabetically.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_NodesOrderedAlphabetically()
     {
@@ -419,6 +482,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         result!.Nodes.Should().BeInAscendingOrder(n => n.Name);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – No Pending Nodes – Returns Empty.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_NoPendingNodes_ReturnsEmpty()
     {
@@ -436,6 +502,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_Unauthenticated_ReturnsUnauthorized()
     {
@@ -443,6 +512,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomies For Approval – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomiesForApproval_NormalUser_ReturnsForbidden()
     {
@@ -457,6 +529,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
     #region GetSimilarTaxonomies
 
+    /// <summary>
+    /// Tests Get Similar – Returns Approved Same Rank Similar Nodes.
+    /// </summary>
     [Fact]
     public async Task GetSimilar_ReturnsApprovedSameRankSimilarNodes()
     {
@@ -483,6 +558,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         dto.Similar.Single().Similarity.Should().BeGreaterThan(0.5);
     }
 
+    /// <summary>
+    /// Tests Get Similar – Includes Ancestor Path.
+    /// </summary>
     [Fact]
     public async Task GetSimilar_IncludesAncestorPath()
     {
@@ -502,6 +580,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         dto!.Similar.Single().Path.Should().Be("Panthera");
     }
 
+    /// <summary>
+    /// Tests Get Similar – Excludes Pending Candidates.
+    /// </summary>
     [Fact]
     public async Task GetSimilar_ExcludesPendingCandidates()
     {
@@ -520,6 +601,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         dto!.Similar.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Similar – Node Not Found – Returns No Taxonomy Found.
+    /// </summary>
     [Fact]
     public async Task GetSimilar_NodeNotFound_ReturnsNoTaxonomyFound()
     {
@@ -532,6 +616,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
+    /// <summary>
+    /// Tests Get Similar – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetSimilar_NormalUser_ReturnsForbidden()
     {

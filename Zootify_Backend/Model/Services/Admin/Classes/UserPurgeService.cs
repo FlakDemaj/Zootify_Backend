@@ -37,6 +37,11 @@ public class UserPurgeService : IUserPurgeService
             return 0;
         }
 
+        // Detach all foreign-key references first, otherwise the hard-delete would violate the
+        // ON DELETE NO ACTION constraints from specimens/collections/taxonomy/loans.
+        var userGuids = batch.Select(u => u.Guid).ToList();
+        await _userRepository.PurgeUserReferencesAsync(userGuids);
+
         await _userRepository.MassDeleteAsync(batch);
         return batch.Count;
     }

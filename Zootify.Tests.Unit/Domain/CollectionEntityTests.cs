@@ -2,6 +2,9 @@ using Zootify_Backend;
 
 namespace Zootify.Tests.Unit.Domain;
 
+/// <summary>
+/// Tests for Collection Entity.
+/// </summary>
 public class CollectionEntityTests
 {
     private static CollectionEntity CreateCollection(
@@ -21,6 +24,9 @@ public class CollectionEntityTests
 
     #region DeleteCollection
 
+    /// <summary>
+    /// Tests Delete Collection – Sets Status To Deleted.
+    /// </summary>
     [Fact]
     public void DeleteCollection_SetsStatusToDeleted()
     {
@@ -31,6 +37,9 @@ public class CollectionEntityTests
         collection.Status.Should().Be(CollectionStatus.Deleted);
     }
 
+    /// <summary>
+    /// Tests Delete Collection – Sets Deleted By User Guid.
+    /// </summary>
     [Fact]
     public void DeleteCollection_SetsDeletedByUserGuid()
     {
@@ -42,6 +51,9 @@ public class CollectionEntityTests
         collection.DeletedByUserGuid.Should().Be(requester);
     }
 
+    /// <summary>
+    /// Tests Delete Collection – Sets Deletion Date.
+    /// </summary>
     [Fact]
     public void DeleteCollection_SetsDeletionDate()
     {
@@ -57,6 +69,9 @@ public class CollectionEntityTests
 
     #region ActivateCollection
 
+    /// <summary>
+    /// Tests Activate Collection – Sets Status To Active.
+    /// </summary>
     [Fact]
     public void ActivateCollection_SetsStatusToActive()
     {
@@ -68,6 +83,9 @@ public class CollectionEntityTests
         collection.Status.Should().Be(CollectionStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Activate Collection – Clears Deletion Date.
+    /// </summary>
     [Fact]
     public void ActivateCollection_ClearsDeletionDate()
     {
@@ -79,6 +97,9 @@ public class CollectionEntityTests
         collection.DeletionDate.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Activate Collection – Clears Deleted By User Guid.
+    /// </summary>
     [Fact]
     public void ActivateCollection_ClearsDeletedByUserGuid()
     {
@@ -90,6 +111,9 @@ public class CollectionEntityTests
         collection.DeletedByUserGuid.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Activate Collection – Sets Updated By User Guid.
+    /// </summary>
     [Fact]
     public void ActivateCollection_SetsUpdatedByUserGuid()
     {
@@ -106,6 +130,9 @@ public class CollectionEntityTests
 
     #region CheckChanges
 
+    /// <summary>
+    /// Tests Check Changes – Identical Data – Returns False.
+    /// </summary>
     [Fact]
     public void CheckChanges_IdenticalData_ReturnsFalse()
     {
@@ -115,6 +142,9 @@ public class CollectionEntityTests
         collection.CheckChanges(same).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Name – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentName_ReturnsTrue()
     {
@@ -124,6 +154,9 @@ public class CollectionEntityTests
         collection.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Description – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentDescription_ReturnsTrue()
     {
@@ -133,6 +166,9 @@ public class CollectionEntityTests
         collection.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Is Private – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentIsPrivate_ReturnsTrue()
     {
@@ -146,6 +182,9 @@ public class CollectionEntityTests
 
     #region UpdateData
 
+    /// <summary>
+    /// Tests Update Data – Copies All Fields.
+    /// </summary>
     [Fact]
     public void UpdateData_CopiesAllFields()
     {
@@ -160,6 +199,9 @@ public class CollectionEntityTests
         collection.IsPrivate.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Update Data – Sets Updated By User Guid.
+    /// </summary>
     [Fact]
     public void UpdateData_SetsUpdatedByUserGuid()
     {

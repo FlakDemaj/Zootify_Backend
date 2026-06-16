@@ -2,6 +2,9 @@ using Zootify_Backend.Model.DataAccess.DBContext;
 
 namespace Zootify.Tests.Integration.Utils.Helpers;
 
+/// <summary>
+/// Loan Test Repository — test support type.
+/// </summary>
 public class LoanTestRepository
 {
     private readonly ZootifyDbContext _dbContext;
@@ -11,6 +14,9 @@ public class LoanTestRepository
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Test support method: Create Loan Async.
+    /// </summary>
     public async Task<LoanEntity> CreateLoanAsync(
         Guid specimenGuid,
         Guid lenderGuid,

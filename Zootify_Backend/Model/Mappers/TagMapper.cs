@@ -6,8 +6,14 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
 
+/// <summary>
+/// AutoMapper profile defining the mappings between tag DTOs and <see cref="TagEntity"/>.
+/// </summary>
 public class TagMapper : Profile
 {
+    /// <summary>
+    /// Registers the tag response and update-request mappings.
+    /// </summary>
     public TagMapper()
     {
         CreateMap<TagEntity, GetAllTagsByFilterDto>()

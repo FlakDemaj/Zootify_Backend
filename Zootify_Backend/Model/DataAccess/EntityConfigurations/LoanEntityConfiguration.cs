@@ -5,16 +5,28 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
+/// <summary>
+/// EF Core configuration mapping <see cref="LoanEntity"/> to the <c>zootify.loans</c> table, including
+/// the specimen, lender, and borrower relationships.
+/// </summary>
 public class LoanEntityConfiguration : BaseGuidEntityConfiguration<LoanEntity>
 {
+    /// <summary>The database table name the entity is mapped to.</summary>
     private string Table { get; }
 
+    /// <summary>
+    /// Initializes the configuration with the loans table and zootify schema.
+    /// </summary>
     public LoanEntityConfiguration()
     {
         Table = "loans";
         Schema = "zootify";
     }
 
+    /// <summary>
+    /// Configures the table mapping, columns, and the specimen/lender/borrower foreign keys.
+    /// </summary>
+    /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<LoanEntity> builder)
     {
         builder.ToTable(Table, Schema);

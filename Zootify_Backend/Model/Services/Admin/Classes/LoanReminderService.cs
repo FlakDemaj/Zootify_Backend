@@ -48,8 +48,12 @@ public class LoanReminderService : ILoanReminderService
         var stage2Cutoff = today.AddDays(ZootifyConfiguration.LoanReminderJobStage2Days + 1);
         var stage3Cutoff = today.AddDays(ZootifyConfiguration.LoanReminderJobStage3Days + 1);
 
-        var stage1 = await _loanRepository.GetLoansForStage1ReminderAsync(stage1Cutoff, batchSize);
-        var stage2 = await _loanRepository.GetLoansForStage2ReminderAsync(stage2Cutoff, batchSize);
+        // The stages are mutually exclusive due-date bands so a single loan can only ever match one
+        // stage per run (otherwise a freshly created short-term loan would receive several reminders
+        // at once): stage 1 = [stage2Cutoff, stage1Cutoff), stage 2 = [stage3Cutoff, stage2Cutoff),
+        // stage 3 = everything due before stage3Cutoff.
+        var stage1 = await _loanRepository.GetLoansForStage1ReminderAsync(stage2Cutoff, stage1Cutoff, batchSize);
+        var stage2 = await _loanRepository.GetLoansForStage2ReminderAsync(stage3Cutoff, stage2Cutoff, batchSize);
         var stage3 = await _loanRepository.GetLoansForStage3ReminderAsync(stage3Cutoff, batchSize);
 
         await ProcessStageAsync(stage1, stageNumber: 1, today);
@@ -72,17 +76,20 @@ public class LoanReminderService : ILoanReminderService
             return;
         }
 
-        foreach (var loan in loans)
+        // All recipients across all loans are notified concurrently (each send isolated); borrower and
+        // lender may prefer different languages and channels, so each is handled per their own settings.
+        await ParallelNotifications.RunAsync(loans, async loan =>
         {
             var daysUntilDue = (loan.DueDate.Date - today).Days;
             var borrowerName = $"{loan.Borrower.FirstName} {loan.Borrower.LastName}".Trim();
             var lenderName   = $"{loan.Lender.FirstName} {loan.Lender.LastName}".Trim();
 
-            // Borrower and lender may prefer different languages and notification channels, so each
-            // is notified by email and/or in-app push depending on their own settings.
             await NotifyReminderRecipientAsync(loan, loan.Borrower, borrowerName, daysUntilDue, isBorrower: true);
             await NotifyReminderRecipientAsync(loan, loan.Lender, lenderName, daysUntilDue, isBorrower: false);
+        });
 
+        foreach (var loan in loans)
+        {
             switch (stageNumber)
             {
                 case 1: loan.Stage1ReminderSentAt = DateTime.UtcNow; break;

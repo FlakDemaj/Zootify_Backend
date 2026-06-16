@@ -2,6 +2,9 @@ using Zootify_Backend.Model.DataAccess.DBContext;
 
 namespace Zootify.Tests.Integration.Utils.Helpers;
 
+/// <summary>
+/// Specimen Test Repository — test support type.
+/// </summary>
 public class SpecimenTestRepository
 {
     private readonly ZootifyDbContext _dbContext;
@@ -11,6 +14,9 @@ public class SpecimenTestRepository
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Test support method: Create Taxonomy Node Async.
+    /// </summary>
     public async Task<TaxonomyNodeEntity> CreateTaxonomyNodeAsync(
         string name,
         TaxonomyRank rank,
@@ -29,6 +35,9 @@ public class SpecimenTestRepository
         return node;
     }
 
+    /// <summary>
+    /// Test support method: Create Geographic Location Async.
+    /// </summary>
     public async Task<GeographicLocationEntity> CreateGeographicLocationAsync(
         string name = "DE",
         GeographicLevel level = GeographicLevel.Country,
@@ -45,6 +54,9 @@ public class SpecimenTestRepository
         return location;
     }
 
+    /// <summary>
+    /// Test support method: Create Specimen Async.
+    /// </summary>
     public async Task<SpecimenEntity> CreateSpecimenAsync(
         Guid speciesGuid,
         Guid geoLocationGuid,
@@ -73,6 +85,9 @@ public class SpecimenTestRepository
         return specimen;
     }
 
+    /// <summary>
+    /// Test support method: Create Specimen With Image Async.
+    /// </summary>
     public async Task<SpecimenEntity> CreateSpecimenWithImageAsync(
         Guid speciesGuid,
         Guid geoLocationGuid,
@@ -91,6 +106,9 @@ public class SpecimenTestRepository
         return specimen;
     }
 
+    /// <summary>
+    /// Test support method: Create Image For Specimen Async.
+    /// </summary>
     public async Task<SpecimenImageEntity> CreateImageForSpecimenAsync(
         Guid speciesGuid,
         Guid geoLocationGuid,
@@ -110,6 +128,9 @@ public class SpecimenTestRepository
     }
 
     
+    /// <summary>
+    /// Test support method: Create Specimen With Tags Async.
+    /// </summary>
     public async Task<SpecimenEntity> CreateSpecimenWithTagsAsync(
         Guid speciesGuid,
         Guid geoLocationGuid,

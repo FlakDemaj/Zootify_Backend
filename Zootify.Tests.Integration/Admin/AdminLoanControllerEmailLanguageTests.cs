@@ -13,6 +13,9 @@ public class AdminLoanControllerEmailLanguageTests : IntegrationTestBase
 {
     public AdminLoanControllerEmailLanguageTests(IntegrationTestFixture fixture) : base(fixture) { }
 
+    /// <summary>
+    /// Tests Create Loan – Passes Borrower Language To Email.
+    /// </summary>
     [Theory]
     [InlineData("en")]
     [InlineData("de")]
@@ -51,6 +54,9 @@ public class AdminLoanControllerEmailLanguageTests : IntegrationTestBase
             It.IsAny<string?>(), borrowerLanguage), Times.Once);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Passes Borrower Language To Email.
+    /// </summary>
     [Theory]
     [InlineData("en")]
     [InlineData("de")]

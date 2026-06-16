@@ -16,11 +16,10 @@ public interface ITaxonomyRepository : IBaseRepository<TaxonomyNodeEntity>
     Task<TaxonomyNodeEntity?> GetTaxonomyNodeByGuidAsync(Guid guid);
 
     /// <summary>
-    /// Returns all taxonomy nodes of the given rank whose names contain the given fragment.
+    /// Returns all species-rank taxonomy nodes whose names contain the given fragment.
     /// </summary>
     /// <param name="filter">Optional name fragment to filter nodes by.</param>
-    /// <param name="rank">The taxonomy rank to filter by.</param>
-    Task<List<TaxonomyNodeEntity>> GetTaxonomyNodeByNameFilterAsync(
+    Task<List<TaxonomyNodeEntity>> GetActiveOPendingSpeciesNodeByNameFilterAsync(
         string? filter);
 
     /// <summary>

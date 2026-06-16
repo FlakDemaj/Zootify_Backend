@@ -3,17 +3,32 @@ using Zootify_Backend.Model.Services.Admin.Interfaces;
 
 namespace Zootify_Backend.Model.Jobs;
 
+/// <summary>
+/// Background job that periodically sends overdue-loan reminders in batches (each batch in its own DI scope).
+/// </summary>
 public class LoanReminderJob : BackgroundService
 {
+    /// <summary>Factory used to create a fresh DI scope (and DbContext) per batch.</summary>
     private readonly IServiceScopeFactory _scopeFactory;
+
+    /// <summary>Logger used to report job progress and failures.</summary>
     private readonly ILogger<LoanReminderJob> _logger;
 
+    /// <summary>
+    /// Initializes the job with its scope factory and logger.
+    /// </summary>
+    /// <param name="scopeFactory">Factory used to create a fresh DI scope per batch.</param>
+    /// <param name="logger">Logger used to report job progress and failures.</param>
     public LoanReminderJob(IServiceScopeFactory scopeFactory, ILogger<LoanReminderJob> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Runs the job once on startup and then on each interval tick until cancellation.
+    /// </summary>
+    /// <param name="stoppingToken">Token signalled when the host is shutting down.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await RunAsync();
@@ -27,6 +42,9 @@ public class LoanReminderJob : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Sends reminder batches until a batch reports zero sends, logging the total and isolating failures.
+    /// </summary>
     private async Task RunAsync()
     {
         _logger.LogInformation("Loan reminder job started.");

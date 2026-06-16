@@ -21,6 +21,9 @@ public class AuthControllerEmailLanguageTests : IntegrationTestBase
 
     #region Registration email language
 
+    /// <summary>
+    /// Tests Register – Sends Email In Requested Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "en")]
     [InlineData("de", "de")]
@@ -49,6 +52,9 @@ public class AuthControllerEmailLanguageTests : IntegrationTestBase
         emailLanguage.Should().Be(expectedLanguage);
     }
 
+    /// <summary>
+    /// Tests Send New Registration Email – Sends Email In Requested Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "en")]
     [InlineData("de", "de")]
@@ -78,6 +84,9 @@ public class AuthControllerEmailLanguageTests : IntegrationTestBase
 
     #region Reset-password email language
 
+    /// <summary>
+    /// Tests Send New Reset Password Email – Sends Email In Requested Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "en")]
     [InlineData("de", "de")]
@@ -103,6 +112,9 @@ public class AuthControllerEmailLanguageTests : IntegrationTestBase
         emailLanguage.Should().Be(expectedLanguage);
     }
 
+    /// <summary>
+    /// Tests Reset Password – Sends Confirmation Email In Requested Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "en")]
     [InlineData("de", "de")]

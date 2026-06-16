@@ -1,7 +1,6 @@
 using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
-using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
@@ -109,7 +108,7 @@ public class CommonSpecimenService : ICommonSpecimenService
         }
         else
         {
-            result.TaxonomyPath = GetAllTaxonomyNodesByFilterDto.DeletedTaxonomys();
+            result.TaxonomyPath = BuildDeletedTaxonomyPath();
         }
         return result;
     }
@@ -208,6 +207,21 @@ public class CommonSpecimenService : ICommonSpecimenService
     }
 
     /// <summary>
+    /// Returns a placeholder taxonomy path for a specimen whose species was deleted (e.g. after a
+    /// taxonomy rejection), so the detail view can still render a meaningful entry.
+    /// </summary>
+    private static List<GetAllTaxonomyNodesByFilterDto> BuildDeletedTaxonomyPath() =>
+    [
+        new()
+        {
+            TaxonomyGuid = Guid.Empty,
+            Name = "Taxonomy deleted due to rejection",
+            Rank = TaxonomyRank.Species,
+            ApprovalStatus = ApprovalStatus.Rejected,
+        },
+    ];
+
+    /// <summary>
     /// Creates a new specimen, resolves its geographic location, and persists associated tags and image.
     /// </summary>
     /// <param name="authentication">The authentication context of the creating user.</param>
@@ -231,7 +245,8 @@ public class CommonSpecimenService : ICommonSpecimenService
     }
 
     /// <summary>
-    /// Returns all tags whose names contain the given fragment, ordered alphabetically.
+    /// Returns the tags matching the given fragment, augmenting substring matches with fuzzy
+    /// (typo-tolerant) matches, ordered by relevance.
     /// </summary>
     /// <param name="filter">The name fragment to filter tag names by.</param>
     /// <returns>A list of matching tag filter DTOs.</returns>
@@ -239,12 +254,12 @@ public class CommonSpecimenService : ICommonSpecimenService
     public async Task<List<GetAllTagsByFilterDto>> GetAllTagsAsync(
         string filter)
     {
-        var tags = await _tagRepository
-            .GetTagsByNameFilterAsync(filter);
-        
-        var mappedTags = _mapper.Map<List<GetAllTagsByFilterDto>>(tags);
-        
-        return mappedTags.OrderBy(t => t.TagName).ToList();
+        // Load all tags and fuzzy-match in memory so typos (e.g. "endangerd" → "Endangered") still match.
+        var tags = await _tagRepository.GetTagsByNameFilterAsync(null);
+
+        var matched = FuzzyMatch.SearchAugmented(filter, tags, t => t.Tag);
+
+        return _mapper.Map<List<GetAllTagsByFilterDto>>(matched);
     }
     
     /// <summary>
@@ -348,6 +363,13 @@ public class CommonSpecimenService : ICommonSpecimenService
     public async Task ActivateSpecimenAsync(IAuthentication authentication, Guid specimenGuid)
     {
         var specimen = await CheckSpecimenWithOwnership(specimenGuid, authentication);
+
+        if (specimen.Status == SpecimenStatus.Rejected 
+            || specimen.Status == SpecimenStatus.Rejected)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+        
         specimen.ActivateSpecimen(authentication.UserGuid);
         await _specimenRepository.UpdateAsync(specimen);
     }
@@ -739,7 +761,9 @@ public class CommonSpecimenService : ICommonSpecimenService
     {
         var tags = await _tagRepository.GetTagByGuidAsync(guids);
 
-        if (tags.Count == 0 && guids.Count > 0)
+        // Fail if any requested tag GUID could not be resolved, instead of silently dropping the
+        // missing ones (which would create the specimen with fewer tags than requested).
+        if (tags.Count != guids.Distinct().Count())
         {
             throw new ZootifyException(ErrorCode.NoTagsFound);
         }
@@ -758,7 +782,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     {
         var location = await _nominatimProvider.SearchLocationAsync(geoData);
 
-        if (location == null || location.Address.CountryCode == null)
+        if (location?.Address?.CountryCode == null)
         {
             throw new ZootifyException(ErrorCode.AddressDoesNotExist);
         }

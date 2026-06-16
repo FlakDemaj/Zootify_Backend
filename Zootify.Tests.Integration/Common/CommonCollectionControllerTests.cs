@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common Collection Controller.
+/// </summary>
 public class CommonCollectionControllerTests : IntegrationTestBase
 {
     public CommonCollectionControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -13,6 +16,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region CreateCollection
 
+    /// <summary>
+    /// Tests Create Collection – Valid Request – Returns Created Guid.
+    /// </summary>
     [Fact]
     public async Task CreateCollection_ValidRequest_ReturnsCreatedGuid()
     {
@@ -38,6 +44,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         collection.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Collection – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task CreateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -51,6 +60,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllCollections
 
+    /// <summary>
+    /// Tests Get All Collections – Authenticated – Contains Six Static Collections.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Authenticated_ContainsSixStaticCollections()
     {
@@ -70,6 +82,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().Contain(c => c.Name == "Meine Abgelehnten");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Authenticated – Returns Static Plus Db Collections.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Authenticated_ReturnsStaticPlusDbCollections()
     {
@@ -87,6 +102,34 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().HaveCount(8);
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Dynamic Collection – Reports Actual Specimen Count.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_DynamicCollection_ReportsActualSpecimenCount()
+    {
+        var user = await UserRepo.CreateUserAsync("count@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            name: "Counted", isPrivate: false, createdByUserGuid: user.Guid);
+
+        var first = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
+        var second = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, first.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, second.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Single(c => c.Name == "Counted").SpecimenCount.Should().Be(2);
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Private Collections Not Returned For Other Users.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_PrivateCollectionsNotReturnedForOtherUsers()
     {
@@ -104,6 +147,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().NotContain(c => c.Name == "Private");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Own Private Collection Is Visible.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_OwnPrivateCollectionIsVisible()
     {
@@ -118,6 +164,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result!.Collections.Should().Contain(c => c.Name == "My Secret");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Deleted Collections Not Returned.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_DeletedCollectionsNotReturned()
     {
@@ -135,6 +184,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().NotContain(c => c.Name == "DeletedColl");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Static Collections – Reflect Actual Specimen Counts.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_StaticCollections_ReflectActualSpecimenCounts()
     {
@@ -162,6 +214,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Static Collections – Only Own Specimen Counts Shown.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_StaticCollections_OnlyOwnSpecimenCountsShown()
     {
@@ -191,6 +246,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Single(c => c.Name == "Meine Abgelehnten").SpecimenCount.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Static Collections – Admin Only Sees Own Specimen Counts.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_StaticCollections_AdminOnlySeesOwnSpecimenCounts()
     {
@@ -215,6 +273,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Single(c => c.Name == "Meine Sammlung").SpecimenCount.Should().Be(1);
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Static Collections – Private Specimens Are Counted.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_StaticCollections_PrivateSpecimensAreCounted()
     {
@@ -239,6 +300,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllCollections – FilterByName
 
+    /// <summary>
+    /// Tests Get All Collections – Filter By Name – Returns Dynamic Matches Only.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_FilterByName_ReturnsDynamicMatchesOnly()
     {
@@ -255,6 +319,29 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().NotContain(c => c.Name == "Mammals");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Fuzzy Filter – Finds Collection Despite Typo.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_FuzzyFilter_FindsCollectionDespiteTypo()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        await CollectionRepo.CreateCollectionAsync(name: "Birds of Europe", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        AuthenticateAs(user);
+
+        // "Birts of Europe" is a typo of "Birds of Europe" → fuzzy matching still finds it.
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?filterByName={Uri.EscapeDataString("Birts of Europe")}");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        result!.Collections.Should().Contain(c => c.Name == "Birds of Europe");
+        result.Collections.Should().NotContain(c => c.Name == "Mammals");
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Filter By Name – Also Filters Static Collections.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_FilterByName_AlsoFiltersStaticCollections()
     {
@@ -272,6 +359,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().NotContain(c => c.Name == "Alle Exemplare");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Filter By Name – Case Insensitive On Static Collections.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_FilterByName_CaseInsensitiveOnStaticCollections()
     {
@@ -284,6 +374,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result!.Collections.Should().Contain(c => c.Name == "Alle Exemplare");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Filter By Name – No Match – Returns Empty Collections.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_FilterByName_NoMatch_ReturnsEmptyCollections()
     {
@@ -302,6 +395,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllCollections – Paging
 
+    /// <summary>
+    /// Tests Get All Collections – Paging – Returns Correct Page.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Paging_ReturnsCorrectPage()
     {
@@ -321,6 +417,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().HaveCount(5);
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Paging – Second Page Returns Remaining Items.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Paging_SecondPageReturnsRemainingItems()
     {
@@ -340,6 +439,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().HaveCount(3); // 11 - 8 = 3 on page 2
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Paging – Total Count Matches With Filter.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Paging_TotalCountMatchesWithFilter()
     {
@@ -361,6 +463,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllCollections – SortBy
 
+    /// <summary>
+    /// Tests Get All Collections – Sort By Name – Asc – Returns Dynamic Collections Sorted Ascending.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_SortByName_Asc_ReturnsDynamicCollectionsSortedAscending()
     {
@@ -383,6 +488,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         dynamicNames.Should().BeInAscendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Sort By Name – Desc – Returns Dynamic Collections Sorted Descending.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_SortByName_Desc_ReturnsDynamicCollectionsSortedDescending()
     {
@@ -405,6 +513,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         dynamicNames.Should().BeInDescendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Sort By Specimen Count – Desc – Sorts Entire List Descending.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_SortBySpecimenCount_Desc_SortsEntireListDescending()
     {
@@ -440,6 +551,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         counts.Should().BeInDescendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Sort By Specimen Count – Asc – Sorts Entire List Ascending.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_SortBySpecimenCount_Asc_SortsEntireListAscending()
     {
@@ -471,6 +585,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         counts.Should().BeInAscendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Sort By Created At – Desc – Returns Dynamic Collections Sorted Descending.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_SortByCreatedAt_Desc_ReturnsDynamicCollectionsSortedDescending()
     {
@@ -498,6 +615,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region UpdateCollection
 
+    /// <summary>
+    /// Tests Update Collection – All Data – Updates Collection.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_AllData_UpdatesCollection()
     {
@@ -530,6 +650,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         updated.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Update Collection – Just Name – Updates Name.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_JustName_UpdatesName()
     {
@@ -558,6 +681,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         updated.UpdatedByUserGuid.Should().Be(user.Guid);
     }
 
+    /// <summary>
+    /// Tests Update Collection – No Changes – Returns No Updated Data.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_NoChanges_ReturnsNoUpdatedData()
     {
@@ -583,6 +709,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
     }
 
+    /// <summary>
+    /// Tests Update Collection – Collection Not Found – Returns Collection Not Found.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_CollectionNotFound_ReturnsCollectionNotFound()
     {
@@ -602,6 +731,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
     }
 
+    /// <summary>
+    /// Tests Update Collection – As User On Other Users Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_AsUserOnOtherUsersCollection_ReturnsForbidden()
     {
@@ -627,6 +759,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update Collection – As Admin – Can Update Any Collection.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_AsAdmin_CanUpdateAnyCollection()
     {
@@ -655,6 +790,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         updated.UpdatedByUserGuid.Should().Be(admin.Guid);
     }
 
+    /// <summary>
+    /// Tests Update Collection – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -665,6 +803,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Tests Update Collection – Collection Is Not Active – Returns Object Is Not Active.
+    /// </summary>
     [Fact]
     public async Task UpdateCollection_CollectionIsNotActive_ReturnsObjectIsNotActive()
     {
@@ -690,6 +831,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region DeleteCollection
 
+    /// <summary>
+    /// Tests Delete Collection – As Owner – Soft Deletes Collection.
+    /// </summary>
     [Fact]
     public async Task DeleteCollection_AsOwner_SoftDeletesCollection()
     {
@@ -710,6 +854,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         deleted.Status.Should().Be(CollectionStatus.Deleted);
     }
 
+    /// <summary>
+    /// Tests Delete Collection – As Admin – Can Soft Delete Any Collection.
+    /// </summary>
     [Fact]
     public async Task DeleteCollection_AsAdmin_CanSoftDeleteAnyCollection()
     {
@@ -731,6 +878,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         deleted.Status.Should().Be(CollectionStatus.Deleted);
     }
 
+    /// <summary>
+    /// Tests Delete Collection – As User On Other Users Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task DeleteCollection_AsUserOnOtherUsersCollection_ReturnsForbidden()
     {
@@ -747,6 +897,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Delete Collection – Collection Not Found – Returns Collection Not Found.
+    /// </summary>
     [Fact]
     public async Task DeleteCollection_CollectionNotFound_ReturnsCollectionNotFound()
     {
@@ -760,6 +913,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
     }
 
+    /// <summary>
+    /// Tests Delete Collection – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task DeleteCollection_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -773,6 +929,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region ActivateCollection
 
+    /// <summary>
+    /// Tests Activate Collection – As Owner – Activates Collection.
+    /// </summary>
     [Fact]
     public async Task ActivateCollection_AsOwner_ActivatesCollection()
     {
@@ -795,6 +954,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         activated.Status.Should().Be(CollectionStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Activate Collection – As Admin – Can Activate Any Collection.
+    /// </summary>
     [Fact]
     public async Task ActivateCollection_AsAdmin_CanActivateAnyCollection()
     {
@@ -818,6 +980,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         activated.Status.Should().Be(CollectionStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Activate Collection – As User On Other Users Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task ActivateCollection_AsUserOnOtherUsersCollection_ReturnsForbidden()
     {
@@ -836,6 +1001,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Activate Collection – Collection Not Found – Returns Collection Not Found.
+    /// </summary>
     [Fact]
     public async Task ActivateCollection_CollectionNotFound_ReturnsCollectionNotFound()
     {
@@ -849,6 +1017,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
     }
 
+    /// <summary>
+    /// Tests Activate Collection – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task ActivateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -862,6 +1033,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region AddSpecimenToCollection
 
+    /// <summary>
+    /// Tests Add Specimen To Collection – Valid Request – Specimen Linked To Collection.
+    /// </summary>
     [Fact]
     public async Task AddSpecimenToCollection_ValidRequest_SpecimenLinkedToCollection()
     {
@@ -881,6 +1055,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         link.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Add Specimen To Collection – Collection Not Found – Returns Collection Not Found.
+    /// </summary>
     [Fact]
     public async Task AddSpecimenToCollection_CollectionNotFound_ReturnsCollectionNotFound()
     {
@@ -898,6 +1075,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
     }
 
+    /// <summary>
+    /// Tests Add Specimen To Collection – Specimen Not Found – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task AddSpecimenToCollection_SpecimenNotFound_ReturnsNoSpecimenFound()
     {
@@ -913,6 +1093,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Add Specimen To Collection – Specimen Already In Collection – Returns Error.
+    /// </summary>
     [Fact]
     public async Task AddSpecimenToCollection_SpecimenAlreadyInCollection_ReturnsError()
     {
@@ -932,6 +1115,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.SpecimenAlreadyInCollection);
     }
 
+    /// <summary>
+    /// Tests Add Specimen To Collection – As User On Other Users Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task AddSpecimenToCollection_AsUserOnOtherUsersCollection_ReturnsForbidden()
     {
@@ -951,6 +1137,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Add Specimen To Collection – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task AddSpecimenToCollection_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -964,6 +1153,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region RemoveSpecimenFromCollection
 
+    /// <summary>
+    /// Tests Remove Specimen From Collection – Valid Request – Specimen Removed From Collection.
+    /// </summary>
     [Fact]
     public async Task RemoveSpecimenFromCollection_ValidRequest_SpecimenRemovedFromCollection()
     {
@@ -984,6 +1176,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         link.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Remove Specimen From Collection – Collection Not Found – Returns Collection Not Found.
+    /// </summary>
     [Fact]
     public async Task RemoveSpecimenFromCollection_CollectionNotFound_ReturnsCollectionNotFound()
     {
@@ -1001,6 +1196,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
     }
 
+    /// <summary>
+    /// Tests Remove Specimen From Collection – As User On Other Users Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task RemoveSpecimenFromCollection_AsUserOnOtherUsersCollection_ReturnsForbidden()
     {
@@ -1021,6 +1219,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Remove Specimen From Collection – Specimen Not In Collection – Returns Error.
+    /// </summary>
     [Fact]
     public async Task RemoveSpecimenFromCollection_SpecimenNotInCollection_ReturnsError()
     {
@@ -1039,6 +1240,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
     }
 
+    /// <summary>
+    /// Tests Remove Specimen From Collection – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task RemoveSpecimenFromCollection_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -1052,6 +1256,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllSpecimensInCollection
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Filter By Name – Returns Only Matching Specimens.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_FilterByName_ReturnsOnlyMatchingSpecimens()
     {
@@ -1076,6 +1283,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == lion.Guid);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Public Collection – Returns Public Specimens.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_PublicCollection_ReturnsPublicSpecimens()
     {
@@ -1096,6 +1306,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Should().HaveCount(1);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Private Specimens Of Other User – Are Hidden.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_PrivateSpecimensOfOtherUser_AreHidden()
     {
@@ -1119,6 +1332,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Single().SpecimenGuid.Should().Be(publicSp.Guid);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Own Private Specimens – Are Visible.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_OwnPrivateSpecimens_AreVisible()
     {
@@ -1138,6 +1354,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Single().SpecimenGuid.Should().Be(privateSp.Guid);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Private Collection – Owner – Can Access.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_PrivateCollection_Owner_CanAccess()
     {
@@ -1157,6 +1376,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result!.Specimens.Should().HaveCount(1);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Private Collection – Other User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_PrivateCollection_OtherUser_ReturnsForbidden()
     {
@@ -1173,6 +1395,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Admin – Sees All Specimens.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_Admin_SeesAllSpecimens()
     {
@@ -1195,6 +1420,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Deleted Collection – Non Owner – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_DeletedCollection_NonOwner_ReturnsForbidden()
     {
@@ -1214,6 +1442,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Unknown Guid – Returns Not Found.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_UnknownGuid_ReturnsNotFound()
     {
@@ -1227,6 +1458,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.CollectionNotFound);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Paging – Returns Correct Page.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_Paging_ReturnsCorrectPage()
     {
@@ -1251,6 +1485,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Sort By Name – Desc – Returns Sorted List.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_SortByName_Desc_ReturnsSortedList()
     {
@@ -1276,6 +1513,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         names.Should().BeInDescendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Contains Collection Metadata.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_ContainsCollectionMetadata()
     {
@@ -1300,6 +1540,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllSpecimensInCollection – Static Collections
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Static All Specimens – Returns Public Specimens.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_StaticAllSpecimens_ReturnsPublicSpecimens()
     {
@@ -1322,6 +1565,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.CollectionName.Should().NotBeNullOrWhiteSpace();
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Static My Active – Returns Own Active Specimens Only.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_StaticMyActive_ReturnsOwnActiveSpecimensOnly()
     {
@@ -1343,6 +1589,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result!.TotalCount.Should().Be(1);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Static My Deleted – Returns Own Deleted Specimens.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_StaticMyDeleted_ReturnsOwnDeletedSpecimens()
     {
@@ -1367,6 +1616,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllCollections – Anonymous
 
+    /// <summary>
+    /// Tests Get All Collections – Anonymous – Allows Unauthenticated Access.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Anonymous_AllowsUnauthenticatedAccess()
     {
@@ -1380,6 +1632,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().HaveCount(1);
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Anonymous – Contains No Static Collections.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Anonymous_ContainsNoStaticCollections()
     {
@@ -1391,6 +1646,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Anonymous – Private Collection Is Not Returned.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Anonymous_PrivateCollectionIsNotReturned()
     {
@@ -1406,6 +1664,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().NotContain(c => c.Name == "Secret");
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Anonymous – Paging – Returns Total Count And Correct Page.
+    /// </summary>
     [Fact]
     public async Task GetAllCollections_Anonymous_Paging_ReturnsTotalCountAndCorrectPage()
     {
@@ -1426,6 +1687,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
     #region GetAllSpecimensInCollection – Anonymous
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Anonymous – Public Collection – Only Public Specimens Returned.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_Anonymous_PublicCollection_OnlyPublicSpecimensReturned()
     {
@@ -1446,6 +1710,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Specimens.Single().SpecimenGuid.Should().Be(publicSp.Guid);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Anonymous – Private Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_Anonymous_PrivateCollection_ReturnsForbidden()
     {
@@ -1458,6 +1725,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Anonymous – Static Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_Anonymous_StaticCollection_ReturnsForbidden()
     {
@@ -1468,6 +1738,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Anonymous – Deleted Public Collection – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetAllSpecimensInCollection_Anonymous_DeletedPublicCollection_ReturnsForbidden()
     {

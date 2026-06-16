@@ -64,4 +64,12 @@ public interface IUserRepository : IBaseRepository<UserEntity>
     /// <param name="cutoff">The maximum allowed deletion date.</param>
     /// <param name="batchSize">The maximum number of users to return.</param>
     Task<List<UserEntity>> GetDeletedUsersForPurgeAsync(DateTime cutoff, int batchSize);
+
+    /// <summary>
+    /// Clears all foreign-key references to the given users (audit columns on specimens, collections and
+    /// taxonomy nodes; loan lender/borrower) so the users can subsequently be hard-deleted without
+    /// violating the database's <c>ON DELETE NO ACTION</c> constraints.
+    /// </summary>
+    /// <param name="userGuids">The GUIDs of the users about to be purged.</param>
+    Task PurgeUserReferencesAsync(List<Guid> userGuids);
 }

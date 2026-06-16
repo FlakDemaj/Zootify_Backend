@@ -2,6 +2,9 @@ using Zootify_Backend.Model.DataAccess.DBContext;
 
 namespace Zootify.Tests.Integration.Utils.Helpers;
 
+/// <summary>
+/// Collection Test Repository — test support type.
+/// </summary>
 public class CollectionTestRepository
 {
     private readonly ZootifyDbContext _dbContext;
@@ -11,6 +14,9 @@ public class CollectionTestRepository
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Test support method: Create Collection Async.
+    /// </summary>
     public async Task<CollectionEntity> CreateCollectionAsync(
         string name = "Test Collection",
         bool isPrivate = false,
@@ -40,6 +46,9 @@ public class CollectionTestRepository
         return collection;
     }
 
+    /// <summary>
+    /// Test support method: Create Specimen Collection Async.
+    /// </summary>
     public async Task CreateSpecimenCollectionAsync(Guid collectionGuid,
         Guid specimenGuid)
     {

@@ -99,44 +99,30 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
     }
 
     /// <summary>
-    /// Returns all taxonomy nodes of the specified rank that match the given name fragment, each accompanied by their ancestor path.
+    /// Returns all active or pending species-rank taxonomy nodes that match the given name fragment, as a flat list.
     /// </summary>
-    /// <param name="filter">Optional name fragment to filter nodes by.</param>
-    /// <param name="rank">The taxonomy rank to filter by.</param>
-    /// <returns>A list of taxonomy chains, where each chain runs from root to the matching node.</returns>
+    /// <param name="filter">Optional name fragment to filter species by.</param>
+    /// <returns>A flat list of matching species nodes, ordered by name.</returns>
     [Transaction(ReadOnly = true)]
-    public async Task<List<List<GetAllTaxonomyNodesByFilterDto>>> GetAllTaxonomyNodesAsync(
+    public async Task<List<GetSpeciesForCreationDto>> GetAllActiveOrPendingSpeciesNodesForCreationAsync(
         string? filter)
     {
-        var taxonomyNodes = await
-            _taxonomyRepository
-                .GetTaxonomyNodeByNameFilterAsync(filter);
+        // Load all active/pending species and apply fuzzy-augmented matching in memory so typos still
+        // resolve (e.g. "Panthera leoo" finds "Panthera leo") on top of plain substring matches.
+        var species = await _taxonomyRepository.GetActiveOPendingSpeciesNodeByNameFilterAsync(null);
 
-        var taxonomyTrees = new List<List<GetAllTaxonomyNodesByFilterDto>>();
+        var matched = FuzzyMatch.SearchAugmented(filter, species, s => s.Name);
 
-        foreach (var taxonomyNode in taxonomyNodes)
-        {
-            var taxonomyTreeList = new List<TaxonomyNodeEntity>();
-
-            var taxonomyTree = await GetTaxonomyTreeAsync(
-                taxonomyNode, taxonomyTreeList);
-
-            var mappedTaxonomyTree = _mapper.Map<List<GetAllTaxonomyNodesByFilterDto>>(taxonomyTree);
-
-            mappedTaxonomyTree = mappedTaxonomyTree
-                .OrderBy(x => x.Rank)
-                .ToList();
-
-            taxonomyTrees.Add(mappedTaxonomyTree);
-        }
-
-        return taxonomyTrees;
+        return _mapper.Map<List<GetSpeciesForCreationDto>>(matched);
     }
     
     /// <summary>
-    /// Returns the full taxonomy tree, optionally filtered by a root-node name fragment.
+    /// Returns the taxonomy tree, optionally filtered by a name prefix that may match a node at any
+    /// depth. When filtering, only the branches leading to a matching node are kept (non-matching
+    /// sibling branches are pruned), while the full subtree below each match is included. Roots without
+    /// any match are omitted.
     /// </summary>
-    /// <param name="filterByName">Optional name fragment to filter root nodes by.</param>
+    /// <param name="filterByName">Optional name prefix; only branches containing a starts-with match are returned.</param>
     /// <returns>A hierarchical taxonomy tree response DTO.</returns>
     [Transaction(ReadOnly = true)]
     public async Task<GetTaxonomyTreeResponseDto> GetAllTaxonomyNodesAsTreeAsync(string? filterByName)
@@ -144,17 +130,20 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
         var byParent = allNodes.ToLookup(n => n.ParentGuid);
 
-        var roots = byParent[null].AsEnumerable();
+        var roots = byParent[null].OrderBy(n => n.Name);
 
-        if (!string.IsNullOrWhiteSpace(filterByName))
+        List<GetTaxonomyTreeNodeDto> nodes;
+        if (string.IsNullOrWhiteSpace(filterByName))
         {
-            roots = roots.Where(n => n.Name.Contains(filterByName, StringComparison.OrdinalIgnoreCase));
+            nodes = roots.Select(r => BuildTreeNode(r, byParent)).ToList();
         }
-
-        var nodes = roots
-            .OrderBy(n => n.Name)
-            .Select(r => BuildTreeNode(r, byParent))
-            .ToList();
+        else
+        {
+            nodes = roots
+                .Select(r => BuildFilteredTreeNode(r, byParent, filterByName))
+                .OfType<GetTaxonomyTreeNodeDto>()
+                .ToList();
+        }
 
         return new GetTaxonomyTreeResponseDto
         {
@@ -228,4 +217,62 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
             .Select(c => BuildTreeNode(c, byParent))
             .ToList(),
     };
+
+    /// <summary>
+    /// Builds a tree node pruned to the given name prefix: a node whose name matches is returned with
+    /// its full subtree; a non-matching node is kept only if it has a matching descendant (and then only
+    /// the branches leading to them); otherwise <c>null</c> is returned. A name matches when any of its
+    /// whitespace-separated words starts with the filter, so "leo" finds "Panthera leo" while an inner
+    /// substring (e.g. the "in" inside "Cyprinus") does not pull in an unrelated branch.
+    /// </summary>
+    /// <param name="node">The taxonomy node to evaluate.</param>
+    /// <param name="byParent">Lookup of nodes keyed by their parent GUID.</param>
+    /// <param name="filter">The word prefix to match (case-insensitive).</param>
+    /// <returns>The pruned tree node, or <c>null</c> if neither the node nor any descendant matches.</returns>
+    private static GetTaxonomyTreeNodeDto? BuildFilteredTreeNode(
+        TaxonomyNodeEntity node,
+        ILookup<Guid?, TaxonomyNodeEntity> byParent,
+        string filter)
+    {
+        // A node whose name matches the prefix is returned with its complete subtree.
+        if (NameMatchesPrefix(node.Name, filter))
+        {
+            return BuildTreeNode(node, byParent);
+        }
+
+        // Otherwise keep the node only if a descendant matches, pruning the non-matching sibling branches.
+        var children = byParent[node.Guid]
+            .OrderBy(c => c.Name)
+            .Select(c => BuildFilteredTreeNode(c, byParent, filter))
+            .OfType<GetTaxonomyTreeNodeDto>()
+            .ToList();
+
+        if (children.Count == 0)
+        {
+            return null;
+        }
+
+        return new GetTaxonomyTreeNodeDto
+        {
+            TaxonomyGuid   = node.Guid,
+            Name           = node.Name,
+            Rank           = node.Rank,
+            ApprovalStatus = node.ApprovalStatus,
+            Children       = children,
+        };
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if any whitespace-separated word of <paramref name="name"/> starts with the
+    /// given filter (case-insensitive). This lets a filter match a single word inside a binomial name
+    /// (e.g. "leo" matches "Panthera leo") without matching an inner substring (e.g. "in" in "Cyprinus").
+    /// </summary>
+    /// <param name="name">The taxonomy node name.</param>
+    /// <param name="filter">The word prefix to match.</param>
+    private static bool NameMatchesPrefix(string name, string filter)
+    {
+        return name
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+            .Any(word => word.StartsWith(filter, StringComparison.OrdinalIgnoreCase));
+    }
 }

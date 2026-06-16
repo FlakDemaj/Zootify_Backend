@@ -309,6 +309,9 @@ public class UserEntityTests
 
     #region CreateUserSettings
 
+    /// <summary>
+    /// Tests Create User Settings – Sets Settings On Entity.
+    /// </summary>
     [Fact]
     public void CreateUserSettings_SetsSettingsOnEntity()
     {
@@ -319,6 +322,9 @@ public class UserEntityTests
         user.Settings.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Create User Settings – Sets User Guid.
+    /// </summary>
     [Fact]
     public void CreateUserSettings_SetsUserGuid()
     {
@@ -329,6 +335,9 @@ public class UserEntityTests
         user.Settings.UserGuid.Should().Be(user.Guid);
     }
 
+    /// <summary>
+    /// Tests Create User Settings – Check Language.
+    /// </summary>
     [Fact]
     public void CreateUserSettings_CheckLanguage()
     {
@@ -341,6 +350,9 @@ public class UserEntityTests
         user.Settings.Language.Should().Be("de");
     }
 
+    /// <summary>
+    /// Tests Create User Settings – Default Dark Mode Is False.
+    /// </summary>
     [Fact]
     public void CreateUserSettings_DefaultDarkModeIsFalse()
     {

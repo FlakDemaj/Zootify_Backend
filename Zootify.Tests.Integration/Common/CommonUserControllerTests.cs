@@ -4,6 +4,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common User Controller.
+/// </summary>
 public class CommonUserControllerTests : IntegrationTestBase
 {
     public CommonUserControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -12,6 +15,9 @@ public class CommonUserControllerTests : IntegrationTestBase
 
     #region GetOwnUserData
 
+    /// <summary>
+    /// Tests Get Own User – Valid User – Returns User.
+    /// </summary>
     [Fact]
     public async Task GetOwnUser_ValidUser_ReturnsUser()
     {
@@ -35,6 +41,9 @@ public class CommonUserControllerTests : IntegrationTestBase
 
     #region UpdateOwnUser
 
+    /// <summary>
+    /// Tests Update Own User – Success – All Data.
+    /// </summary>
     [Fact]
     public async Task UpdateOwnUser_Success_AllData()
     {
@@ -68,6 +77,9 @@ public class CommonUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Update Own User – Success – Just Email.
+    /// </summary>
     [Fact]
     public async Task UpdateOwnUser_Success_JustEmail()
     {
@@ -105,6 +117,9 @@ public class CommonUserControllerTests : IntegrationTestBase
 
     #region DeleteUser
 
+    /// <summary>
+    /// Tests Delete User – Success.
+    /// </summary>
     [Fact]
     public async Task DeleteUser_Success()
     {
@@ -132,6 +147,9 @@ public class CommonUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Delete User – No User To Delete Found – Error Code.
+    /// </summary>
     [Fact]
     public async Task DeleteUser_NoUserToDeleteFound_ErrorCode()
     {
@@ -153,6 +171,9 @@ public class CommonUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
+    /// <summary>
+    /// Tests Delete User – Moderator Trys To Delete Another User – Error Code.
+    /// </summary>
     [Fact]
     public async Task DeleteUser_ModeratorTrysToDeleteAnotherUser_ErrorCode()
     {
@@ -174,6 +195,9 @@ public class CommonUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Delete User – User Trys To Delete Another User – Error Code.
+    /// </summary>
     [Fact]
     public async Task DeleteUser_UserTrysToDeleteAnotherUser_ErrorCode()
     {
@@ -195,6 +219,9 @@ public class CommonUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Delete User – User Deletes Himself – Success.
+    /// </summary>
     [Fact]
     public async Task DeleteUser_UserDeletesHimself_Success()
     {
@@ -215,6 +242,27 @@ public class CommonUserControllerTests : IntegrationTestBase
         updatedUser!.DeletedByUserGuid.Should().Be(requester.Guid);
         updatedUser.DeletionDate.Should().BeCloseTo(DateTime.UtcNow,
             precision: TimeSpan.FromSeconds(5));
+    }
+
+    /// <summary>
+    /// Tests Delete User – Moderator Deletes User – Success.
+    /// </summary>
+    [Fact]
+    public async Task DeleteUser_ModeratorDeletesUser_Success()
+    {
+        var moderator = await UserRepo.CreateUserAsync("mod@test.de", role: UserRole.Moderator);
+        AuthenticateAs(moderator);
+
+        var userToDelete = await UserRepo.CreateUserAsync("user@test.de", role: UserRole.User);
+
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonUserRouting}/{userToDelete.Guid}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updated = await GetUserFromDbByGuidAsync(userToDelete.Guid);
+        updated!.Status.Should().Be(UserStatus.Deleted);
+        updated.DeletedByUserGuid.Should().Be(moderator.Guid);
     }
 
     #endregion
