@@ -99,7 +99,7 @@ public interface ICommonSpecimenService
     /// </summary>
     /// <param name="authentication">The optional authentication context used to enforce visibility rules.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to search under.</param>
-    /// <returns>A list of specimen DTOs matching the taxonomy subtree.</returns>
+    /// <returns>A list of specimen DTOs (including their tags) matching the taxonomy subtree.</returns>
     /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
-    Task<List<SpecimenDto>> GetSpecimensByTaxonomyNodeGuidAsync(IAuthentication? authentication, Guid taxonomyGuid);
+    Task<List<SpecimenWithTagsDto>> GetSpecimensByTaxonomyNodeGuidAsync(IAuthentication? authentication, Guid taxonomyGuid);
 }

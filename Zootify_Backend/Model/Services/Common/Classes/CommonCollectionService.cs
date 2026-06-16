@@ -73,9 +73,11 @@ public class CommonCollectionService : ICommonCollectionService
     }
 
     /// <summary>
-    /// Returns a paged list of all collections visible to the caller, merged with virtual static collections for authenticated users.
+    /// Returns a paged list of all collections visible to the caller, merged with virtual static collections.
+    /// The "All Specimens" static collection is included for everyone; the user-specific static collections
+    /// are only included for authenticated callers.
     /// </summary>
-    /// <param name="authentication">The optional authentication context; anonymous callers see only public active collections.</param>
+    /// <param name="authentication">The optional authentication context; anonymous callers see only public active collections plus "All Specimens".</param>
     /// <param name="filterByName">Optional name fragment to filter collections by.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A paged response containing matching collections and the total count.</returns>
@@ -262,37 +264,50 @@ public class CommonCollectionService : ICommonCollectionService
 
     /// <summary>
     /// Returns a paged list of specimens from a virtual static collection such as "All Specimens" or "My Active".
+    /// "All Specimens" is accessible to everyone (only public specimens are returned); the user-specific
+    /// collections require authentication.
     /// </summary>
-    /// <param name="authentication">The authentication context required for all static collections.</param>
+    /// <param name="authentication">The optional authentication context; required for the user-specific collections.</param>
     /// <param name="filterByName">Optional name fragment to filter the specimens by.</param>
     /// <param name="collectionGuid">The well-known GUID identifying the static collection.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A response containing the virtual collection metadata and its paged specimens.</returns>
-    /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
+    /// <exception cref="ZootifyException">Thrown when an anonymous caller requests a user-specific static collection.</exception>
     private async Task<GetAllSpecimenInCollectionResponseDto> GetSpecimensFromStaticCollectionAsync(
         IAuthentication? authentication,
         string? filterByName,
         Guid collectionGuid,
         BaseSortAndPagingDto paging)
     {
-        if (authentication == null)
-        {
-            throw new ZootifyException(ErrorCode.Forbidden);
-        }
-
         var culture = CultureInfo.CurrentUICulture;
         var key = StaticCollectionKey(collectionGuid);
         var name = CollectionNamesManager.GetString(key, culture) ?? key;
 
-        (Guid? userGuid, SpecimenStatus? status) = collectionGuid switch
+        Guid? userGuid;
+        SpecimenStatus? status;
+
+        if (collectionGuid == AllSpecimensGuid)
         {
-            _ when collectionGuid == AllSpecimensGuid  => ((Guid?)null,                     (SpecimenStatus?)null),
-            _ when collectionGuid == MyCollectionGuid  => (authentication.UserGuid,          (SpecimenStatus?)null),
-            _ when collectionGuid == MyActiveGuid      => (authentication.UserGuid,          SpecimenStatus.Active),
-            _ when collectionGuid == MyPendingGuid     => (authentication.UserGuid,          SpecimenStatus.Pending),
-            _ when collectionGuid == MyDeletedGuid     => (authentication.UserGuid,          SpecimenStatus.Deleted),
-            _                                          => (authentication.UserGuid,          SpecimenStatus.Rejected),
-        };
+            // Public to everyone; a null user GUID makes the repository return only public specimens.
+            (userGuid, status) = (null, null);
+        }
+        else
+        {
+            // The remaining static collections are tied to the current user and require authentication.
+            if (authentication == null)
+            {
+                throw new ZootifyException(ErrorCode.Forbidden);
+            }
+
+            (userGuid, status) = collectionGuid switch
+            {
+                _ when collectionGuid == MyCollectionGuid  => (authentication.UserGuid, (SpecimenStatus?)null),
+                _ when collectionGuid == MyActiveGuid      => (authentication.UserGuid, SpecimenStatus.Active),
+                _ when collectionGuid == MyPendingGuid     => (authentication.UserGuid, SpecimenStatus.Pending),
+                _ when collectionGuid == MyDeletedGuid     => (authentication.UserGuid, SpecimenStatus.Deleted),
+                _                                          => (authentication.UserGuid, SpecimenStatus.Rejected),
+            };
+        }
 
         var (items, total) = await 
             _specimenRepository
@@ -387,36 +402,47 @@ public class CommonCollectionService : ICommonCollectionService
         user == null ? null : $"{user.FirstName} {user.LastName}".Trim();
 
     /// <summary>
-    /// Builds the list of virtual static collection DTOs with up-to-date specimen counts for the authenticated user.
+    /// Builds the list of virtual static collection DTOs with up-to-date specimen counts. The "All Specimens"
+    /// collection is included for everyone (it only ever exposes public specimens); the remaining,
+    /// user-specific collections are only included for authenticated callers.
     /// </summary>
-    /// <param name="authentication">The optional authentication context; returns an empty list for anonymous callers.</param>
+    /// <param name="authentication">The optional authentication context.</param>
     /// <returns>A list of virtual static collection response DTOs.</returns>
     private async Task<List<GetCollectionResponseDto>> BuildStaticCollectionsAsync(
         IAuthentication? authentication)
     {
-        if (authentication == null)
-        {
-            return [];
-        }
-
         var culture = CultureInfo.CurrentUICulture;
 
         var allPublicCount = await _specimenRepository.CountPublicAsync();
-        var myCount        = await _specimenRepository.CountOwnAsync(authentication.UserGuid);
-        var activeCount    = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Active,  authentication);
-        var pendingCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Pending, authentication);
-        var deletedCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Deleted, authentication);
-        var rejectedCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Rejected, authentication);
 
-        return
+        // "All Specimens" is visible to everyone, logged in or not.
+        var statics = new List<GetCollectionResponseDto>
+        {
+            StaticCollection(AllSpecimensGuid, "AllSpecimens", culture, allPublicCount),
+        };
+
+        // The remaining static collections are tied to the current user and require authentication.
+        if (authentication == null)
+        {
+            return statics;
+        }
+
+        var myCount       = await _specimenRepository.CountOwnAsync(authentication.UserGuid);
+        var activeCount   = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Active,  authentication);
+        var pendingCount  = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Pending, authentication);
+        var deletedCount  = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Deleted, authentication);
+        var rejectedCount = await _specimenRepository.CountByStatusAsync(SpecimenStatus.Rejected, authentication);
+
+        statics.AddRange(
         [
-            StaticCollection(AllSpecimensGuid,  "AllSpecimens", culture, allPublicCount),
             StaticCollection(MyCollectionGuid,  "MyCollection", culture, myCount),
             StaticCollection(MyActiveGuid,      "MyActive",     culture, activeCount),
             StaticCollection(MyPendingGuid,     "MyPending",    culture, pendingCount),
             StaticCollection(MyDeletedGuid,     "MyDeleted",    culture, deletedCount),
-            StaticCollection(MyRejectedGuid,     "MyRejected",    culture, rejectedCount),
-        ];
+            StaticCollection(MyRejectedGuid,    "MyRejected",   culture, rejectedCount),
+        ]);
+
+        return statics;
     }
 
     /// <summary>

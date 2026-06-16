@@ -46,13 +46,14 @@ public class CommonSpecimenController : BaseRestController
     }
 
     /// <summary>
-    /// Returns all specimens belonging to the given taxonomy node or any of its descendant species.
+    /// Returns all specimens belonging to the given taxonomy node or any of its descendant species,
+    /// each including the tags assigned to the specimen.
     /// </summary>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to search under.</param>
-    /// <returns>A list of specimen DTOs matching the taxonomy subtree.</returns>
+    /// <returns>A list of specimen DTOs (with tags) matching the taxonomy subtree.</returns>
     [AllowAnonymous]
     [HttpGet("{taxonomyGuid:guid}")]
-    public async Task<ActionResult<List<SpecimenDto>>> GetSpecimensByTaxonomyGuidAsync(Guid taxonomyGuid)
+    public async Task<ActionResult<List<SpecimenWithTagsDto>>> GetSpecimensByTaxonomyGuidAsync(Guid taxonomyGuid)
     {
         return Ok(await _commonSpecimenService.GetSpecimensByTaxonomyNodeGuidAsync(
             OptionalAuthentication,

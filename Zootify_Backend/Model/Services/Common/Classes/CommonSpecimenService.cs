@@ -379,10 +379,10 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// </summary>
     /// <param name="authentication">The optional authentication context used to enforce visibility rules.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to search under.</param>
-    /// <returns>A list of specimen DTOs matching the taxonomy subtree.</returns>
+    /// <returns>A list of specimen DTOs (including their tags) matching the taxonomy subtree.</returns>
     /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
-    public async Task<List<SpecimenDto>> GetSpecimensByTaxonomyNodeGuidAsync(
+    public async Task<List<SpecimenWithTagsDto>> GetSpecimensByTaxonomyNodeGuidAsync(
         IAuthentication? authentication,
         Guid taxonomyGuid)
     {
@@ -399,9 +399,10 @@ public class CommonSpecimenService : ICommonSpecimenService
 
         var speciesGuids = CollectDescendantSpeciesGuids(taxonomyGuid, byGuid, byParent);
 
-        var specimens = await _specimenRepository.GetSpecimensBySpeciesGuidsAsync(speciesGuids, authentication);
+        var specimens = await _specimenRepository.GetSpecimensBySpeciesGuidsAsync(
+            speciesGuids, authentication, includeTags: true);
 
-        return _mapper.Map<List<SpecimenDto>>(specimens);
+        return _mapper.Map<List<SpecimenWithTagsDto>>(specimens);
     }
 
     /// <summary>

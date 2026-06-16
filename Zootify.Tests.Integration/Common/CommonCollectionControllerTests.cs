@@ -1628,22 +1628,27 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
-        result!.TotalCount.Should().Be(1);
-        result.Collections.Should().HaveCount(1);
+        // The public dynamic collection plus the "All Specimens" static collection (visible to everyone).
+        result!.TotalCount.Should().Be(2);
+        result.Collections.Should().HaveCount(2);
+        result.Collections.Should().Contain(c => c.Guid == new Guid("00000000-0000-0000-0000-000000000001"));
     }
 
     /// <summary>
-    /// Tests Get All Collections – Anonymous – Contains No Static Collections.
+    /// Tests Get All Collections – Anonymous – Contains Only The All-Specimens Static Collection.
     /// </summary>
     [Fact]
-    public async Task GetAllCollections_Anonymous_ContainsNoStaticCollections()
+    public async Task GetAllCollections_Anonymous_ContainsOnlyAllSpecimensStaticCollection()
     {
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
-        result!.TotalCount.Should().Be(0);
-        result.Collections.Should().BeEmpty();
+        // Anonymous callers see the public "All Specimens" static collection but none of the user-specific ones.
+        result!.TotalCount.Should().Be(1);
+        result.Collections.Should().ContainSingle()
+            .Which.Guid.Should().Be(new Guid("00000000-0000-0000-0000-000000000001"));
+        result.Collections.Should().NotContain(c => c.Guid == new Guid("00000000-0000-0000-0000-000000000002"));
     }
 
     /// <summary>
@@ -1659,7 +1664,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
         var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
-        result!.TotalCount.Should().Be(1);
+        // The public collection plus the "All Specimens" static collection; the private one stays hidden.
+        result!.TotalCount.Should().Be(2);
         result.Collections.Should().Contain(c => c.Name == "Open");
         result.Collections.Should().NotContain(c => c.Name == "Secret");
     }
@@ -1679,7 +1685,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
             $"{Routings.CommonCollectionRouting}?page=1&pageSize=3");
 
         var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
-        result!.TotalCount.Should().Be(5);
+        // 5 dynamic collections plus the "All Specimens" static collection.
+        result!.TotalCount.Should().Be(6);
         result.Collections.Should().HaveCount(3);
     }
 
@@ -1726,13 +1733,35 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     /// <summary>
-    /// Tests Get All Specimens In Collection – Anonymous – Static Collection – Returns Forbidden.
+    /// Tests Get All Specimens In Collection – Anonymous – Static All Specimens – Returns Public Specimens.
     /// </summary>
     [Fact]
-    public async Task GetAllSpecimensInCollection_Anonymous_StaticCollection_ReturnsForbidden()
+    public async Task GetAllSpecimensInCollection_Anonymous_StaticAllSpecimens_ReturnsPublicSpecimens()
     {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var publicSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+
         var response = await Client.GetAsync(
             $"{Routings.CommonCollectionRouting}/00000000-0000-0000-0000-000000000001/specimens");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Single().SpecimenGuid.Should().Be(publicSp.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Anonymous – User-Specific Static Collection – Returns Forbidden.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_Anonymous_UserSpecificStaticCollection_ReturnsForbidden()
+    {
+        // "My Active" (00...003) is tied to a user and still requires authentication.
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}/00000000-0000-0000-0000-000000000003/specimens");
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);

@@ -18,6 +18,8 @@ public class PublicSpecimenOverviewMapper : Profile
     public PublicSpecimenOverviewMapper()
     {
         CreateMap<SpecimenEntity, PublicSpecimenOverviewDto>()
+            .ForMember(d => d.SpecimenGuid,
+                o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.Name,
                 o => o.MapFrom(s => s.Name))
             .ForMember(d => d.LatinName,
