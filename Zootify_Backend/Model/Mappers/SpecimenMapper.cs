@@ -60,6 +60,11 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.IsPublic,      o => o.MapFrom(s => s.IsPublic))
             .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status));
 
+        // Same as SpecimenDto, plus the specimen's tags (via the TagEntity -> GetAllTagsByFilterDto map).
+        CreateMap<SpecimenEntity, SpecimenWithTagsDto>()
+            .IncludeBase<SpecimenEntity, SpecimenDto>()
+            .ForMember(d => d.Tags, o => o.MapFrom(s => s.SpecimensTags.Select(st => st.Tag)));
+
         CreateMap<SpecimenEntity, GetSpecimenDetailResponseDto>(MemberList.None)
             .ForMember(d => d.SpecimenGuid,
                 o => o.MapFrom(s => s.Guid))

@@ -1755,6 +1755,46 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     #region GetSpecimenByTaxonomy
 
     /// <summary>
+    /// Tests Get Specimen By Taxonomy – Specimen With Tags – Returns Tags With Guid And Name.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenByTaxonomy_SpecimenWithTags_ReturnsTagsWithGuidAndName()
+    {
+        var owner    = await UserRepo.CreateUserAsync("owner@test.de");
+        var species  = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var tag1 = await TagRepo.CreateTagAsync("Big");
+        var tag2 = await TagRepo.CreateTagAsync("Blue");
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [tag1, tag2], createdByUserGuid: owner.Guid);
+
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+            $"{Routings.CommonSpecimenRouting}/{species.Guid}");
+
+        var returned = result!.Single(s => s.SpecimenGuid == specimen.Guid);
+        returned.Tags.Should().HaveCount(2);
+        returned.Tags.Select(t => t.TagName).Should().BeEquivalentTo("Big", "Blue");
+        returned.Tags.Select(t => t.TagGuid).Should().BeEquivalentTo([tag1.Guid, tag2.Guid]);
+    }
+
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Specimen Without Tags – Returns Empty Tag List.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenByTaxonomy_SpecimenWithoutTags_ReturnsEmptyTagList()
+    {
+        var owner    = await UserRepo.CreateUserAsync("owner@test.de");
+        var species  = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+            $"{Routings.CommonSpecimenRouting}/{species.Guid}");
+
+        result!.Single().Tags.Should().BeEmpty();
+    }
+
+    /// <summary>
     /// Tests Get Specimen By Taxonomy – Species Node – Returns Linked Specimens.
     /// </summary>
     [Fact]
@@ -1766,7 +1806,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimen1 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
         var specimen2 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(2);
@@ -1788,7 +1828,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimen1 = await SpecimenRepo.CreateSpecimenAsync(species1.Guid, location.Guid, createdByUserGuid: owner.Guid);
         var specimen2 = await SpecimenRepo.CreateSpecimenAsync(species2.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{genus.Guid}");
 
         result!.Should().HaveCount(2);
@@ -1811,7 +1851,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{phylum.Guid}");
 
         result!.Should().HaveCount(1);
@@ -1834,7 +1874,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimenCat = await SpecimenRepo.CreateSpecimenAsync(speciesCat.Guid, location.Guid, createdByUserGuid: owner.Guid);
         var specimenDog = await SpecimenRepo.CreateSpecimenAsync(speciesDog.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{familyFeli.Guid}");
 
         result!.Should().HaveCount(1);
@@ -1851,7 +1891,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
         await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{genus.Guid}");
 
         result!.Should().BeEmpty();
@@ -1886,7 +1926,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var publicSpecimen  = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true,  createdByUserGuid: owner.Guid);
         var privateSpecimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(1);
@@ -1908,7 +1948,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(owner);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(2);
@@ -1931,7 +1971,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(viewer);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(1);
@@ -1954,7 +1994,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(admin);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenDto>>(
+        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(2);

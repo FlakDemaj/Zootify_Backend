@@ -292,14 +292,23 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
     /// <param name="speciesGuids">The list of species GUIDs to match against.</param>
     /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
     /// <param name="status">Optional status filter.</param>
+    /// <param name="includeTags">When <c>true</c>, eagerly loads each specimen's tags.</param>
     public async Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
         List<Guid> speciesGuids,
         IAuthentication? authentication = null,
-        SpecimenStatus? status = null)
+        SpecimenStatus? status = null,
+        bool includeTags = false)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>(true)
             .Where(sp => sp.TaxonomySpeciesGuid.HasValue
                          && speciesGuids.Contains(sp.TaxonomySpeciesGuid.Value));
+
+        if (includeTags)
+        {
+            query = query
+                .Include(sp => sp.SpecimensTags)
+                .ThenInclude(st => st.Tag);
+        }
 
         if (authentication == null)
         {

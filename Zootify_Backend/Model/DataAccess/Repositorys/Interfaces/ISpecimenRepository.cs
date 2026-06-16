@@ -99,10 +99,12 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     /// <param name="speciesGuids">The list of species GUIDs to match against.</param>
     /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
     /// <param name="status">Optional status filter.</param>
+    /// <param name="includeTags">When <c>true</c>, eagerly loads each specimen's tags.</param>
     Task<List<SpecimenEntity>> GetSpecimensBySpeciesGuidsAsync(
         List<Guid> speciesGuids,
         IAuthentication? authentication = null,
-        SpecimenStatus? status = null);
+        SpecimenStatus? status = null,
+        bool includeTags = false);
 
     /// <summary>
     /// Returns a batch of soft-deleted specimens whose deletion date is older than the given cutoff.

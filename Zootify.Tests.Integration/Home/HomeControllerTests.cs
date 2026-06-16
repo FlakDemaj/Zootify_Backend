@@ -46,6 +46,7 @@ public class HomeControllerTests : IntegrationTestBase
         var result = await response.Content.ReadFromJsonAsync<GetPublicSpecimenOverviewResponseDto>();
         result!.TotalCount.Should().Be(1);
         result.Specimens.Should().ContainSingle();
+        result.Specimens.Single().SpecimenGuid.Should().Be(publicSpecimen.Guid);
         result.Specimens.Single().Name.Should().Be(publicSpecimen.Name);
     }
 
@@ -110,7 +111,7 @@ public class HomeControllerTests : IntegrationTestBase
 
         // Public + own non-public are visible; the other user's non-public is hidden.
         result!.TotalCount.Should().Be(2);
-        result.Specimens.Should().Contain(s => s.Name == ownNonPublic.Name);
+        result.Specimens.Should().Contain(s => s.SpecimenGuid == ownNonPublic.Guid);
     }
 
     #endregion
@@ -177,7 +178,7 @@ public class HomeControllerTests : IntegrationTestBase
             $"{Routings.HomeAnimalsRouting}?filterByOrt=Siegen");
 
         result!.TotalCount.Should().Be(1);
-        result.Specimens.Should().ContainSingle(s => s.Name == siegenSpecimen.Name);
+        result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == siegenSpecimen.Guid);
         result.Specimens.Single().LocationPath
             .Should().Contain(n => n.Level == GeographicLevel.City && n.Name == "Siegen");
     }

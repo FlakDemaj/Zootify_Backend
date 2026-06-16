@@ -7,6 +7,9 @@ namespace Zootify_Backend.DTOs.Common.Response;
 /// </summary>
 public class PublicSpecimenOverviewDto
 {
+    /// <summary> The specimen´s Guid</summary>
+    public required Guid SpecimenGuid { get; init; }
+    
     /// <summary>The specimen's common display name.</summary>
     public required string Name { get; init; }
 
