@@ -3,33 +3,37 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Providers.SignalR;
 
+/// <summary>
+/// <see cref="INotificationProvider"/> implementation that dispatches notifications to clients through
+/// the SignalR <see cref="NotificationHub"/>.
+/// </summary>
 public class NotificationProvider : INotificationProvider
 {
+    /// <summary>The hub context used to send messages to connected clients.</summary>
     private readonly IHubContext<NotificationHub> _hubContext;
 
+    /// <summary>
+    /// Initializes the provider with the notification hub context.
+    /// </summary>
+    /// <param name="hubContext">The SignalR hub context used to reach connected clients.</param>
     public NotificationProvider(IHubContext<NotificationHub> hubContext)
     {
         _hubContext = hubContext;
     }
 
-    public async Task SendNotificationAsync(List<UserEntity> adminsAndModerators)
+    /// <inheritdoc/>
+    public Task SendNotificationAsync(List<UserEntity> adminsAndModerators)
     {
-        var message = "New Taxonomy was created. Please check the new Taxonomy.";
-        
-        foreach (var user in adminsAndModerators)
+        return ParallelNotifications.RunAsync(adminsAndModerators, user =>
         {
-            
-            if (user.Settings != null)
-            {
-                message = user.Settings.Language == "de"
-                    ? "Eine neue Taxonomie wurde erstellt. Bitte überprüfen Sie die neue Taxonomie."
-                    : message;   
-            }
-            
-            await _hubContext.Clients
+            var message = user.Settings?.Language == "de"
+                ? "Eine neue Taxonomie wurde erstellt. Bitte überprüfen Sie die neue Taxonomie."
+                : "New Taxonomy was created. Please check the new Taxonomy.";
+
+            return _hubContext.Clients
                 .User(user.Guid.ToString())
                 .SendAsync("ReceiveNotification", message);
-        }
+        });
     }
 
     /// <summary>

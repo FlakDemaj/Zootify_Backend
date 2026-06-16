@@ -29,6 +29,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
     private readonly INotificationProvider _notificationProvider;
+    private readonly IPostCommitQueue _postCommitQueue;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -39,6 +40,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     /// <param name="userRepository">Repository for user lookups.</param>
     /// <param name="brevoProvider">Email provider for sending taxonomy notification emails.</param>
     /// <param name="notificationProvider">Provider for sending in-app push notifications.</param>
+    /// <param name="postCommitQueue">Queue used to dispatch notifications only after the transaction commits.</param>
     /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminTaxonomyService(
         ITaxonomyRepository taxonomyRepository,
@@ -46,6 +48,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         IUserRepository userRepository,
         IBrevoProvider brevoProvider,
         INotificationProvider notificationProvider,
+        IPostCommitQueue postCommitQueue,
         IMapper mapper)
     {
         _taxonomyRepository = taxonomyRepository;
@@ -53,6 +56,7 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
         _notificationProvider = notificationProvider;
+        _postCommitQueue = postCommitQueue;
         _mapper = mapper;
     }
 
@@ -199,14 +203,18 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         }
 
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
-        foreach (var user in users)
+
+        // Each affected user is notified by email and/or in-app push depending on their settings, each
+        // in their own preferred language. Dispatched only after the transaction commits so no one is
+        // notified about an approval that was rolled back.
+        var approvedName = node.Name;
+        var approvedRank = node.Rank;
+        _postCommitQueue.Enqueue(() => ParallelNotifications.RunAsync(users, async user =>
         {
-            // Each affected user is notified by email and/or in-app push depending on their settings,
-            // each in their own preferred language.
             if (user.Settings.SendEmail)
             {
                 await _brevoProvider.SendTaxonomyApprovedEmail(
-                    user.Email, user.FirstName, user.LastName, node.Name, node.Rank,
+                    user.Email, user.FirstName, user.LastName, approvedName, approvedRank,
                     user.Settings.Language);
             }
 
@@ -214,10 +222,10 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             {
                 await _notificationProvider.SendNotificationAsync(
                     user,
-                    $"Ihre Taxonomie \"{node.Name}\" wurde genehmigt.",
-                    $"Your taxonomy \"{node.Name}\" has been approved.");
+                    $"Ihre Taxonomie \"{approvedName}\" wurde genehmigt.",
+                    $"Your taxonomy \"{approvedName}\" has been approved.");
             }
-        }
+        }));
     }
 
     /// <summary>
@@ -283,14 +291,19 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         await _taxonomyRepository.MassDeleteAsync(subtreeNodes);
 
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
-        foreach (var user in users)
+
+        // Each affected user is notified by email and/or in-app push depending on their settings, each
+        // in their own preferred language. Dispatched only after the transaction commits so no one is
+        // notified about a rejection (and subtree deletion) that was rolled back.
+        var rejectedName = node.Name;
+        var rejectedRank = node.Rank;
+        var rejectionComment = request.Comment;
+        _postCommitQueue.Enqueue(() => ParallelNotifications.RunAsync(users, async user =>
         {
-            // Each affected user is notified by email and/or in-app push depending on their settings,
-            // each in their own preferred language.
             if (user.Settings.SendEmail)
             {
                 await _brevoProvider.SendTaxonomyRejectedEmail(
-                    user.Email, user.FirstName, user.LastName, node.Name, node.Rank, request.Comment,
+                    user.Email, user.FirstName, user.LastName, rejectedName, rejectedRank, rejectionComment,
                     user.Settings.Language);
             }
 
@@ -298,10 +311,10 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             {
                 await _notificationProvider.SendNotificationAsync(
                     user,
-                    $"Ihre Taxonomie \"{node.Name}\" wurde abgelehnt.",
-                    $"Your taxonomy \"{node.Name}\" has been rejected.");
+                    $"Ihre Taxonomie \"{rejectedName}\" wurde abgelehnt.",
+                    $"Your taxonomy \"{rejectedName}\" has been rejected.");
             }
-        }
+        }));
     }
 
     /// <summary>

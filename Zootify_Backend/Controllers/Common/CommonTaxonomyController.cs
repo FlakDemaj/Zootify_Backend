@@ -27,16 +27,15 @@ public class CommonTaxonomyController : BaseRestController
     }
 
     /// <summary>
-    /// Returns all taxonomy nodes of the specified rank that match the given name fragment, each accompanied by their ancestor path.
+    /// Returns all active or pending species-rank taxonomy nodes that match the given name fragment, as a flat list.
     /// </summary>
-    /// <param name="filter">Optional name fragment to filter nodes by.</param>
-    /// <param name="rank">The taxonomy rank to filter by.</param>
-    /// <returns>A list of taxonomy chains, where each chain starts from a root node down to the matching node.</returns>
+    /// <param name="filter">Optional name fragment to filter species by.</param>
+    /// <returns>A flat list of matching species nodes, ordered by name.</returns>
     [HttpGet]
-    public async Task<ActionResult<List<List<GetAllTaxonomyNodesByFilterDto>>>> GetTaxonomyNodesForCreation(
+    public async Task<ActionResult<List<GetSpeciesForCreationDto>>> GetActiveOrPendingSpeciesNodesForCreationAsync(
         [FromQuery] string? filter)
     {
-        return Ok(await _commonTaxonomyNodeService.GetAllTaxonomyNodesAsync(
+        return Ok(await _commonTaxonomyNodeService.GetAllActiveOrPendingSpeciesNodesForCreationAsync(
             filter));
     }
 
@@ -58,7 +57,7 @@ public class CommonTaxonomyController : BaseRestController
     /// <param name="requestDto">The taxonomy node chain to create, including an optional parent GUID.</param>
     /// <returns>A list of DTOs containing the GUIDs of the created nodes.</returns>
     [HttpPost]
-    public async Task<ActionResult<List<CreatedObjectResponseDto>>> CreateTaxonomyNode(
+    public async Task<ActionResult<List<CreatedObjectResponseDto>>> CreateTaxonomyNodeAsync(
         [FromBody] CreateTaxonomyNodeRequestDto requestDto)
     {
         return Ok(await _commonTaxonomyNodeService.CreateTaxonomyNodeAsync(Authentication, requestDto));

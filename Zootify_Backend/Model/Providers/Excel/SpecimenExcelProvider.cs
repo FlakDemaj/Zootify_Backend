@@ -234,7 +234,20 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
     /// </summary>
     private static bool IsDescriptionRow(IXLRow row, Dictionary<string, int> columns)
     {
-        if (!columns.TryGetValue(FieldLatitude, out var column))
+        // Only treat the row directly below the header as a description/hint row when BOTH coordinate
+        // columns hold non-numeric text (as the template's hint row does). A genuine data row with a
+        // single malformed coordinate is then not silently dropped but parsed and reported as a failure.
+        return IsNonNumericTextCell(row, columns, FieldLatitude)
+               && IsNonNumericTextCell(row, columns, FieldLongitude);
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if the given field's cell holds non-empty, non-numeric text (i.e. hint text
+    /// rather than a coordinate).
+    /// </summary>
+    private static bool IsNonNumericTextCell(IXLRow row, Dictionary<string, int> columns, string field)
+    {
+        if (!columns.TryGetValue(field, out var column))
         {
             return false;
         }

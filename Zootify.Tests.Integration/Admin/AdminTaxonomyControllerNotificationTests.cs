@@ -48,6 +48,9 @@ public class AdminTaxonomyControllerNotificationTests : IntegrationTestBase
         return (user, species);
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Sends Push To Affected User In User Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "approved")]
     [InlineData("de", "genehmigt")]
@@ -63,6 +66,9 @@ public class AdminTaxonomyControllerNotificationTests : IntegrationTestBase
         VerifyPushNotificationSent(keyword, Times.Once());
     }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Push Disabled – Sends Email But No Push.
+    /// </summary>
     [Fact]
     public async Task ApproveTaxonomy_PushDisabled_SendsEmailButNoPush()
     {
@@ -79,6 +85,9 @@ public class AdminTaxonomyControllerNotificationTests : IntegrationTestBase
             It.IsAny<string>(), It.IsAny<TaxonomyRank>(), It.IsAny<string?>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Sends Push To Affected User In User Language.
+    /// </summary>
     [Theory]
     [InlineData("en", "rejected")]
     [InlineData("de", "abgelehnt")]

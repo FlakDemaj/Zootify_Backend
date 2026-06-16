@@ -1,6 +1,5 @@
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
-using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Model.Providers.Nominatim;
@@ -8,6 +7,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common Specimen Controller.
+/// </summary>
 public class CommonSpecimenControllerTests : IntegrationTestBase
 {
     public CommonSpecimenControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -16,6 +18,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen
 
+    /// <summary>
+    /// Tests Create Specimen – Valid Species Guid – Returns Created Specimen.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_ValidSpeciesGuid_ReturnsCreatedSpecimen()
     {
@@ -40,6 +45,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         specimen.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – All Fields Persisted.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_AllFieldsPersisted()
     {
@@ -84,6 +92,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen – Tags
 
+    /// <summary>
+    /// Tests Create Specimen – With Existing Tags – Tags Linked To Specimen.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithExistingTags_TagsLinkedToSpecimen()
     {
@@ -109,6 +120,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         tagRelations.Select(r => r.TagGuid).Should().Contain(tag2.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – With New Tags To Create – Tags Created And Linked.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithNewTagsToCreate_TagsCreatedAndLinked()
     {
@@ -130,6 +144,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         tagRelations.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – With Existing And New Tags – All Tags Linked.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithExistingAndNewTags_AllTagsLinked()
     {
@@ -157,6 +174,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen – Images
 
+    /// <summary>
+    /// Tests Create Specimen – With Base64 Image – Image Stored For Specimen.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithBase64Image_ImageStoredForSpecimen()
     {
@@ -179,6 +199,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         images.Single().ImageBase64.Should().Be("base64image1");
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Without Image – Specimen Created With No Image.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithoutImage_SpecimenCreatedWithNoImage()
     {
@@ -204,6 +227,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen – Geographic Location
 
+    /// <summary>
+    /// Tests Create Specimen – Nominatim Returns Full Address – Creates Complete Geo Chain.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_NominatimReturnsFullAddress_CreatesCompleteGeoChain()
     {
@@ -233,6 +259,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         locations.Should().ContainSingle(l => l.Level == GeographicLevel.Street && l.Name == "Marienplatz");
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Nominatim Returns Only Country – Creates Only Country Geo Entry.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_NominatimReturnsOnlyCountry_CreatesOnlyCountryGeoEntry()
     {
@@ -254,6 +283,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         locations.Single().Name.Should().Be("DE");
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Specimen Geo Guid Points To Most Specific Level.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_SpecimenGeoGuidPointsToMostSpecificLevel()
     {
@@ -274,6 +306,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         specimen!.GeographicLocationGuid.Should().Be(cityEntry.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Same Location Submitted Twice – Reuses Existing Geo Entities.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_SameLocationSubmittedTwice_ReusesExistingGeoEntities()
     {
@@ -299,6 +334,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen – Coordinates
 
+    /// <summary>
+    /// Tests Create Specimen – Stores Latitude And Longitude On Specimen.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_StoresLatitudeAndLongitudeOnSpecimen()
     {
@@ -322,6 +360,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen – Status
 
+    /// <summary>
+    /// Tests Create Specimen – With Approved Species – Specimen Status Is Active.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithApprovedSpecies_SpecimenStatusIsActive()
     {
@@ -338,6 +379,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         specimen!.Status.Should().Be(SpecimenStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – With Pending Species – Specimen Status Is Pending.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_WithPendingSpecies_SpecimenStatusIsPending()
     {
@@ -358,6 +402,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region CreateSpecimen – Error Cases
 
+    /// <summary>
+    /// Tests Create Specimen – Invalid Tag Guid – Returns No Tag With This Guid.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_InvalidTagGuid_ReturnsNoTagWithThisGuid()
     {
@@ -375,6 +422,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoTagsFound);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Invalid Species Guid – Returns No Taxonomy Found.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_InvalidSpeciesGuid_ReturnsNoTaxonomyFound()
     {
@@ -391,6 +441,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Species Guid With Non Species Rank – Returns Taxonomy Rank Is No Species.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_SpeciesGuidWithNonSpeciesRank_ReturnsTaxonomyRankIsNoSpecies()
     {
@@ -408,6 +461,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.TaxonomyRankIsNoSpecies);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Nominatim Returns Null – Returns Address Does Not Exist.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_NominatimReturnsNull_ReturnsAddressDoesNotExist()
     {
@@ -426,6 +482,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.AddressDoesNotExist);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Nominatim Returns Null Country Code – Returns Address Does Not Exist.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_NominatimReturnsNullCountryCode_ReturnsAddressDoesNotExist()
     {
@@ -447,6 +506,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.AddressDoesNotExist);
     }
 
+    /// <summary>
+    /// Tests Create Specimen – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task CreateSpecimen_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -461,6 +523,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region UpdateSpecimen
 
+    /// <summary>
+    /// Tests Update Specimen – Valid Data – Returns Ok And Updates Specimen.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_ValidData_ReturnsOkAndUpdatesSpecimen()
     {
@@ -477,8 +542,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             LatinName = "Updated latinname",
             DateOfDiscovery = new DateTime(2020, 5, 1),
             Comment = "New comment",
-            IsPublic = false,
-            Status = SpecimenStatus.Active
+            IsPublic = false
         };
 
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
@@ -491,6 +555,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         updated.IsPublic.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests Update Specimen – No Changes – Returns No Updated Data.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_NoChanges_ReturnsNoUpdatedData()
     {
@@ -507,8 +574,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             LatinName = specimen.LatinName,
             DateOfDiscovery = specimen.DateOfDiscovery,
             Comment = specimen.Comment,
-            IsPublic = specimen.IsPublic,
-            Status = specimen.Status
+            IsPublic = specimen.IsPublic
         };
 
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
@@ -517,6 +583,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
     }
 
+    /// <summary>
+    /// Tests Update Specimen – Invalid Specimen Guid – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_InvalidSpecimenGuid_ReturnsNoSpecimenFound()
     {
@@ -529,8 +598,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             LatinName = "X",
             DateOfDiscovery = DateTime.UtcNow,
             Comment = null,
-            IsPublic = true,
-            Status = SpecimenStatus.Active
+            IsPublic = true
         };
 
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}", request);
@@ -539,6 +607,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Update Specimen – As User Not Owner – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_AsUserNotOwner_ReturnsForbidden()
     {
@@ -556,8 +627,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             LatinName = "X",
             DateOfDiscovery = DateTime.UtcNow,
             Comment = null,
-            IsPublic = true,
-            Status = SpecimenStatus.Active
+            IsPublic = true
         };
 
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
@@ -566,6 +636,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update Specimen – As Admin – Can Update Other Users Specimen.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_AsAdmin_CanUpdateOtherUsersSpecimen()
     {
@@ -583,8 +656,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             LatinName = specimen.LatinName,
             DateOfDiscovery = specimen.DateOfDiscovery,
             Comment = "admin fix",
-            IsPublic = specimen.IsPublic,
-            Status = specimen.Status
+            IsPublic = specimen.IsPublic
         };
 
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
@@ -592,13 +664,16 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Update Specimen – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_NotAuthenticated_ReturnsUnauthorized()
     {
         var request = new UpdateSpecimenRequestDto
         {
             Name = "X", LatinName = "X", DateOfDiscovery = DateTime.UtcNow,
-            Comment = null, IsPublic = true, Status = SpecimenStatus.Active
+            Comment = null, IsPublic = true
         };
         var response = await Client.PatchAsJsonAsync(
             $"{Routings.CommonSpecimenRouting}/{Guid.CreateVersion7()}", request);
@@ -606,6 +681,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Tests Update Specimen – Specimen Is Not Active – Returns Object Is Not Active.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimen_SpecimenIsNotActive_ReturnsObjectIsNotActive()
     {
@@ -622,7 +700,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var request = new UpdateSpecimenRequestDto
         {
             Name = "Updated", LatinName = "X", DateOfDiscovery = DateTime.UtcNow,
-            Comment = null, IsPublic = true, Status = SpecimenStatus.Deleted
+            Comment = null, IsPublic = true
         };
 
         var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
@@ -635,6 +713,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region UpdateSpecimenImage
 
+    /// <summary>
+    /// Tests Update Specimen Image – With New Image – Replaces Existing Image.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_WithNewImage_ReplacesExistingImage()
     {
@@ -656,6 +737,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         images.Single().ImageBase64.Should().Be("newImage");
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – With Null Image – Deletes Existing Image.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_WithNullImage_DeletesExistingImage()
     {
@@ -676,6 +760,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         images.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – Specimen Has No Image – Adds New Image.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_SpecimenHasNoImage_AddsNewImage()
     {
@@ -697,6 +784,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         images.Single().ImageBase64.Should().Be("brandNew");
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – Same Image Data – Returns No Updated Data.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_SameImageData_ReturnsNoUpdatedData()
     {
@@ -716,6 +806,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – Invalid Specimen Guid – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_InvalidSpecimenGuid_ReturnsNoSpecimenFound()
     {
@@ -730,6 +823,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – As User Not Owner – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_AsUserNotOwner_ReturnsForbidden()
     {
@@ -750,6 +846,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -760,6 +859,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Image – Specimen Is Not Active – Returns Object Is Not Active.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenImage_SpecimenIsNotActive_ReturnsObjectIsNotActive()
     {
@@ -786,6 +888,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region UpdateSpecimenTags
 
+    /// <summary>
+    /// Tests Update Specimen Tags – Replace With Existing Tags – Updates Tag Links.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_ReplaceWithExistingTags_UpdatesTagLinks()
     {
@@ -816,6 +921,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         relations.Single().TagGuid.Should().Be(tag2.Guid);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – With New Tags To Create – Creates And Links New Tags.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_WithNewTagsToCreate_CreatesAndLinksNewTags()
     {
@@ -845,6 +953,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         relations.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – Same Tags – Returns No Updated Data.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_SameTags_ReturnsNoUpdatedData()
     {
@@ -869,6 +980,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – Remove All Tags – Removes All Tag Links.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_RemoveAllTags_RemovesAllTagLinks()
     {
@@ -891,6 +1005,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         relations.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – Invalid Specimen Guid – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_InvalidSpecimenGuid_ReturnsNoSpecimenFound()
     {
@@ -905,6 +1022,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – As User Not Owner – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_AsUserNotOwner_ReturnsForbidden()
     {
@@ -930,6 +1050,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -940,6 +1063,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Tests Update Specimen Tags – Specimen Is Not Active – Returns Object Is Not Active.
+    /// </summary>
     [Fact]
     public async Task UpdateSpecimenTags_SpecimenIsNotActive_ReturnsObjectIsNotActive()
     {
@@ -1023,6 +1149,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region GetSpecimenDetail
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Public Specimen In Dynamic Collection – Returns Detail.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_PublicSpecimenInDynamicCollection_ReturnsDetail()
     {
@@ -1045,6 +1174,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.IsPublic.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Returns All Core Fields.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_ReturnsAllCoreFields()
     {
@@ -1068,6 +1200,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.CreatedAt.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Taxonomy Path Ordered By Rank Ascending.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_TaxonomyPathOrderedByRankAscending()
     {
@@ -1094,6 +1229,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.TaxonomyPath[^1].TaxonomyGuid.Should().Be(species.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Geo Path Ordered Root To Leaf.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_GeoPathOrderedRootToLeaf()
     {
@@ -1117,6 +1255,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.GeoPath[1].Name.Should().Be("Munich");
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Own Private Specimen – Returns Detail.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_OwnPrivateSpecimen_ReturnsDetail()
     {
@@ -1133,6 +1274,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Other Users Private Specimen – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_OtherUsersPrivateSpecimen_ReturnsForbidden()
     {
@@ -1151,6 +1295,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Admin Can See Private Specimen Of Other User.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_AdminCanSeePrivateSpecimenOfOtherUser()
     {
@@ -1168,6 +1315,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Specimen Not In Dynamic Collection – Returns Specimen Not In Collection.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_SpecimenNotInDynamicCollection_ReturnsSpecimenNotInCollection()
     {
@@ -1186,6 +1336,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Static Collection – All Specimens – Always Allowed.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_StaticCollection_AllSpecimens_AlwaysAllowed()
     {
@@ -1202,6 +1355,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Static Collection – My Active – Returns Specimen Not In Collection For Wrong Status.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_StaticCollection_MyActive_ReturnsSpecimenNotInCollectionForWrongStatus()
     {
@@ -1219,6 +1375,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Static Collection – My Collection – Other User Specimen – Returns Specimen Not In Collection.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_StaticCollection_MyCollection_OtherUserSpecimen_ReturnsSpecimenNotInCollection()
     {
@@ -1237,6 +1396,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Unknown Specimen Guid – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_UnknownSpecimenGuid_ReturnsNoSpecimenFound()
     {
@@ -1254,6 +1416,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region DeleteSpecimen
 
+    /// <summary>
+    /// Tests Delete Specimen – As Owner – Soft Deletes Specimen.
+    /// </summary>
     [Fact]
     public async Task DeleteSpecimen_AsOwner_SoftDeletesSpecimen()
     {
@@ -1276,6 +1441,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         deleted.Status.Should().Be(SpecimenStatus.Deleted);
     }
 
+    /// <summary>
+    /// Tests Delete Specimen – As Admin – Can Soft Delete Any Specimen.
+    /// </summary>
     [Fact]
     public async Task DeleteSpecimen_AsAdmin_CanSoftDeleteAnySpecimen()
     {
@@ -1299,6 +1467,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         deleted.Status.Should().Be(SpecimenStatus.Deleted);
     }
 
+    /// <summary>
+    /// Tests Delete Specimen – As User On Other Users Specimen – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task DeleteSpecimen_AsUserOnOtherUsersSpecimen_ReturnsForbidden()
     {
@@ -1317,6 +1488,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Delete Specimen – Specimen Not Found – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task DeleteSpecimen_SpecimenNotFound_ReturnsNoSpecimenFound()
     {
@@ -1330,6 +1504,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Delete Specimen – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task DeleteSpecimen_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -1343,6 +1520,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region ActivateSpecimen
 
+    /// <summary>
+    /// Tests Activate Specimen – As Owner – Activates Specimen.
+    /// </summary>
     [Fact]
     public async Task ActivateSpecimen_AsOwner_ActivatesSpecimen()
     {
@@ -1366,6 +1546,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         activated.Status.Should().Be(SpecimenStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Activate Specimen – As Admin – Can Activate Any Specimen.
+    /// </summary>
     [Fact]
     public async Task ActivateSpecimen_AsAdmin_CanActivateAnySpecimen()
     {
@@ -1390,6 +1573,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         activated.Status.Should().Be(SpecimenStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Activate Specimen – As User On Other Users Specimen – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task ActivateSpecimen_AsUserOnOtherUsersSpecimen_ReturnsForbidden()
     {
@@ -1409,6 +1595,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Activate Specimen – Specimen Not Found – Returns No Specimen Found.
+    /// </summary>
     [Fact]
     public async Task ActivateSpecimen_SpecimenNotFound_ReturnsNoSpecimenFound()
     {
@@ -1422,6 +1611,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Activate Specimen – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task ActivateSpecimen_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -1435,6 +1627,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region GetSpecimenDetail – Anonymous
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Anonymous – Public Specimen – Returns Detail.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_Anonymous_PublicSpecimen_ReturnsDetail()
     {
@@ -1454,6 +1649,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.IsPublic.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Anonymous – Private Specimen – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_Anonymous_PrivateSpecimen_ReturnsForbidden()
     {
@@ -1469,6 +1667,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Anonymous – Specimen Not In Collection – Returns Specimen Not In Collection.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_Anonymous_SpecimenNotInCollection_ReturnsSpecimenNotInCollection()
     {
@@ -1485,6 +1686,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.SpecimenNotInCollection);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Anonymous – Taxonomy Path Present For Public Specimen.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_Anonymous_TaxonomyPathPresentForPublicSpecimen()
     {
@@ -1504,6 +1708,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.TaxonomyPath.Should().BeInAscendingOrder(n => n.Rank);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Logged In User – Can Access Own Private Specimen.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_LoggedInUser_CanAccessOwnPrivateSpecimen()
     {
@@ -1522,6 +1729,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result!.SpecimenGuid.Should().Be(specimen.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen Detail – Logged In User – Cannot Access Other Users Private Specimen.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenDetail_LoggedInUser_CannotAccessOtherUsersPrivateSpecimen()
     {
@@ -1544,6 +1754,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region GetSpecimenByTaxonomy
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Species Node – Returns Linked Specimens.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_SpeciesNode_ReturnsLinkedSpecimens()
     {
@@ -1561,6 +1774,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Select(s => s.SpecimenGuid).Should().Contain(specimen2.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Genus Node – Returns Specimens From All Child Species.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_GenusNode_ReturnsSpecimensFromAllChildSpecies()
     {
@@ -1580,6 +1796,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Select(s => s.SpecimenGuid).Should().Contain(specimen2.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Higher Rank Node – Returns Specimens Across Full Subtree.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_HigherRankNode_ReturnsSpecimensAcrossFullSubtree()
     {
@@ -1599,6 +1818,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Single().SpecimenGuid.Should().Be(specimen.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Only Returns Specimens From Subtree – Not From Sibling Branch.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_OnlyReturnsSpecimensFromSubtree_NotFromSiblingBranch()
     {
@@ -1620,6 +1842,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Select(s => s.SpecimenGuid).Should().NotContain(specimenDog.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Node With No Descendant Specimens – Returns Empty List.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_NodeWithNoDescendantSpecimens_ReturnsEmptyList()
     {
@@ -1632,6 +1857,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result!.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – Unknown Guid – Returns No Taxonomy Found.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_UnknownGuid_ReturnsNoTaxonomyFound()
     {
@@ -1646,6 +1874,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
     #region GetSpecimenByTaxonomy – Visibility
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – As Anonymous – Does Not Return Private Specimens.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_AsAnonymous_DoesNotReturnPrivateSpecimens()
     {
@@ -1663,6 +1894,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Select(s => s.SpecimenGuid).Should().NotContain(privateSpecimen.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – As Logged In User – Returns Own Private And Public Specimens.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_AsLoggedInUser_ReturnsOwnPrivateAndPublicSpecimens()
     {
@@ -1682,6 +1916,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Select(s => s.SpecimenGuid).Should().Contain(privateSpecimen.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – As Logged In User – Does Not Return Other Users Private Specimens.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_AsLoggedInUser_DoesNotReturnOtherUsersPrivateSpecimens()
     {
@@ -1702,6 +1939,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Select(s => s.SpecimenGuid).Should().NotContain(privateSpecimen.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Specimen By Taxonomy – As Admin – Returns All Specimens Including Private.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenByTaxonomy_AsAdmin_ReturnsAllSpecimensIncludingPrivate()
     {

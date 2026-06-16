@@ -37,10 +37,12 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
     /// </summary>
     /// <param name="dueBefore">The exclusive upper bound for the due date.</param>
     /// <param name="batchSize">The maximum number of loans to return.</param>
-    public async Task<List<LoanEntity>> GetLoansForStage1ReminderAsync(DateTime dueBefore, int batchSize)
+    public async Task<List<LoanEntity>> GetLoansForStage1ReminderAsync(DateTime dueFrom, DateTime dueBefore, int batchSize)
     {
         return await ReminderQuery()
-            .Where(l => l.Stage1ReminderSentAt == null && l.DueDate < dueBefore)
+            .Where(l => l.Stage1ReminderSentAt == null
+                        && l.DueDate >= dueFrom
+                        && l.DueDate < dueBefore)
             .Take(batchSize)
             .ToListAsync();
     }
@@ -50,10 +52,12 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
     /// </summary>
     /// <param name="dueBefore">The exclusive upper bound for the due date.</param>
     /// <param name="batchSize">The maximum number of loans to return.</param>
-    public async Task<List<LoanEntity>> GetLoansForStage2ReminderAsync(DateTime dueBefore, int batchSize)
+    public async Task<List<LoanEntity>> GetLoansForStage2ReminderAsync(DateTime dueFrom, DateTime dueBefore, int batchSize)
     {
         return await ReminderQuery()
-            .Where(l => l.Stage2ReminderSentAt == null && l.DueDate < dueBefore)
+            .Where(l => l.Stage2ReminderSentAt == null
+                        && l.DueDate >= dueFrom
+                        && l.DueDate < dueBefore)
             .Take(batchSize)
             .ToListAsync();
     }

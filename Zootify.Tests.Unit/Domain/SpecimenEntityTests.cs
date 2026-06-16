@@ -2,6 +2,9 @@ using Zootify_Backend;
 
 namespace Zootify.Tests.Unit.Domain;
 
+/// <summary>
+/// Tests for Specimen Entity.
+/// </summary>
 public class SpecimenEntityTests
 {
     private static SpecimenEntity CreateSpecimen(
@@ -26,6 +29,9 @@ public class SpecimenEntityTests
 
     #region CheckChanges
 
+    /// <summary>
+    /// Tests Check Changes – Identical Data – Returns False.
+    /// </summary>
     [Fact]
     public void CheckChanges_IdenticalData_ReturnsFalse()
     {
@@ -35,6 +41,9 @@ public class SpecimenEntityTests
         specimen.CheckChanges(same).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Name – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentName_ReturnsTrue()
     {
@@ -44,6 +53,9 @@ public class SpecimenEntityTests
         specimen.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Latin Name – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentLatinName_ReturnsTrue()
     {
@@ -53,6 +65,9 @@ public class SpecimenEntityTests
         specimen.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Date Of Discovery – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentDateOfDiscovery_ReturnsTrue()
     {
@@ -62,6 +77,9 @@ public class SpecimenEntityTests
         specimen.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Comment – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentComment_ReturnsTrue()
     {
@@ -71,6 +89,9 @@ public class SpecimenEntityTests
         specimen.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Is Public – Returns True.
+    /// </summary>
     [Fact]
     public void CheckChanges_DifferentIsPublic_ReturnsTrue()
     {
@@ -80,21 +101,29 @@ public class SpecimenEntityTests
         specimen.CheckChanges(updated).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Check Changes – Different Status Only – Returns False.
+    /// </summary>
     [Fact]
-    public void CheckChanges_DifferentStatus_ReturnsTrue()
+    public void CheckChanges_DifferentStatusOnly_ReturnsFalse()
     {
+        // Status is no longer part of the editable update payload, so a status-only difference is
+        // not treated as a change.
         var specimen = CreateSpecimen(status: SpecimenStatus.Active);
         var updated = CreateSpecimen(status: SpecimenStatus.Pending);
 
-        specimen.CheckChanges(updated).Should().BeTrue();
+        specimen.CheckChanges(updated).Should().BeFalse();
     }
 
     #endregion
 
     #region UpdateData
 
+    /// <summary>
+    /// Tests Update Data – Copies Editable Fields – But Leaves Status Unchanged.
+    /// </summary>
     [Fact]
-    public void UpdateData_CopiesAllFieldsFromNewData()
+    public void UpdateData_CopiesEditableFields_ButLeavesStatusUnchanged()
     {
         var specimen = CreateSpecimen(
             name: "Old Name",
@@ -119,10 +148,14 @@ public class SpecimenEntityTests
         specimen.LatinName.Should().Be("New latinname");
         specimen.Comment.Should().Be("new comment");
         specimen.IsPublic.Should().BeFalse();
-        specimen.Status.Should().Be(SpecimenStatus.Pending);
         specimen.DateOfDiscovery.Should().Be(new DateTime(2023, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+        // Status is not part of the update; it must stay as it was.
+        specimen.Status.Should().Be(SpecimenStatus.Active);
     }
 
+    /// <summary>
+    /// Tests Update Data – Sets Updated By User Guid.
+    /// </summary>
     [Fact]
     public void UpdateData_SetsUpdatedByUserGuid()
     {
@@ -135,6 +168,9 @@ public class SpecimenEntityTests
         specimen.UpdatedByUserGuid.Should().Be(requester);
     }
 
+    /// <summary>
+    /// Tests Update Data – Sets Updated Date.
+    /// </summary>
     [Fact]
     public void UpdateData_SetsUpdatedDate()
     {
@@ -151,6 +187,9 @@ public class SpecimenEntityTests
 
     #region CreateImage
 
+    /// <summary>
+    /// Tests Create Image – Sets Image On Specimen.
+    /// </summary>
     [Fact]
     public void CreateImage_SetsImageOnSpecimen()
     {
@@ -161,6 +200,9 @@ public class SpecimenEntityTests
         specimen.Image.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Create Image – Sets Correct Image Base64.
+    /// </summary>
     [Fact]
     public void CreateImage_SetsCorrectImageBase64()
     {
@@ -171,6 +213,9 @@ public class SpecimenEntityTests
         specimen.Image!.ImageBase64.Should().Be("myBase64String");
     }
 
+    /// <summary>
+    /// Tests Create Image – Sets Specimen Guid On Image.
+    /// </summary>
     [Fact]
     public void CreateImage_SetsSpecimenGuidOnImage()
     {
@@ -181,6 +226,9 @@ public class SpecimenEntityTests
         specimen.Image!.SpecimenGuid.Should().Be(specimen.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Image – Sets Updated By User Guid.
+    /// </summary>
     [Fact]
     public void CreateImage_SetsUpdatedByUserGuid()
     {
@@ -196,6 +244,9 @@ public class SpecimenEntityTests
 
     #region SetLocation
 
+    /// <summary>
+    /// Tests Set Location – Sets Latitude.
+    /// </summary>
     [Fact]
     public void SetLocation_SetsLatitude()
     {
@@ -206,6 +257,9 @@ public class SpecimenEntityTests
         specimen.Latitude.Should().BeApproximately(48.137, 0.001);
     }
 
+    /// <summary>
+    /// Tests Set Location – Sets Longitude.
+    /// </summary>
     [Fact]
     public void SetLocation_SetsLongitude()
     {
@@ -220,6 +274,9 @@ public class SpecimenEntityTests
 
     #region SetSpecies
 
+    /// <summary>
+    /// Tests Set Species – With Species Node – Sets Taxonomy Species Guid.
+    /// </summary>
     [Fact]
     public void SetSpecies_WithSpeciesNode_SetsTaxonomySpeciesGuid()
     {
@@ -236,6 +293,9 @@ public class SpecimenEntityTests
         specimen.TaxonomySpeciesGuid.Should().Be(speciesNode.Guid);
     }
 
+    /// <summary>
+    /// Tests Set Species – With Multiple Nodes – Picks Most Specific Rank.
+    /// </summary>
     [Fact]
     public void SetSpecies_WithMultipleNodes_PicksMostSpecificRank()
     {
@@ -248,6 +308,9 @@ public class SpecimenEntityTests
         specimen.TaxonomySpeciesGuid.Should().Be(speciesNode.Guid);
     }
 
+    /// <summary>
+    /// Tests Set Species – With Empty List – Throws Species Not Found.
+    /// </summary>
     [Fact]
     public void SetSpecies_WithEmptyList_ThrowsSpeciesNotFound()
     {

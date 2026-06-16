@@ -4,6 +4,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common User Settings Controller.
+/// </summary>
 public class CommonUserSettingsControllerTests : IntegrationTestBase
 {
     public CommonUserSettingsControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -12,6 +15,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
 
     #region GetUserSettings
 
+    /// <summary>
+    /// Tests Get User Settings – Existing Settings – Returns Current Values.
+    /// </summary>
     [Fact]
     public async Task GetUserSettings_ExistingSettings_ReturnsCurrentValues()
     {
@@ -36,6 +42,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         settings.Language.Should().Be("en");
     }
 
+    /// <summary>
+    /// Tests Get User Settings – No Existing Settings – Returns User Settings Not Found.
+    /// </summary>
     [Fact]
     public async Task GetUserSettings_NoExistingSettings_ReturnsUserSettingsNotFound()
     {
@@ -48,6 +57,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.UserSettingsNotFound);
     }
 
+    /// <summary>
+    /// Tests Get User Settings – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task GetUserSettings_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -60,6 +72,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
 
     #region UpdateUserSettings
 
+    /// <summary>
+    /// Tests Update User Settings – Existing Settings – Updates Dark Mode – Returns Ok.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_ExistingSettings_UpdatesDarkMode_ReturnsOk()
     {
@@ -82,6 +97,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         settings!.DarkMode.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests Update User Settings – Existing Settings – Updates Language – Returns Ok.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_ExistingSettings_UpdatesLanguage_ReturnsOk()
     {
@@ -104,6 +122,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         settings!.Language.Should().Be("en");
     }
     
+    /// <summary>
+    /// Tests Update User Settings – Existing Settings – Updates Notification – Returns Ok.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_ExistingSettings_UpdatesNotification_ReturnsOk()
     {
@@ -126,6 +147,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         settings!.SendPushNotification.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests Update User Settings – Existing Settings – Updates Notification False – Returns Error Code.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_ExistingSettings_UpdatesNotificationFalse_ReturnsErrorCode()
     {
@@ -150,6 +174,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
     }
 
 
+    /// <summary>
+    /// Tests Update User Settings – Existing Settings – Updates All Values – Returns Ok.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_ExistingSettings_UpdatesAllValues_ReturnsOk()
     {
@@ -175,6 +202,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         settings.SendPushNotification.Should().BeTrue();
     }
     
+    /// <summary>
+    /// Tests Update User Settings Language – Existing Settings – Returns Ok.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettingsLanguage_ExistingSettings_ReturnsOk()
     {
@@ -196,6 +226,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
 
     #region UpdateUserSettings – Error Cases
 
+    /// <summary>
+    /// Tests Update User Settings – No Existing Settings – Returns User Settings Not Found.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_NoExistingSettings_ReturnsUserSettingsNotFound()
     {
@@ -215,6 +248,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.UserSettingsNotFound);
     }
 
+    /// <summary>
+    /// Tests Update User Settings – Same Data Sent Twice – Returns No Updated Data.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_SameDataSentTwice_ReturnsNoUpdatedData()
     {
@@ -235,6 +271,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
     }
 
+    /// <summary>
+    /// Tests Update User Settings – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettings_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -250,6 +289,9 @@ public class CommonUserSettingsControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
     
+    /// <summary>
+    /// Tests Update User Settings Language – Language Is The Same – Returns Error.
+    /// </summary>
     [Fact]
     public async Task UpdateUserSettingsLanguage_LanguageIsTheSame_ReturnsError()
     {

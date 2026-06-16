@@ -4,12 +4,18 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common Tag Controller.
+/// </summary>
 public class CommonTagControllerTests : IntegrationTestBase
 {
     public CommonTagControllerTests(IntegrationTestFixture fixture) : base(fixture)
     {
     }
 
+    /// <summary>
+    /// Tests Get All Tags – Returns All Tags.
+    /// </summary>
     [Fact]
     public async Task GetAllTags_ReturnsAllTags()
     {
@@ -52,6 +58,9 @@ public class CommonTagControllerTests : IntegrationTestBase
 
     }
     
+    /// <summary>
+    /// Tests Get All Tags – With Filter – Returns Tags.
+    /// </summary>
     [Fact]
     public async Task GetAllTags_WithFilter_ReturnsTags()
     {
@@ -86,6 +95,9 @@ public class CommonTagControllerTests : IntegrationTestBase
         response[1].TagName.Should().Be(tagFour.Tag);
     }
     
+    /// <summary>
+    /// Tests Get All Tags – With Filter – Returns Nothing.
+    /// </summary>
     [Fact]
     public async Task GetAllTags_WithFilter_ReturnsNothing()
     {
@@ -114,6 +126,30 @@ public class CommonTagControllerTests : IntegrationTestBase
         response!.Count.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Get All Tags – Fuzzy Filter – Finds Tag Despite Typo.
+    /// </summary>
+    [Fact]
+    public async Task GetAllTags_FuzzyFilter_FindsTagDespiteTypo()
+    {
+        var endangered = await TagRepo.CreateTagAsync("Endangered");
+        await TagRepo.CreateTagAsync("Mammal");
+
+        var requester = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(requester);
+
+        // "endangerd" is a typo of "Endangered" → fuzzy matching still finds it.
+        var response = await Client.GetFromJsonAsync<List<GetAllTagsByFilterDto>>(
+            $"{Routings.CommonTagRouting}?filter=endangerd");
+
+        response.Should().NotBeNull();
+        response!.Should().Contain(t => t.TagGuid == endangered.Guid);
+        response.Should().NotContain(t => t.TagName == "Mammal");
+    }
+
+    /// <summary>
+    /// Tests Get All Tags – With Filter – Matches Substring Not Only Prefix.
+    /// </summary>
     [Fact]
     public async Task GetAllTags_WithFilter_MatchesSubstringNotOnlyPrefix()
     {

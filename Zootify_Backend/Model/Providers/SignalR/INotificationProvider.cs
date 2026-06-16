@@ -2,8 +2,16 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Providers.SignalR;
 
+/// <summary>
+/// Provider for sending real-time push notifications to users over SignalR.
+/// </summary>
 public interface INotificationProvider
 {
+    /// <summary>
+    /// Sends a "new taxonomy created" notification to each of the given users in their own language,
+    /// concurrently and with per-user failure isolation.
+    /// </summary>
+    /// <param name="adminsAndModerators">The recipients to notify.</param>
     Task SendNotificationAsync(List<UserEntity> adminsAndModerators);
 
     /// <summary>

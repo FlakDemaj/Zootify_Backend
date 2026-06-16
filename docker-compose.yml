@@ -1,0 +1,24 @@
+# Containerisierte Zootify-API, die sich mit der (externen) Uni-Datenbank verbindet.
+#
+# Die gesamte Konfiguration (Connection-String zur Uni-DB, JWT-Key, Brevo-Key) kommt aus der `.env`-Datei
+# im Repo-Root. Diese wird per `env_file` als Umgebungsvariablen in den Container gereicht – es gibt also
+# weder Secrets in dieser Datei noch einen eigenen SQL-Server-Container.
+#
+# Vor dem ersten Start: `cp .env.example .env` und Werte eintragen.
+# Start: docker compose up --build
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zootify-api
+    env_file:
+      - .env
+    environment:
+      # Development aktiviert Swagger; die Konfiguration selbst kommt aus der .env (Umgebungsvariablen).
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+    ports:
+      - "5138:8080"
+    restart: on-failure

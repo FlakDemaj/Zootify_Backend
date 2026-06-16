@@ -4,6 +4,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Auth;
 
+/// <summary>
+/// Tests for Auth Controller.
+/// </summary>
 public class AuthControllerTests : IntegrationTestBase
 {
     public AuthControllerTests(IntegrationTestFixture fixture) : base(fixture) { }
@@ -457,12 +460,11 @@ public class AuthControllerTests : IntegrationTestBase
     }
 
     /// <summary>
-    /// Verifies that requesting a new registration email for an already active user returns 500
-    /// with the <see cref="ErrorCode.DatabaseError"/> error code.
-    /// An active user has no pending registration token, causing the DB operation to fail.
+    /// Verifies that requesting a new registration email for an already active user returns 400
+    /// with the <see cref="ErrorCode.UserAlreadyActive"/> error code (a client error, not a 500).
     /// </summary>
     [Fact]
-    public async Task SendNewRegistrationEmail_ActiveUser_Returns500WithDatabaseError()
+    public async Task SendNewRegistrationEmail_ActiveUser_Returns400WithUserAlreadyActive()
     {
         await UserRepo.CreateUserAsync("active-reg-email@test.com");
 
@@ -470,9 +472,9 @@ public class AuthControllerTests : IntegrationTestBase
 
         var response = await Client.PostAsJsonAsync($"{Routings.SystemAuthRouting}/new-registration-email", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var error = await ReadErrorAsync(response);
-        error.ErrorCode.Should().Be((int)ErrorCode.DatabaseError);
+        error.ErrorCode.Should().Be((int)ErrorCode.UserAlreadyActive);
     }
 
     #endregion

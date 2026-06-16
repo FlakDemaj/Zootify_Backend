@@ -16,17 +16,39 @@ public class CommonUserSettingsService : ICommonUserSettingsService
 {
     private readonly IUserSettingsRepository _userSettingsRepository;
 
+    private readonly IUserRepository _userRepository;
+
     private readonly IMapper _mapper;
 
     /// <summary>
     /// Initializes a new <see cref="CommonUserSettingsService"/> with its required dependencies.
     /// </summary>
     /// <param name="userSettingsRepository">Repository for user settings persistence operations.</param>
+    /// <param name="userRepository">Repository used to verify the requesting user is active.</param>
     /// <param name="mapper">AutoMapper instance for object mapping.</param>
-    public CommonUserSettingsService(IUserSettingsRepository userSettingsRepository, IMapper mapper)
+    public CommonUserSettingsService(
+        IUserSettingsRepository userSettingsRepository,
+        IUserRepository userRepository,
+        IMapper mapper)
     {
         _userSettingsRepository = userSettingsRepository;
+        _userRepository = userRepository;
         _mapper = mapper;
+    }
+
+    /// <summary>
+    /// Throws <see cref="ErrorCode.ObjectIsNotActive"/> if the authenticated user is not active, so that
+    /// blocked or deleted users cannot change their settings.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the requesting user.</param>
+    /// <exception cref="ZootifyException">Thrown when the requesting user is not active.</exception>
+    private async Task EnsureRequesterIsActiveAsync(IAuthentication authentication)
+    {
+        var user = await _userRepository.GetActiveUserByGuid(authentication.UserGuid);
+        if (user == null)
+        {
+            throw new ZootifyException(ErrorCode.ObjectIsNotActive);
+        }
     }
 
     /// <summary>
@@ -61,6 +83,8 @@ public class CommonUserSettingsService : ICommonUserSettingsService
         IAuthentication authentication,
         UpdateUserSettingsRequestDto requestDto)
     {
+        await EnsureRequesterIsActiveAsync(authentication);
+
         var settings = await _userSettingsRepository
             .GetByUserGuidAsync(authentication.UserGuid);
 
@@ -101,6 +125,8 @@ public class CommonUserSettingsService : ICommonUserSettingsService
     /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     public async Task UpdateUserSettingsLanguageAsync(IAuthentication authentication, UpdateUserSettingsLanguageRequestDto requestDto)
     {
+        await EnsureRequesterIsActiveAsync(authentication);
+
         var settings = await _userSettingsRepository
             .GetByUserGuidAsync(authentication.UserGuid);
 

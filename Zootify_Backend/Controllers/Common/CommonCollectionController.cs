@@ -118,7 +118,7 @@ public class CommonCollectionController : BaseRestController
     /// <param name="collectionGuid">The GUID of the collection to add the specimen to.</param>
     /// <param name="specimenGuid">The GUID of the specimen to add.</param>
     [HttpPost("{collectionGuid}/specimen/{specimenGuid}")]
-    public async Task<IActionResult> AddSpecimenToCollection(Guid collectionGuid, Guid specimenGuid)
+    public async Task<IActionResult> AddSpecimenToCollectionAsync(Guid collectionGuid, Guid specimenGuid)
     {
         await _commonCollectionService.AddSpecimenToCollectionAsync(Authentication,collectionGuid, specimenGuid);
         return Ok();
@@ -130,7 +130,7 @@ public class CommonCollectionController : BaseRestController
     /// <param name="collectionGuid">The GUID of the collection to remove the specimen from.</param>
     /// <param name="specimenGuid">The GUID of the specimen to remove.</param>
     [HttpDelete("{collectionGuid}/specimen/{specimenGuid}")]
-    public async Task<IActionResult> RemoveSpecimenFromCollection(Guid collectionGuid, Guid specimenGuid)
+    public async Task<IActionResult> RemoveSpecimenFromCollectionAsync(Guid collectionGuid, Guid specimenGuid)
     {
         await _commonCollectionService.RemoveSpecimenFromCollectionAsync(Authentication, collectionGuid, specimenGuid);
         return Ok();

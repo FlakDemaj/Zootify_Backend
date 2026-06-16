@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common Taxonomy Controller.
+/// </summary>
 public class CommonTaxonomyControllerTests : IntegrationTestBase
 {
     public CommonTaxonomyControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -13,57 +16,60 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
     #region GetTaxonomyNodes
 
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – Returns Only Species.
+    /// </summary>
     [Fact]
-    public async Task GetTaxonomyNodes_ByRank_ReturnsMatchingNodesWithTree()
+    public async Task GetTaxonomyNodes_ReturnsOnlySpecies()
     {
         var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
         var @class = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia", TaxonomyRank.Class, parentGuid: phylum.Guid);
         var order = await SpecimenRepo.CreateTaxonomyNodeAsync("Carnivora", TaxonomyRank.Order, parentGuid: @class.Guid);
         var family = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family, parentGuid: order.Guid);
         var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus, parentGuid: family.Guid);
-        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus.Guid);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera leo", TaxonomyRank.Species, parentGuid: genus.Guid);
 
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?rank={(int)TaxonomyRank.Species}");
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            Routings.CommonTaxonomyRouting);
 
         response.Should().NotBeNull();
-        response!.Should().HaveCount(1);
-
-        var tree = response![0];
-        tree.Should().HaveCount(6);
-        tree.Should().ContainSingle(n => n.TaxonomyGuid == species.Guid && n.Rank == TaxonomyRank.Species);
-        tree.Should().ContainSingle(n => n.TaxonomyGuid == genus.Guid && n.Rank == TaxonomyRank.Genus);
-        tree.Should().ContainSingle(n => n.TaxonomyGuid == phylum.Guid && n.Rank == TaxonomyRank.Phylum);
+        // Only the species node is returned, not any of its ancestor ranks.
+        response!.Should().ContainSingle();
+        response.Single().TaxonomyGuid.Should().Be(species.Guid);
+        response.Should().NotContain(n => n.TaxonomyGuid == genus.Guid || n.TaxonomyGuid == phylum.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – Multiple Species – Returns All Flat.
+    /// </summary>
     [Fact]
-    public async Task GetTaxonomyNodes_MultipleNodesWithSameRank_ReturnsOneTreePerNode()
+    public async Task GetTaxonomyNodes_MultipleSpecies_ReturnsAllFlat()
     {
         var genus1 = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
-        var species1 = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus1.Guid);
+        var species1 = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera leo", TaxonomyRank.Species, parentGuid: genus1.Guid);
         var genus2 = await SpecimenRepo.CreateTaxonomyNodeAsync("Felis", TaxonomyRank.Genus);
-        var species2 = await SpecimenRepo.CreateTaxonomyNodeAsync("catus", TaxonomyRank.Species, parentGuid: genus2.Guid);
+        var species2 = await SpecimenRepo.CreateTaxonomyNodeAsync("Felis catus", TaxonomyRank.Species, parentGuid: genus2.Guid);
 
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?rank={(int)TaxonomyRank.Species}");
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            Routings.CommonTaxonomyRouting);
 
         response.Should().NotBeNull();
         response!.Should().HaveCount(2);
-
-        response.Should().ContainSingle(tree =>
-            tree.Any(n => n.TaxonomyGuid == species1.Guid));
-        response.Should().ContainSingle(tree =>
-            tree.Any(n => n.TaxonomyGuid == species2.Guid));
+        response.Should().Contain(n => n.TaxonomyGuid == species1.Guid);
+        response.Should().Contain(n => n.TaxonomyGuid == species2.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – With Filter – Returns Matching Species.
+    /// </summary>
     [Fact]
-    public async Task GetTaxonomyNodes_WithFilter_ReturnsMatchingNodes()
+    public async Task GetTaxonomyNodes_WithFilter_ReturnsMatchingSpecies()
     {
         var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
         await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus.Guid);
@@ -73,14 +79,63 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?filter=p&rank={(int)TaxonomyRank.Species}");
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            $"{Routings.CommonTaxonomyRouting}?filter=p");
 
         response.Should().NotBeNull();
-        response!.Should().HaveCount(1);
-        response![0].Should().ContainSingle(n => n.TaxonomyGuid == matchedSpecies.Guid);
+        response!.Should().ContainSingle();
+        response.Single().TaxonomyGuid.Should().Be(matchedSpecies.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – Filter With Space – Matches Full Binomial Name.
+    /// </summary>
+    [Fact]
+    public async Task GetTaxonomyNodes_FilterWithSpace_MatchesFullBinomialName()
+    {
+        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
+        var leo = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera leo", TaxonomyRank.Species, parentGuid: genus.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera tigris", TaxonomyRank.Species, parentGuid: genus.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        // Filter has a space in the middle and a stray trailing space → still matches "Panthera leo".
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            $"{Routings.CommonTaxonomyRouting}?filter={Uri.EscapeDataString("Panthera leo ")}");
+
+        response.Should().NotBeNull();
+        // The trailing space is trimmed and the inner space kept; the exact match ranks first (fuzzy may
+        // additionally surface the sibling "Panthera tigris" because they share the genus word).
+        response!.Should().Contain(n => n.TaxonomyGuid == leo.Guid);
+        response.First().TaxonomyGuid.Should().Be(leo.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – Fuzzy Filter – Finds Species Despite Typo.
+    /// </summary>
+    [Fact]
+    public async Task GetTaxonomyNodes_FuzzyFilter_FindsSpeciesDespiteTypo()
+    {
+        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
+        var leo = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera leo", TaxonomyRank.Species, parentGuid: genus.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Carabus coriaceus", TaxonomyRank.Species, parentGuid: genus.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        // "leoo" is a typo of "leo" → fuzzy matching still finds "Panthera leo".
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            $"{Routings.CommonTaxonomyRouting}?filter={Uri.EscapeDataString("Panthera leoo")}");
+
+        response.Should().NotBeNull();
+        response!.Should().Contain(n => n.TaxonomyGuid == leo.Guid);
+        response.Should().NotContain(n => n.Name == "Carabus coriaceus");
+    }
+
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – With Filter – Returns Nothing.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyNodes_WithFilter_ReturnsNothing()
     {
@@ -90,39 +145,41 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?filter=xyz&rank={(int)TaxonomyRank.Species}");
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            $"{Routings.CommonTaxonomyRouting}?filter=xyz");
 
         response.Should().NotBeNull();
         response!.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – Are Ordered By Name Ascending.
+    /// </summary>
     [Fact]
-    public async Task GetTaxonomyNodes_TreeIsOrderedByRankAscending()
+    public async Task GetTaxonomyNodes_AreOrderedByNameAscending()
     {
-        var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
-        var @class = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia", TaxonomyRank.Class, parentGuid: phylum.Guid);
-        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("sapiens", TaxonomyRank.Species, parentGuid: @class.Guid);
+        var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera tigris", TaxonomyRank.Species, parentGuid: genus.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera leo", TaxonomyRank.Species, parentGuid: genus.Guid);
 
         var user = await UserRepo.CreateUserAsync("test@test.de");
         AuthenticateAs(user);
 
-        var response = await Client.GetFromJsonAsync<List<List<GetAllTaxonomyNodesByFilterDto>>>(
-            $"{Routings.CommonTaxonomyRouting}?rank={(int)TaxonomyRank.Species}");
+        var response = await Client.GetFromJsonAsync<List<GetSpeciesForCreationDto>>(
+            Routings.CommonTaxonomyRouting);
 
         response.Should().NotBeNull();
-        var tree = response![0];
-
-        tree.Should().BeInAscendingOrder(n => n.Rank);
-        tree[0].TaxonomyGuid.Should().Be(phylum.Guid);
-        tree[^1].TaxonomyGuid.Should().Be(species.Guid);
+        response!.Should().BeInAscendingOrder(n => n.Name);
+        response.Select(n => n.Name).Should().ContainInOrder("Panthera leo", "Panthera tigris");
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Nodes – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyNodes_NotAuthenticated_ReturnsUnauthorized()
     {
-        var response = await Client.GetAsync(
-            $"{Routings.CommonTaxonomyRouting}?rank={(int)TaxonomyRank.Species}");
+        var response = await Client.GetAsync(Routings.CommonTaxonomyRouting);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -131,6 +188,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
     #region CreateTaxonomyNode
 
+    /// <summary>
+    /// Tests Create Taxonomy Node – With No Parent – Creates Phylum Node.
+    /// </summary>
     [Fact]
     public async Task CreateTaxonomyNode_WithNoParent_CreatesPhylumNode()
     {
@@ -158,6 +218,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         node.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Taxonomy Node – With Phylum Parent – Creates Class Node.
+    /// </summary>
     [Fact]
     public async Task CreateTaxonomyNode_WithPhylumParent_CreatesClassNode()
     {
@@ -188,6 +251,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         node.CreatedByUserGuid.Should().Be(user.Guid);
     }
 
+    /// <summary>
+    /// Tests Create Taxonomy Node – Multiple Nodes In Single Request – Creates Chained Nodes.
+    /// </summary>
     [Fact]
     public async Task CreateTaxonomyNode_MultipleNodesInSingleRequest_CreatesChainedNodes()
     {
@@ -240,6 +306,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         species.ParentGuid.Should().Be(result[4].CreatedObjectGuid);
     }
 
+    /// <summary>
+    /// Tests Create Taxonomy Node – With Invalid Parent Guid – Returns No Taxonomy Found.
+    /// </summary>
     [Fact]
     public async Task CreateTaxonomyNode_WithInvalidParentGuid_ReturnsNoTaxonomyFound()
     {
@@ -258,6 +327,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoTaxonomyFound);
     }
 
+    /// <summary>
+    /// Tests Create Taxonomy Node – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task CreateTaxonomyNode_NotAuthenticated_ReturnsUnauthorized()
     {
@@ -275,6 +347,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
 
     #region GetTaxonomyTree
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Full Chain – Returns Correct Tree Structure.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_FullChain_ReturnsCorrectTreeStructure()
     {
@@ -316,6 +391,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         level6.Children.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Multiple Roots – Returns Both Trees.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_MultipleRoots_ReturnsBothTrees()
     {
@@ -335,6 +413,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Should().ContainSingle(n => n.TaxonomyGuid == phylum2.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Roots Are Ordered By Name Ascending.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_RootsAreOrderedByNameAscending()
     {
@@ -351,6 +432,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result!.Nodes.Select(n => n.Name).Should().BeInAscendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Children Are Ordered By Name Ascending.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_ChildrenAreOrderedByNameAscending()
     {
@@ -369,6 +453,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         root.Children.Select(c => c.Name).Should().BeInAscendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Root With No Children – Returns Empty Children List.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_RootWithNoChildren_ReturnsEmptyChildrenList()
     {
@@ -384,6 +471,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Single().Children.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – No Nodes – Returns Empty Tree.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_NoNodes_ReturnsEmptyTree()
     {
@@ -397,6 +487,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filter By Name – Returns Matching Roots Only.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_FilterByName_ReturnsMatchingRootsOnly()
     {
@@ -415,6 +508,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Should().NotContain(n => n.TaxonomyGuid == arthropoda.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filter By Name – Is Case Insensitive.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_FilterByName_IsCaseInsensitive()
     {
@@ -430,6 +526,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Single().TaxonomyGuid.Should().Be(phylum.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filter By Name – No Match – Returns Empty Tree.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_FilterByName_NoMatch_ReturnsEmptyTree()
     {
@@ -445,6 +544,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         result.Nodes.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filtered Root Includes Full Subtree.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_FilteredRootIncludesFullSubtree()
     {
@@ -466,6 +568,98 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         root.Children.Single().Children.Single().TaxonomyGuid.Should().Be(carnivora.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filter Is Prefix Match – Loads Only Trees With A Starts With Match.
+    /// </summary>
+    [Fact]
+    public async Task GetTaxonomyTree_FilterIsPrefixMatch_LoadsOnlyTreesWithAStartsWithMatch()
+    {
+        // Tree 1: "Cyprinus" only contains "in" as an inner substring → the whole root must NOT be loaded.
+        var chordata = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Cyprinus", TaxonomyRank.Genus, parentGuid: chordata.Guid);
+        // Tree 2: only the "Insecta" branch starts with "In"; the "Arachnida" sibling must be pruned.
+        var arthropoda = await SpecimenRepo.CreateTaxonomyNodeAsync("Arthropoda", TaxonomyRank.Phylum);
+        var insecta = await SpecimenRepo.CreateTaxonomyNodeAsync("Insecta", TaxonomyRank.Class, parentGuid: arthropoda.Guid);
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Arachnida", TaxonomyRank.Class, parentGuid: arthropoda.Guid);
+        // Tree 3: no match at all.
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Mollusca", TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=In");
+
+        result!.TotalCount.Should().Be(1);
+        var root = result.Nodes.Single();
+        root.TaxonomyGuid.Should().Be(arthropoda.Guid);
+        // Only the Insecta branch remains; the non-matching Arachnida sibling is pruned out.
+        root.Children.Should().ContainSingle();
+        root.Children.Single().TaxonomyGuid.Should().Be(insecta.Guid);
+        result.Nodes.Should().NotContain(n => n.TaxonomyGuid == chordata.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filter Matches Word Inside Binomial Name.
+    /// </summary>
+    [Fact]
+    public async Task GetTaxonomyTree_FilterMatchesWordInsideBinomialName()
+    {
+        var chordata = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum);
+        var panthera = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus, parentGuid: chordata.Guid);
+        var leo = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera leo", TaxonomyRank.Species, parentGuid: panthera.Guid);
+        // A sibling species whose second word is not "leo" → must be pruned.
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera tigris", TaxonomyRank.Species, parentGuid: panthera.Guid);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        // "leo" is the second word of "Panthera leo" → it must match even though the name starts with "Panthera".
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=leo");
+
+        result!.TotalCount.Should().Be(1);
+        var root = result.Nodes.Single();
+        root.TaxonomyGuid.Should().Be(chordata.Guid);
+        var genus = root.Children.Single();
+        genus.TaxonomyGuid.Should().Be(panthera.Guid);
+        genus.Children.Should().ContainSingle();
+        genus.Children.Single().TaxonomyGuid.Should().Be(leo.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Filter Matches Deep Node – Prunes Non Matching Sibling Branches.
+    /// </summary>
+    [Fact]
+    public async Task GetTaxonomyTree_FilterMatchesDeepNode_PrunesNonMatchingSiblingBranches()
+    {
+        var chordata  = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata",  TaxonomyRank.Phylum);
+        var mammalia  = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class, parentGuid: chordata.Guid);
+        var carnivora = await SpecimenRepo.CreateTaxonomyNodeAsync("Carnivora", TaxonomyRank.Order, parentGuid: mammalia.Guid);
+        // A sibling class with no match anywhere in its branch: it must be pruned out.
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Aves", TaxonomyRank.Class, parentGuid: chordata.Guid);
+        // An unrelated root without any match must not be returned.
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Arthropoda", TaxonomyRank.Phylum);
+
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        // "Carniv" matches only the Order node deep in the tree; the root does not match its own name.
+        var result = await Client.GetFromJsonAsync<GetTaxonomyTreeResponseDto>(
+            $"{Routings.CommonTaxonomyTreeRouting}?filterByName=Carniv");
+
+        result!.TotalCount.Should().Be(1);
+        var root = result.Nodes.Single();
+        root.TaxonomyGuid.Should().Be(chordata.Guid);
+        // Only the branch leading to the match is kept (Mammalia → Carnivora); the Aves sibling is pruned.
+        root.Children.Should().ContainSingle();
+        root.Children.Single().TaxonomyGuid.Should().Be(mammalia.Guid);
+        root.Children.Single().Children.Single().TaxonomyGuid.Should().Be(carnivora.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Node Carries Correct Approval Status.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_NodeCarriesCorrectApprovalStatus()
     {
@@ -485,6 +679,9 @@ public class CommonTaxonomyControllerTests : IntegrationTestBase
         root.Children.Single().ApprovalStatus.Should().Be(ApprovalStatus.Pending);
     }
 
+    /// <summary>
+    /// Tests Get Taxonomy Tree – Not Authenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task GetTaxonomyTree_NotAuthenticated_ReturnsUnauthorized()
     {

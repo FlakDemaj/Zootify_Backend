@@ -5,8 +5,14 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
 
+/// <summary>
+/// AutoMapper profile defining the mappings between collection DTOs and <see cref="CollectionEntity"/>.
+/// </summary>
 public class CollectionMapper : Profile
 {
+    /// <summary>
+    /// Registers the create/update request and response mappings for collections.
+    /// </summary>
     public CollectionMapper()
     {
         CreateMap<UpdateCollectionRequestDto, CollectionEntity>(MemberList.None)

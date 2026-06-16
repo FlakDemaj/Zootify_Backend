@@ -14,6 +14,9 @@ public class BaseEntitysTests
     
     #region BaseCreationEntity
 
+    /// <summary>
+    /// Tests Set Created By – With Guid – Sets Created By User Guid And Creation Date.
+    /// </summary>
     [Fact]
     public void SetCreatedBy_WithGuid_SetsCreatedByUserGuidAndCreationDate()
     {

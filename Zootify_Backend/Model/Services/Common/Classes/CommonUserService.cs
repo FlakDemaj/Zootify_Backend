@@ -31,7 +31,8 @@ public class CommonUserService : ICommonUserService
     }
 
     /// <summary>
-    /// Soft-deletes a user account. Admins may delete any user; regular users may only delete themselves.
+    /// Soft-deletes a user account. Anyone may delete themselves; a moderator may additionally delete
+    /// regular users; an admin may delete any user.
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="userToDeleteGuid">The GUID of the user to delete.</param>
@@ -42,23 +43,42 @@ public class CommonUserService : ICommonUserService
         IAuthentication authentication,
         Guid userToDeleteGuid)
     {
-        if (authentication.Role != UserRole.Admin
-            && authentication.UserGuid != userToDeleteGuid)
+        var isSelf = authentication.UserGuid == userToDeleteGuid;
+
+        // A regular user may delete no one but themselves (decided independently of the target).
+        if (!isSelf && authentication.Role == UserRole.User)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }
-        
+
         var userToDelete = await _userRepository
-            .GetActiveUserByGuid(userToDeleteGuid);
+            .GetUserByGuidWithAuditInformationAsync(userToDeleteGuid);
 
         if (userToDelete == null)
         {
             throw new ZootifyException(ErrorCode.NoUserFound);
         }
-        
+
+        // A moderator may only delete strictly-lower roles (i.e. regular users); an admin may delete
+        // anyone. This role rule is evaluated before the active-state check so a moderator targeting a
+        // peer/admin is consistently forbidden.
+        if (!isSelf
+            && authentication.Role == UserRole.Moderator
+            && userToDelete.Role >= UserRole.Moderator)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+
+        // Only an active user can be deleted; an already-deleted (or otherwise inactive) account is
+        // treated as not found.
+        if (userToDelete.Status != UserStatus.Active)
+        {
+            throw new ZootifyException(ErrorCode.NoUserFound);
+        }
+
         userToDelete.Status = UserStatus.Deleted;
         userToDelete.SetDeletedBy(authentication.UserGuid);
-        
+
         await _userRepository.UpdateAsync(userToDelete);
     }
     
@@ -67,25 +87,26 @@ public class CommonUserService : ICommonUserService
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting user.</param>
     /// <param name="updateOwnUserRequestDto">The new profile data to apply.</param>
-    /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the requesting user is not active.</exception>
     /// <exception cref="ZootifyException">Thrown when no changes are detected.</exception>
     [Transaction(ReadOnly = false)]
     public async Task UpdateOwnUserAsync(
         IAuthentication authentication,
         UpdateOwnUserRequestDto updateOwnUserRequestDto)
     {
+        // The object must be active to be updated; a non-active (blocked/deleted) caller is rejected.
         var requester =  await _userRepository
             .GetActiveUserByGuid(authentication.UserGuid);
 
         if (requester == null)
         {
-            throw new ZootifyException(ErrorCode.NoUserFound);
+            throw new ZootifyException(ErrorCode.ObjectIsNotActive);
         }
-        
+
         HelperMethods.CheckEmail(updateOwnUserRequestDto.Email);
 
         var mappedUser = _mapper.Map<UserEntity>(updateOwnUserRequestDto);
-        mappedUser.Status = requester.Status;
+        mappedUser.Role = requester.Role;
 
         mappedUser.FormatEmail();
 

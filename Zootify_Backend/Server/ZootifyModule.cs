@@ -24,6 +24,10 @@ public class ZootifyModule : Module
         builder.RegisterType<TransactionInterceptor>()
             .InstancePerLifetimeScope();
 
+        builder.RegisterType<PostCommitQueue>()
+            .As<IPostCommitQueue>()
+            .InstancePerLifetimeScope();
+
         builder.LoadServicesAndRepositories(ThisAssembly);
 
         LoadProviders(builder);

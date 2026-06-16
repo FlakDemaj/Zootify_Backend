@@ -3,12 +3,18 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common Specimen Image Controller.
+/// </summary>
 public class CommonSpecimenImageControllerTests : IntegrationTestBase
 {
     public CommonSpecimenImageControllerTests(IntegrationTestFixture fixture) : base(fixture)
     {
     }
 
+    /// <summary>
+    /// Tests Get Specimen Image – With Anonym User – Return Image.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenImage_WithAnonymUser_ReturnImage()
     {
@@ -29,6 +35,9 @@ public class CommonSpecimenImageControllerTests : IntegrationTestBase
         content!.Base64.Should().Be("Image");
     }
 
+    /// <summary>
+    /// Tests Get Specimen Image – With Authenticated User – Return Image.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenImage_WithAuthenticatedUser_ReturnImage()
     {
@@ -51,6 +60,9 @@ public class CommonSpecimenImageControllerTests : IntegrationTestBase
         content!.Base64.Should().Be("Image");
     }
 
+    /// <summary>
+    /// Tests Get Specimen Image – With Invalid Guid – Returns Not Found.
+    /// </summary>
     [Fact]
     public async Task GetSpecimenImage_WithInvalidGuid_ReturnsNotFound()
     {

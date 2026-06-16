@@ -64,7 +64,8 @@ public class AdminModeratorUserService : IAdminModeratorUserService
     }
 
     /// <summary>
-    /// Updates the data of an existing user. Only Admins may perform this action and cannot update themselves.
+    /// Updates the data of an existing user. Admins and Moderators may perform this action (a Moderator
+    /// may not edit other Moderators or Admins), and no caller may update themselves.
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting admin.</param>
     /// <param name="userToUpdateGuid">The GUID of the user to update.</param>
@@ -97,9 +98,16 @@ public class AdminModeratorUserService : IAdminModeratorUserService
         {
             throw new ZootifyException(ErrorCode.NoUserFound);
         }
-        
+
+        // The object must be active to be updated; a blocked user must be activated first.
+        if (oldUser.Status != UserStatus.Active)
+        {
+            throw new ZootifyException(ErrorCode.ObjectIsNotActive);
+        }
+
+        // A moderator may only edit strictly-lower roles (regular users); an admin may edit anyone.
         if (authentication.Role <= oldUser.Role
-            && authentication.Role == UserRole.Moderator)
+            && authentication.Role != UserRole.Admin)
         {
             throw new ZootifyException(ErrorCode.Forbidden);
         }
@@ -117,27 +125,63 @@ public class AdminModeratorUserService : IAdminModeratorUserService
     }
 
     /// <summary>
-    /// Re-activates a previously deleted user account.
+    /// Re-activates a user account that is currently blocked or deleted, setting it back to active.
     /// </summary>
     /// <param name="authentication">The authentication context of the requesting admin.</param>
-    /// <param name="userToActivateGuid">The GUID of the deleted user to activate.</param>
+    /// <param name="userToActivateGuid">The GUID of the blocked or deleted user to activate.</param>
     /// <exception cref="ZootifyException">Thrown when no user with the given GUID exists.</exception>
+    /// <exception cref="ZootifyException">Thrown when the user is already active.</exception>
     [Transaction(ReadOnly = false)]
     public async Task ActivateUserAsync(
         IAuthentication authentication,
         Guid userToActivateGuid)
     {
-        var userToActivate = await _userRepository.GetDeletedUserByGuid(userToActivateGuid);
+        var userToActivate = await _userRepository.GetUserByGuidWithAuditInformationAsync(userToActivateGuid);
 
         if (userToActivate == null)
         {
             throw new ZootifyException(ErrorCode.NoUserFound);
         }
 
-        userToActivate.Status = UserStatus.Active;
+        if (userToActivate.Status == UserStatus.Active)
+        {
+            throw new ZootifyException(ErrorCode.UserAlreadyActive);
+        }
+
+        userToActivate.ActivateUser();
+        // Clears the soft-deletion stamp; harmless when the user was only blocked.
         userToActivate.RemoveDeletion();
         userToActivate.SetUpdatedBy(authentication.UserGuid);
 
         await _userRepository.UpdateAsync(userToActivate);
+    }
+
+    /// <summary>
+    /// Blocks an active user account, setting its status to blocked. A user cannot block themselves.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the requesting admin.</param>
+    /// <param name="userToBlockGuid">The GUID of the active user to block.</param>
+    /// <exception cref="ZootifyException">Thrown when the caller tries to block themselves.</exception>
+    /// <exception cref="ZootifyException">Thrown when no active user with the given GUID exists.</exception>
+    [Transaction(ReadOnly = false)]
+    public async Task BlockUserAsync(
+        IAuthentication authentication,
+        Guid userToBlockGuid)
+    {
+        if (authentication.UserGuid == userToBlockGuid)
+        {
+            throw new ZootifyException(ErrorCode.Forbidden);
+        }
+
+        var userToBlock = await _userRepository.GetActiveUserByGuid(userToBlockGuid);
+
+        if (userToBlock == null)
+        {
+            throw new ZootifyException(ErrorCode.NoUserFound);
+        }
+
+        userToBlock.BlockUser(authentication.UserGuid);
+
+        await _userRepository.UpdateAsync(userToBlock);
     }
 }

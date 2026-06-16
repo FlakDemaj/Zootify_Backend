@@ -28,18 +28,40 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
     /// </summary>
     /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
     /// <param name="filterByName">Optional name fragment to filter collections by.</param>
-    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <param name="paging">Paging and sorting parameters (used for ordering).</param>
+    /// <param name="skip">The number of matching collections to skip.</param>
+    /// <param name="take">The maximum number of collections to return.</param>
     /// <returns>A list of matching <see cref="CollectionEntity"/> instances.</returns>
     public async Task<List<CollectionEntity>> GetAllCollectionsByNameFilterAsync(
         IAuthentication? authentication,
         string? filterByName,
-        BaseSortAndPagingDto paging)
+        BaseSortAndPagingDto paging,
+        int skip,
+        int take)
     {
-        var query = Context.GetTrackingSet<CollectionEntity>();
+        // Include the specimen-collection links so the mapper can project the specimen count.
+        IQueryable<CollectionEntity> query = Context.GetTrackingSet<CollectionEntity>()
+            .Include(c => c.Collection);
 
         query = AddFilter(query, authentication, filterByName, paging);
 
-        return await query.ToListAsync();
+        return await query.Skip(skip).Take(take).ToListAsync();
+    }
+
+    /// <summary>
+    /// Counts the collections visible to the caller that match the optional name filter (ignoring paging).
+    /// </summary>
+    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
+    /// <param name="filterByName">Optional name fragment to filter collections by.</param>
+    /// <returns>The number of matching collections.</returns>
+    public async Task<int> CountCollectionsByNameFilterAsync(
+        IAuthentication? authentication,
+        string? filterByName)
+    {
+        var query = ApplyVisibilityAndNameFilter(
+            Context.GetTrackingSet<CollectionEntity>(), authentication, filterByName);
+
+        return await query.CountAsync();
     }
 
     /// <summary>
@@ -96,6 +118,24 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
         string? filterByName,
         BaseSortAndPagingDto paging)
     {
+        query = ApplyVisibilityAndNameFilter(query, authentication, filterByName);
+
+        return ApplyOrderBy(query, paging.SortBy, paging.SortDirection);
+    }
+
+    /// <summary>
+    /// Applies authentication-based visibility rules and the optional name filter to the query
+    /// (without ordering or paging), so it can be shared by the list and count queries.
+    /// </summary>
+    /// <param name="query">The base collection queryable to filter.</param>
+    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
+    /// <param name="filterByName">Optional name fragment to filter collections by.</param>
+    /// <returns>The filtered queryable.</returns>
+    private static IQueryable<CollectionEntity> ApplyVisibilityAndNameFilter(
+        IQueryable<CollectionEntity> query,
+        IAuthentication? authentication,
+        string? filterByName)
+    {
         if (authentication == null)
         {
             query = query.Where(c => !c.IsPrivate && c.Status == CollectionStatus.Active);
@@ -112,7 +152,7 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
             query = query.Where(c => c.Name.Contains(filterByName));
         }
 
-        return ApplyOrderBy(query, paging.SortBy, paging.SortDirection);
+        return query;
     }
 
     /// <summary>

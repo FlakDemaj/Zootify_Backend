@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Jobs;
 
+/// <summary>
+/// Tests for Specimen Purge Service.
+/// </summary>
 public class SpecimenPurgeServiceTests : IntegrationTestBase
 {
     private static readonly DateTime OldEnough = DateTime.UtcNow.AddYears(-4);
@@ -21,6 +24,9 @@ public class SpecimenPurgeServiceTests : IntegrationTestBase
         return (species, location);
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted Specimen Beyond Retention – Is Hard Deleted.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedSpecimenBeyondRetention_IsHardDeleted()
     {
@@ -38,6 +44,9 @@ public class SpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Deleted Specimen Within Retention – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_DeletedSpecimenWithinRetention_IsNotPurged()
     {
@@ -55,6 +64,9 @@ public class SpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Active Specimen – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_ActiveSpecimen_IsNotPurged()
     {
@@ -70,6 +82,9 @@ public class SpecimenPurgeServiceTests : IntegrationTestBase
         inDb.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Purge Batch – No Deletion Date – Is Not Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_NoDeletionDate_IsNotPurged()
     {
@@ -84,6 +99,9 @@ public class SpecimenPurgeServiceTests : IntegrationTestBase
         purged.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Purge Batch – No Eligible Specimens – Returns Zero.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_NoEligibleSpecimens_ReturnsZero()
     {
@@ -93,6 +111,9 @@ public class SpecimenPurgeServiceTests : IntegrationTestBase
         purged.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests Purge Batch – Multiple Eligible – All Purged.
+    /// </summary>
     [Fact]
     public async Task PurgeBatch_MultipleEligible_AllPurged()
     {

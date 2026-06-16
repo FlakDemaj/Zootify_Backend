@@ -126,13 +126,26 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
     /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
     public async Task<byte[]> ExportCollectionAsync(IAuthentication authentication, Guid collectionGuid)
     {
-        // Reuse the existing visibility + static/dynamic-collection dispatch; a single large page
-        // returns all visible specimens.
-        var paging = new BaseSortAndPagingDto { Page = 1, PageSize = int.MaxValue };
-        var collection = await _commonCollectionService.GetAllSpecimensInCollectionAsync(
-            authentication, collectionGuid, null, paging);
+        // Reuse the existing visibility + static/dynamic-collection dispatch, paging through all
+        // visible specimens (page size is capped, so a single request can no longer fetch everything).
+        var guids = new List<Guid>();
+        var page = 1;
+        while (true)
+        {
+            var paging = new BaseSortAndPagingDto { Page = page, PageSize = BaseSortAndPagingDto.MaxPageSize };
+            var collection = await _commonCollectionService.GetAllSpecimensInCollectionAsync(
+                authentication, collectionGuid, null, paging);
 
-        var guids = collection.Specimens.Select(s => s.SpecimenGuid).ToList();
+            guids.AddRange(collection.Specimens.Select(s => s.SpecimenGuid));
+
+            if (collection.Specimens.Count == 0 || guids.Count >= collection.TotalCount)
+            {
+                break;
+            }
+
+            page++;
+        }
+
         var entities = await _specimenRepository.GetSpecimensByGuidsWithSpeciesAsync(guids);
 
         var rows = entities.Select(ToExportRow).ToList();
@@ -143,6 +156,11 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
     /// Creates a single specimen via the standard create pipeline in its own DI scope (and DbContext),
     /// so a failure in one row cannot affect the others.
     /// </summary>
+    /// <param name="authentication">The authentication context of the importing user.</param>
+    /// <param name="row">The parsed import row to create a specimen from.</param>
+    /// <param name="speciesGuid">The GUID of the resolved taxonomy species.</param>
+    /// <param name="speciesLatinName">The matched species' latin name, used as a fallback when the row has none.</param>
+    /// <param name="tagsByName">Map of existing tag names to their GUIDs, used to link existing tags.</param>
     private async Task CreateSpecimenInIsolatedScopeAsync(
         IAuthentication authentication,
         ImportSpecimenRowDto row,
@@ -157,7 +175,7 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
             Name = row.Name,
             // The Latin Name column is optional in the import template, but a specimen always requires
             // one, so fall back to the matched species' latin name when the row leaves it empty.
-            LatinName = string.IsNullOrWhiteSpace(row.LatinName) ? speciesLatinName : row.LatinName,
+            LatinName = string.IsNullOrWhiteSpace(row.LatinName) ? speciesLatinName : row.LatinName!,
             Comment = row.Comment,
             Location = new GeoDto { Latitude = row.Latitude, Longitude = row.Longitude },
             DateOfDiscovery = row.DateOfDiscovery,
@@ -178,6 +196,9 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
     /// <summary>
     /// Splits a comma-separated tag list into existing tag GUIDs (linked) and new tag names (created).
     /// </summary>
+    /// <param name="tagsCsv">The comma-separated tag names from the import row, or <c>null</c>.</param>
+    /// <param name="tagsByName">Map of existing tag names to their GUIDs.</param>
+    /// <returns>A tuple of existing tag GUIDs to link and new tag names to create.</returns>
     private static (List<Guid> Existing, List<string> ToCreate) ResolveTags(
         string? tagsCsv,
         IReadOnlyDictionary<string, Guid> tagsByName)
@@ -209,6 +230,8 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
     /// Maps a specimen entity to an export row using the species node's name as the latin species name
     /// and a comma-separated list of its tag names.
     /// </summary>
+    /// <param name="specimen">The specimen entity (with species and tags loaded) to map.</param>
+    /// <returns>The export row representing the specimen.</returns>
     private static ImportSpecimenRowDto ToExportRow(SpecimenEntity specimen) => new()
     {
         RowNumber = 0,

@@ -3,8 +3,8 @@ using System.Resources;
 using AutoMapper;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
-using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Auth;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -85,31 +85,120 @@ public class CommonCollectionService : ICommonCollectionService
         string? filterByName,
         BaseSortAndPagingDto paging)
     {
-        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
-            await _collectionRepository.GetAllCollectionsByNameFilterAsync(
-                authentication, filterByName, paging));
-
         var statics = await BuildStaticCollectionsAsync(authentication);
 
+        // When a name filter is given, search is fuzzy-augmented (substring matches plus typo-tolerant
+        // near-misses), which must run in memory over the full set of visible collections.
         if (!string.IsNullOrWhiteSpace(filterByName))
         {
-            statics = statics
-                .Where(c => c.Name.Contains(filterByName, StringComparison.OrdinalIgnoreCase))
+            return await GetFuzzyFilteredCollectionsAsync(authentication, filterByName, paging, statics);
+        }
+
+        // specimenCount sort must compare static (computed) and dynamic counts in a single ordering,
+        // which cannot be expressed in the DB query, so that path materializes the full set.
+        if (paging.SortBy == "specimenCount")
+        {
+            return await GetAllCollectionsSortedBySpecimenCountAsync(
+                authentication, null, paging, statics);
+        }
+
+        // Stable order: static collections first (fixed order), then DB-ordered dynamic collections.
+        // Only the dynamic slice needed for the requested page is fetched from the database.
+        var dynamicTotal = await _collectionRepository
+            .CountCollectionsByNameFilterAsync(authentication, null);
+
+        var skip = (paging.Page - 1) * paging.PageSize;
+        var take = paging.PageSize;
+
+        var staticSlice = statics.Skip(skip).Take(take).ToList();
+        var remaining = take - staticSlice.Count;
+
+        var dynamicSlice = new List<GetCollectionResponseDto>();
+        if (remaining > 0)
+        {
+            var dynamicSkip = Math.Max(0, skip - statics.Count);
+            var dynamicEntities = await _collectionRepository.GetAllCollectionsByNameFilterAsync(
+                authentication, null, paging, dynamicSkip, remaining);
+            dynamicSlice = _mapper.Map<List<GetCollectionResponseDto>>(dynamicEntities);
+        }
+
+        return new GetAllCollectionsPagedResponseDto
+        {
+            TotalCount  = statics.Count + dynamicTotal,
+            Collections = staticSlice.Concat(dynamicSlice).ToList(),
+        };
+    }
+
+    /// <summary>
+    /// Returns the collections matching the given name fragment using fuzzy-augmented search: static and
+    /// all visible dynamic collections are loaded into memory, ranked by relevance (substring matches
+    /// first, then typo-tolerant near-misses), then paged. An explicit specimen-count sort overrides the
+    /// relevance order.
+    /// </summary>
+    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
+    /// <param name="filterByName">The name fragment to fuzzy-match against.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <param name="statics">The caller's static (virtual) collections to include in the match.</param>
+    /// <returns>A paged response containing the matching collections and the total match count.</returns>
+    private async Task<GetAllCollectionsPagedResponseDto> GetFuzzyFilteredCollectionsAsync(
+        IAuthentication? authentication,
+        string filterByName,
+        BaseSortAndPagingDto paging,
+        List<GetCollectionResponseDto> statics)
+    {
+        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
+            await _collectionRepository.GetAllCollectionsByNameFilterAsync(
+                authentication, null, paging, 0, int.MaxValue));
+
+        var matched = FuzzyMatch.SearchAugmented(
+            filterByName, statics.Concat(dynamic), c => c.Name);
+
+        if (paging.SortBy == "specimenCount")
+        {
+            matched = (paging.SortDirection == SortDirection.Desc
+                    ? matched.OrderByDescending(c => c.SpecimenCount)
+                    : matched.OrderBy(c => c.SpecimenCount))
                 .ToList();
         }
 
+        var paged = matched
+            .Skip((paging.Page - 1) * paging.PageSize)
+            .Take(paging.PageSize)
+            .ToList();
+
+        return new GetAllCollectionsPagedResponseDto
+        {
+            TotalCount  = matched.Count,
+            Collections = paged,
+        };
+    }
+
+    /// <summary>
+    /// Returns the combined static and dynamic collections ordered by specimen count. Because static
+    /// counts are computed outside the database, the full visible set is materialized, sorted, and
+    /// paged in memory.
+    /// </summary>
+    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
+    /// <param name="filterByName">Optional name fragment to filter collections by; <c>null</c> for no filter.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <param name="statics">The caller's static (virtual) collections to include.</param>
+    /// <returns>A paged response containing the ordered collections and the total count.</returns>
+    private async Task<GetAllCollectionsPagedResponseDto> GetAllCollectionsSortedBySpecimenCountAsync(
+        IAuthentication? authentication,
+        string? filterByName,
+        BaseSortAndPagingDto paging,
+        List<GetCollectionResponseDto> statics)
+    {
+        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
+            await _collectionRepository.GetAllCollectionsByNameFilterAsync(
+                authentication, filterByName, paging, 0, int.MaxValue));
+
         var combined = statics.Concat(dynamic).ToList();
 
-        // specimenCount sort is applied in memory because static collections are not in the DB
-        // query and therefore cannot be sorted server-side alongside the dynamic ones.
-        if (!string.IsNullOrWhiteSpace(paging.SortBy) && paging.SortBy == "specimenCount")
-        {
-            combined = paging.SortDirection == SortDirection.Desc
-                ? combined.OrderByDescending(c => c.SpecimenCount).ToList()
-                : combined.OrderBy(c => c.SpecimenCount).ToList();
-        }
+        combined = paging.SortDirection == SortDirection.Desc
+            ? combined.OrderByDescending(c => c.SpecimenCount).ToList()
+            : combined.OrderBy(c => c.SpecimenCount).ToList();
 
-        var total = combined.Count;
         var paged = combined
             .Skip((paging.Page - 1) * paging.PageSize)
             .Take(paging.PageSize)
@@ -117,7 +206,7 @@ public class CommonCollectionService : ICommonCollectionService
 
         return new GetAllCollectionsPagedResponseDto
         {
-            TotalCount  = total,
+            TotalCount  = combined.Count,
             Collections = paged,
         };
     }
@@ -175,6 +264,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// Returns a paged list of specimens from a virtual static collection such as "All Specimens" or "My Active".
     /// </summary>
     /// <param name="authentication">The authentication context required for all static collections.</param>
+    /// <param name="filterByName">Optional name fragment to filter the specimens by.</param>
     /// <param name="collectionGuid">The well-known GUID identifying the static collection.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A response containing the virtual collection metadata and its paged specimens.</returns>

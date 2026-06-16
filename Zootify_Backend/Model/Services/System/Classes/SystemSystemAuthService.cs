@@ -146,7 +146,7 @@ public class SystemSystemAuthService : ISystemAuthService
 
         if (user.Status == UserStatus.Active)
         {
-            throw new ZootifyException(ErrorCode.DatabaseError);
+            throw new ZootifyException(ErrorCode.UserAlreadyActive);
         }
 
         var registrationToken = user

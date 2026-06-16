@@ -23,6 +23,7 @@ public class AdminLoanService : IAdminLoanService
     private readonly IUserRepository _userRepository;
     private readonly IBrevoProvider _brevoProvider;
     private readonly INotificationProvider _notificationProvider;
+    private readonly IPostCommitQueue _postCommitQueue;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -33,6 +34,7 @@ public class AdminLoanService : IAdminLoanService
     /// <param name="userRepository">Repository for user lookups.</param>
     /// <param name="brevoProvider">Email provider for sending loan notification emails.</param>
     /// <param name="notificationProvider">Provider for sending in-app push notifications.</param>
+    /// <param name="postCommitQueue">Queue used to dispatch notifications only after the transaction commits.</param>
     /// <param name="mapper">AutoMapper instance for object mapping.</param>
     public AdminLoanService(
         ILoanRepository loanRepository,
@@ -40,6 +42,7 @@ public class AdminLoanService : IAdminLoanService
         IUserRepository userRepository,
         IBrevoProvider brevoProvider,
         INotificationProvider notificationProvider,
+        IPostCommitQueue postCommitQueue,
         IMapper mapper)
     {
         _loanRepository = loanRepository;
@@ -47,6 +50,7 @@ public class AdminLoanService : IAdminLoanService
         _userRepository = userRepository;
         _brevoProvider = brevoProvider;
         _notificationProvider = notificationProvider;
+        _postCommitQueue = postCommitQueue;
         _mapper = mapper;
     }
 
@@ -106,29 +110,33 @@ public class AdminLoanService : IAdminLoanService
 
         var lenderName = $"{lender.FirstName} {lender.LastName}".Trim();
 
-        // The borrower is notified by email and/or in-app push depending on their settings,
-        // each in the borrower's preferred language.
-        if (borrower.Settings.SendEmail)
+        // The borrower is notified by email and/or in-app push depending on their settings, each in
+        // the borrower's preferred language. Dispatched only after the transaction commits so the
+        // borrower is never notified about a loan that was rolled back.
+        _postCommitQueue.Enqueue(async () =>
         {
-            await _brevoProvider.SendLoanConfirmationEmail(
-                borrower.Email,
-                $"{borrower.FirstName} {borrower.LastName}".Trim(),
-                lenderName,
-                specimen.Name,
-                specimen.LatinName,
-                loan.LoanDate,
-                loan.DueDate,
-                loan.Notes,
-                borrower.Settings.Language);
-        }
+            if (borrower.Settings.SendEmail)
+            {
+                await _brevoProvider.SendLoanConfirmationEmail(
+                    borrower.Email,
+                    $"{borrower.FirstName} {borrower.LastName}".Trim(),
+                    lenderName,
+                    specimen.Name,
+                    specimen.LatinName,
+                    loan.LoanDate,
+                    loan.DueDate,
+                    loan.Notes,
+                    borrower.Settings.Language);
+            }
 
-        if (borrower.Settings.SendPushNotification)
-        {
-            await _notificationProvider.SendNotificationAsync(
-                borrower,
-                $"Eine neue Ausleihe für \"{specimen.Name}\" wurde erstellt.",
-                $"A new loan for \"{specimen.Name}\" has been created.");
-        }
+            if (borrower.Settings.SendPushNotification)
+            {
+                await _notificationProvider.SendNotificationAsync(
+                    borrower,
+                    $"Eine neue Ausleihe für \"{specimen.Name}\" wurde erstellt.",
+                    $"A new loan for \"{specimen.Name}\" has been created.");
+            }
+        });
 
         return new CreatedObjectResponseDto { CreatedObjectGuid = loan.Guid };
     }
@@ -166,28 +174,32 @@ public class AdminLoanService : IAdminLoanService
         await _loanRepository.UpdateAsync(loan);
 
         var borrowerName = $"{loan.Borrower.FirstName} {loan.Borrower.LastName}".Trim();
+        var returnDate = loan.ReturnDate.Value;
 
-        // The borrower is notified by email and/or in-app push depending on their settings,
-        // each in the borrower's preferred language.
-        if (loan.Borrower.Settings.SendEmail)
+        // The borrower is notified by email and/or in-app push depending on their settings, each in
+        // the borrower's preferred language. Dispatched only after the transaction commits.
+        _postCommitQueue.Enqueue(async () =>
         {
-            await _brevoProvider.SendLoanReturnConfirmationEmail(
-                loan.Borrower.Email,
-                borrowerName,
-                loan.Specimen.Name,
-                loan.Specimen.LatinName,
-                loan.LoanDate,
-                loan.ReturnDate.Value,
-                loan.Notes,
-                loan.Borrower.Settings.Language);
-        }
+            if (loan.Borrower.Settings.SendEmail)
+            {
+                await _brevoProvider.SendLoanReturnConfirmationEmail(
+                    loan.Borrower.Email,
+                    borrowerName,
+                    loan.Specimen.Name,
+                    loan.Specimen.LatinName,
+                    loan.LoanDate,
+                    returnDate,
+                    loan.Notes,
+                    loan.Borrower.Settings.Language);
+            }
 
-        if (loan.Borrower.Settings.SendPushNotification)
-        {
-            await _notificationProvider.SendNotificationAsync(
-                loan.Borrower,
-                $"Die Ausleihe für \"{loan.Specimen.Name}\" wurde als zurückgegeben markiert.",
-                $"The loan for \"{loan.Specimen.Name}\" has been marked as returned.");
-        }
+            if (loan.Borrower.Settings.SendPushNotification)
+            {
+                await _notificationProvider.SendNotificationAsync(
+                    loan.Borrower,
+                    $"Die Ausleihe für \"{loan.Specimen.Name}\" wurde als zurückgegeben markiert.",
+                    $"The loan for \"{loan.Specimen.Name}\" has been marked as returned.");
+            }
+        });
     }
 }

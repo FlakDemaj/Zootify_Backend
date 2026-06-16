@@ -17,11 +17,12 @@ namespace Zootify_Backend.Transaction
 
         private IDbContextTransaction? DbContextTransaction { get; set; }
 
-        private List<Func<Task>> AfterTransactionActions { get; } = [];
+        private IPostCommitQueue PostCommitQueue { get; }
 
-        public TransactionInterceptor(ZootifyDbContext context)
+        public TransactionInterceptor(ZootifyDbContext context, IPostCommitQueue postCommitQueue)
         {
             Context = context;
+            PostCommitQueue = postCommitQueue;
         }
 
         /// <summary>
@@ -140,36 +141,11 @@ namespace Zootify_Backend.Transaction
                 DbContextTransaction = null;
             }
 
-            await InvokeAfterTransactionActions();
-        }
-
-        /// <summary>
-        /// Executes any registered post-transaction actions.
-        /// </summary>
-        /// <exception cref="ZootifyException">Thrown when an unexpected error occurs.</exception>
-        private async Task InvokeAfterTransactionActions()
-        {
-            // Snapshot and clear before iterating so that actions added by other callbacks
-            // during execution are not processed in the same pass (avoids re-entrancy).
-            var actions = AfterTransactionActions.ToList();
-            AfterTransactionActions.Clear();
-
-            foreach (var action in actions)
+            // Run deferred side effects (emails, push notifications) only after a successful commit;
+            // on a read-only transaction the changes were rolled back, so nothing must be dispatched.
+            if (!isReadonly)
             {
-                try
-                {
-                    await action();
-                }
-                catch (ZootifyException e)
-                {
-                    RollbackTransaction();
-                    throw new ZootifyException(e.ErrorCode, e);
-                }
-                catch (Exception)
-                {
-                    RollbackTransaction();
-                    throw new ZootifyException(ErrorCode.DefaultErrorCode);
-                }
+                await PostCommitQueue.DrainAsync();
             }
         }
 

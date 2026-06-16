@@ -8,6 +8,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Common;
 
+/// <summary>
+/// Tests for Common Specimen Import Export Controller.
+/// </summary>
 public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
 {
     private const string ExcelContentType =
@@ -65,6 +68,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
 
     #region Import
 
+    /// <summary>
+    /// Tests Import – Valid Rows – Creates Specimens Owned By User.
+    /// </summary>
     [Fact]
     public async Task Import_ValidRows_CreatesSpecimensOwnedByUser()
     {
@@ -93,6 +99,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         created.Should().OnlyContain(s => s.CreatedByUserGuid == user.Guid);
     }
 
+    /// <summary>
+    /// Tests Import – Similar Species Name – Is Matched Fuzzily.
+    /// </summary>
     [Fact]
     public async Task Import_SimilarSpeciesName_IsMatchedFuzzily()
     {
@@ -114,6 +123,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         created.Single().TaxonomySpeciesGuid.Should().Be(species.Guid);
     }
 
+    /// <summary>
+    /// Tests Import – No Matching Species – Row Is Reported And Others Imported.
+    /// </summary>
     [Fact]
     public async Task Import_NoMatchingSpecies_RowIsReportedAndOthersImported()
     {
@@ -137,6 +149,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         result.Failures.Should().ContainSingle();
     }
 
+    /// <summary>
+    /// Tests Import – Tags – Links Existing And Creates New.
+    /// </summary>
     [Fact]
     public async Task Import_Tags_LinksExistingAndCreatesNew()
     {
@@ -179,6 +194,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         tags.Count(t => t.Tag == "Existing").Should().Be(1); // existing tag re-used, not duplicated
     }
 
+    /// <summary>
+    /// Tests Import – No File – Returns Invalid Import File.
+    /// </summary>
     [Fact]
     public async Task Import_NoFile_ReturnsInvalidImportFile()
     {
@@ -192,6 +210,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.InvalidImportFile);
     }
 
+    /// <summary>
+    /// Tests Import – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task Import_Unauthenticated_ReturnsUnauthorized()
     {
@@ -206,6 +227,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
 
     #region Export
 
+    /// <summary>
+    /// Tests Export – Returns Collection Specimens As Excel.
+    /// </summary>
     [Fact]
     public async Task Export_ReturnsCollectionSpecimensAsExcel()
     {
@@ -235,6 +259,9 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         parsed.Rows.Single().TaxonomySpeciesLatinName.Should().Be("Papilio machaon");
     }
 
+    /// <summary>
+    /// Tests Export – Non Public Specimen Of Other User – Is Excluded.
+    /// </summary>
     [Fact]
     public async Task Export_NonPublicSpecimenOfOtherUser_IsExcluded()
     {

@@ -5,6 +5,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Admin;
 
+/// <summary>
+/// Tests for Admin Loan Controller.
+/// </summary>
 public class AdminLoanControllerTests : IntegrationTestBase
 {
     public AdminLoanControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -13,6 +16,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
 
     #region GetBorrowers
 
+    /// <summary>
+    /// Tests Get Borrowers – Returns Matching Users.
+    /// </summary>
     [Fact]
     public async Task GetBorrowers_ReturnsMatchingUsers()
     {
@@ -30,6 +36,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         result.Should().AllSatisfy(u => u.FullName.Should().StartWith("Anna"));
     }
 
+    /// <summary>
+    /// Tests Get Borrowers – No Match – Returns Empty.
+    /// </summary>
     [Fact]
     public async Task GetBorrowers_NoMatch_ReturnsEmpty()
     {
@@ -44,6 +53,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         result!.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get Borrowers – Results Ordered By First Name Then Last Name.
+    /// </summary>
     [Fact]
     public async Task GetBorrowers_ResultsOrderedByFirstNameThenLastName()
     {
@@ -60,6 +72,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         result[1].FullName.Should().Be("Anna Ziegler");
     }
 
+    /// <summary>
+    /// Tests Get Borrowers – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetBorrowers_NormalUser_ReturnsForbidden()
     {
@@ -72,6 +87,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Get Borrowers – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task GetBorrowers_Unauthenticated_ReturnsUnauthorized()
     {
@@ -85,6 +103,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
 
     #region CreateLoan
 
+    /// <summary>
+    /// Tests Create Loan – Success – Returns Loan Guid.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_Success_ReturnsLoanGuid()
     {
@@ -110,6 +131,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         result!.CreatedObjectGuid.Should().NotBeEmpty();
     }
 
+    /// <summary>
+    /// Tests Create Loan – All Fields Persisted.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_AllFieldsPersisted()
     {
@@ -146,6 +170,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         loan.ReturnDate.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests Create Loan – Moderator – Success.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_Moderator_Success()
     {
@@ -168,6 +195,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Create Loan – Specimen Not Found – Returns Error.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_SpecimenNotFound_ReturnsError()
     {
@@ -188,6 +218,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoSpecimenFound);
     }
 
+    /// <summary>
+    /// Tests Create Loan – Borrower Not Found – Returns Error.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_BorrowerNotFound_ReturnsError()
     {
@@ -211,6 +244,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
+    /// <summary>
+    /// Tests Create Loan – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_NormalUser_ReturnsForbidden()
     {
@@ -228,6 +264,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Create Loan – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task CreateLoan_Unauthenticated_ReturnsUnauthorized()
     {
@@ -270,6 +309,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         return (result!.CreatedObjectGuid, admin, borrower);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Success – Sets Return Date.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_Success_SetsReturnDate()
     {
@@ -287,6 +329,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         loan.ReturnDate!.Value.Should().BeCloseTo(before, precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Return Loan – With Appended Notes – Appends To Existing Notes.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_WithAppendedNotes_AppendsToExistingNotes()
     {
@@ -302,6 +347,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         loan!.Notes.Should().Be("Original notes.\nReturned in good condition.");
     }
 
+    /// <summary>
+    /// Tests Return Loan – Without Appended Notes – Original Notes Unchanged.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_WithoutAppendedNotes_OriginalNotesUnchanged()
     {
@@ -317,6 +365,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         loan!.Notes.Should().Be("Original notes.");
     }
 
+    /// <summary>
+    /// Tests Return Loan – Moderator – Success.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_Moderator_Success()
     {
@@ -332,6 +383,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Already Returned – Returns Error.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_AlreadyReturned_ReturnsError()
     {
@@ -350,6 +404,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.LoanAlreadyReturned);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Not Found – Returns Error.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_NotFound_ReturnsError()
     {
@@ -365,6 +422,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.LoanNotFound);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Normal User – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_NormalUser_ReturnsForbidden()
     {
@@ -380,6 +440,9 @@ public class AdminLoanControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Return Loan – Unauthenticated – Returns Unauthorized.
+    /// </summary>
     [Fact]
     public async Task ReturnLoan_Unauthenticated_ReturnsUnauthorized()
     {

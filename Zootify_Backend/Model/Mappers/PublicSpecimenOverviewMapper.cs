@@ -32,8 +32,6 @@ public class PublicSpecimenOverviewMapper : Profile
                 o => o.MapFrom(s => s.Image != null ? (Guid?)s.Image.Guid : null))
             .ForMember(d => d.LocationPath,
                 o => o.MapFrom((s, _) => BuildLocationPath(s.GeographicLocation)))
-            .ForMember(d => d.City,
-                o => o.MapFrom((s, _) => ResolveCity(s.GeographicLocation)))
             .ForMember(d => d.TaxonGroup,
                 o => o.MapFrom((s, _) => ResolveTaxonGroup(s.Species)));
     }
@@ -56,27 +54,6 @@ public class PublicSpecimenOverviewMapper : Profile
 
         path.Reverse();
         return path;
-    }
-
-    /// <summary>
-    /// Returns the name of the city-level node within the location chain, or <c>null</c> if absent.
-    /// </summary>
-    /// <param name="leaf">The most specific geographic location of the specimen.</param>
-    /// <returns>The city name, or <c>null</c> when the chain has no city-level node.</returns>
-    private static string? ResolveCity(GeographicLocationEntity? leaf)
-    {
-        var current = leaf;
-        while (current != null)
-        {
-            if (current.Level == GeographicLevel.City)
-            {
-                return current.Name;
-            }
-
-            current = current.Parent;
-        }
-
-        return null;
     }
 
     /// <summary>

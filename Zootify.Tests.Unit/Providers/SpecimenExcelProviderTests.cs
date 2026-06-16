@@ -8,10 +8,16 @@ using Zootify_Backend.Model.Providers.Excel;
 
 namespace Zootify.Tests.Unit.Providers;
 
+/// <summary>
+/// Tests for Specimen Excel Provider.
+/// </summary>
 public class SpecimenExcelProviderTests
 {
     private readonly SpecimenExcelProvider _provider = new();
 
+    /// <summary>
+    /// Tests Write Then Read – Round Trips All Fields.
+    /// </summary>
     [Fact]
     public void WriteThenRead_RoundTripsAllFields()
     {
@@ -56,6 +62,9 @@ public class SpecimenExcelProviderTests
         row.RowNumber.Should().Be(2); // first data row after the header
     }
 
+    /// <summary>
+    /// Tests Read Import Rows – Template Layout – Finds Header And Skips Banner And Description.
+    /// </summary>
     [Fact]
     public void ReadImportRows_TemplateLayout_FindsHeaderAndSkipsBannerAndDescription()
     {
@@ -83,6 +92,7 @@ public class SpecimenExcelProviderTests
             worksheet.Cell(4, 2).Value = "Common Latin name of the specimen";
             worksheet.Cell(4, 3).Value = "Scientific species name (exact match)";
             worksheet.Cell(4, 4).Value = "Decimal degrees  e.g. 51.5074";
+            worksheet.Cell(4, 5).Value = "Decimal degrees  e.g. -0.1278";
             worksheet.Cell(4, 6).Value = "Format: YYYY-MM-DD";
 
             // Row 5: actual data, matching the template's example row.
@@ -118,6 +128,9 @@ public class SpecimenExcelProviderTests
         row.Tags.Should().Be("Raptor, Endangered");
     }
 
+    /// <summary>
+    /// Tests Read Import Rows – No Species Column – Uses Latin Name As Species Key.
+    /// </summary>
     [Fact]
     public void ReadImportRows_NoSpeciesColumn_UsesLatinNameAsSpeciesKey()
     {
@@ -147,6 +160,39 @@ public class SpecimenExcelProviderTests
         row.TaxonomySpeciesLatinName.Should().Be("Aquila chrysaetos");
     }
 
+    /// <summary>
+    /// Tests Read Import Rows – First Data Row With Bad Latitude – Is Reported Not Silently Skipped.
+    /// </summary>
+    [Fact]
+    public void ReadImportRows_FirstDataRowWithBadLatitude_IsReportedNotSilentlySkipped()
+    {
+        var bytes = BuildWorkbook(worksheet =>
+        {
+            worksheet.Cell(1, 1).Value = "Name";
+            worksheet.Cell(1, 2).Value = "Species";
+            worksheet.Cell(1, 3).Value = "Latitude";
+            worksheet.Cell(1, 4).Value = "Longitude";
+            worksheet.Cell(1, 5).Value = "Date of Discovery";
+
+            // First data row directly under the header has a malformed latitude but a valid longitude,
+            // so it is a real (broken) data row, not the template's description/hint row.
+            worksheet.Cell(2, 1).Value = "Golden Eagle";
+            worksheet.Cell(2, 2).Value = "Aquila chrysaetos";
+            worksheet.Cell(2, 3).Value = "not-a-number";
+            worksheet.Cell(2, 4).Value = -0.1278;
+            worksheet.Cell(2, 5).Value = new DateTime(2024, 6, 15);
+        });
+
+        using var stream = new MemoryStream(bytes);
+        var result = _provider.ReadImportRows(stream);
+
+        result.Rows.Should().BeEmpty();
+        result.Failures.Should().ContainSingle(f => f.RowNumber == 2);
+    }
+
+    /// <summary>
+    /// Tests Read Import Rows – Missing Required Fields – Are Reported As Failures.
+    /// </summary>
     [Fact]
     public void ReadImportRows_MissingRequiredFields_AreReportedAsFailures()
     {
@@ -180,6 +226,9 @@ public class SpecimenExcelProviderTests
         result.Failures.Should().ContainSingle(f => f.RowNumber == 2);
     }
 
+    /// <summary>
+    /// Tests Read Import Rows – Invalid File – Throws.
+    /// </summary>
     [Fact]
     public void ReadImportRows_InvalidFile_Throws()
     {

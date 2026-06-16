@@ -16,6 +16,9 @@ public class AdminTaxonomyControllerEmailLanguageTests : IntegrationTestBase
 {
     public AdminTaxonomyControllerEmailLanguageTests(IntegrationTestFixture fixture) : base(fixture) { }
 
+    /// <summary>
+    /// Tests Approve Taxonomy – Passes Affected User Language To Email.
+    /// </summary>
     [Theory]
     [InlineData("en")]
     [InlineData("de")]
@@ -51,6 +54,9 @@ public class AdminTaxonomyControllerEmailLanguageTests : IntegrationTestBase
             It.IsAny<string>(), It.IsAny<TaxonomyRank>(), userLanguage), Times.Once);
     }
 
+    /// <summary>
+    /// Tests Reject Taxonomy – Passes Affected User Language To Email.
+    /// </summary>
     [Theory]
     [InlineData("en")]
     [InlineData("de")]

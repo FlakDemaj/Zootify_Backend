@@ -7,6 +7,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Admin;
 
+/// <summary>
+/// Tests for Admin Moderator User Controller.
+/// </summary>
 public class AdminModeratorUserControllerTests : IntegrationTestBase
 {
     public AdminModeratorUserControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -15,6 +18,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
 
     #region GetUser
 
+    /// <summary>
+    /// Tests Get User – As Admin – Returns User.
+    /// </summary>
     [Fact]
     public async Task GetUser_AsAdmin_ReturnsUser()
     {
@@ -65,6 +71,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response.DeletedBy.Should().Be(deleter.FirstName + " " + deleter.LastName);
     }
     
+    /// <summary>
+    /// Tests Get User – As Moderator – Returns User.
+    /// </summary>
     [Fact]
     public async Task GetUser_AsModerator_ReturnsUser()
     {
@@ -115,6 +124,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response.DeletedBy.Should().Be(deleter.FirstName + " " + deleter.LastName);
     }
 
+    /// <summary>
+    /// Tests Get User – Valid Guid – Updater Is Null.
+    /// </summary>
     [Fact]
     public async Task GetUser_ValidGuid_UpdaterIsNull()
     {
@@ -159,6 +171,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response.DeletedBy.Should().Be(deleter.FirstName + " " + deleter.LastName);
     }
 
+    /// <summary>
+    /// Tests Get User – Valid Guid – Updater And Deleter Is Null.
+    /// </summary>
     [Fact]
     public async Task GetUser_ValidGuid_UpdaterAndDeleterIsNull()
     {
@@ -197,6 +212,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response.DeletedBy.Should().Be("Deleted User");
     }
 
+    /// <summary>
+    /// Tests Get User – Valid Guid – Updater Is Him Self.
+    /// </summary>
     [Fact]
     public async Task GetUser_ValidGuid_UpdaterIsHimSelf()
     {
@@ -236,6 +254,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response.DeletedBy.Should().Be("Deleted User");
     }
 
+    /// <summary>
+    /// Tests Get User – Invalid Guid – Returns No User.
+    /// </summary>
     [Fact]
     public async Task GetUser_InvalidGuid_ReturnsNoUser()
     {
@@ -254,6 +275,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
+    /// <summary>
+    /// Tests Get User – User Role – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetUser_UserRole_ReturnsForbidden()
     {
@@ -273,6 +297,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
 
     #region GetAllUsers
 
+    /// <summary>
+    /// Tests Get All Users – Valid Admin – Returns All Users.
+    /// </summary>
     [Fact]
     public async Task GetAllUsers_ValidAdmin_ReturnsAllUsers()
     {
@@ -309,6 +336,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         returnedUser2.Status.Should().Be(user2.Status);
     }
 
+    /// <summary>
+    /// Tests Get All Users – With Paging – Returns All Users.
+    /// </summary>
     [Fact]
     public async Task GetAllUsers_WithPaging_ReturnsAllUsers()
     {
@@ -354,6 +384,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response3!.Intersect(response2!).Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get All Users – With Filter – Returns Two Users.
+    /// </summary>
     [Fact]
     public async Task GetAllUsers_WithFilter_ReturnsTwoUsers()
     {
@@ -397,6 +430,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response!.Where(u => u.Guid == user3.Guid).Should().NotBeEmpty();
     }
 
+    /// <summary>
+    /// Tests Get All Users – With Sort – Returns Sorted Users.
+    /// </summary>
     [Fact]
     public async Task GetAllUsers_WithSort_ReturnsSortedUsers()
     {
@@ -445,6 +481,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response.FindIndex(u => u.Guid == requester.Guid).Should().Be(2);
     }
 
+    /// <summary>
+    /// Tests Get All Users – With Filter Sort And Paging – Returns Correct Slice.
+    /// </summary>
     [Fact]
     public async Task GetAllUsers_WithFilterSortAndPaging_ReturnsCorrectSlice()
     {
@@ -492,6 +531,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         response!.Select(u => u.Email).Should().Equal(expectedEmails);
     }
 
+    /// <summary>
+    /// Tests Get All Users – User Role – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task GetAllUsers_UserRole_ReturnsForbidden()
     {
@@ -510,6 +552,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
 
     #region UpdateUser
 
+    /// <summary>
+    /// Tests Update User – Success – All Data.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_Success_AllData()
     {
@@ -527,8 +572,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = "ChangedName",
             LastName = "ChangedLastName",
-            Role = UserRole.Admin,
-            Status = userToUpdate.Status
+            Role = UserRole.Admin
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -550,6 +594,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Update User – Success – Just First Name.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_Success_JustFirstName()
     {
@@ -567,8 +614,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = "ChangedName",
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -590,6 +636,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Update User – Success – Just Last Name.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_Success_JustLastName()
     {
@@ -607,8 +656,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = "ChangedLastName",
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -630,6 +678,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Update User – Success – Just Role.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_Success_JustRole()
     {
@@ -647,8 +698,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = UserRole.User,
-            Status = userToUpdate.Status
+            Role = UserRole.User
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -670,6 +720,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Update User – Error Code – No Changes.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_ErrorCode_NoChanges()
     {
@@ -687,8 +740,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -699,6 +751,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUpdatedData);
     }
 
+    /// <summary>
+    /// Tests Update User – No Active User – Error Code.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_NoActiveUser_ErrorCode()
     {
@@ -717,8 +772,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -729,6 +783,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
     }
 
+    /// <summary>
+    /// Tests Update User – No Permission – Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_NoPermission_Forbidden()
     {
@@ -746,8 +803,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = userToUpdate.FirstName,
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -759,6 +815,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update User – Update Own User – Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_UpdateOwnUser_Forbidden()
     {
@@ -784,6 +843,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update User – As Moderator – Can Update User.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_AsModerator_CanUpdateUser()
     {
@@ -801,8 +863,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = "ChangedByModerator",
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -816,6 +877,9 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
     }
 
+    /// <summary>
+    /// Tests Update User – As Moderator – On Admin – Returns Forbidden.
+    /// </summary>
     [Fact]
     public async Task UpdateUser_AsModerator_OnAdmin_ReturnsForbidden()
     {
@@ -833,8 +897,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         {
             FirstName = "ShouldNotApply",
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = userToUpdate.Status
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -846,75 +909,102 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
     }
 
+    /// <summary>
+    /// Tests Update User – Target Is Blocked – Returns Object Is Not Active.
+    /// </summary>
     [Fact]
-    public async Task UpdateUser_BlocksActiveUser_SetsStatusBlocked()
+    public async Task UpdateUser_TargetIsBlocked_ReturnsObjectIsNotActive()
     {
-        var requester = await UserRepo.CreateUserAsync(
-            "mod@test.de",
-            role: UserRole.Moderator);
-
+        var requester = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
         AuthenticateAs(requester);
 
         var userToUpdate = await UserRepo.CreateUserAsync(
-            "user@test.de",
-            role: UserRole.User);
+            "blocked@test.de", status: UserStatus.Blocked, role: UserRole.User);
 
         var requestDto = new UpdateUserRequestDto
         {
-            FirstName = userToUpdate.FirstName,
+            FirstName = "ChangedName",
             LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = UserStatus.Blocked
+            Role = userToUpdate.Role
         };
 
         var response = await Client.PatchAsJsonAsync(
             $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
             requestDto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var updatedUser = await GetUserFromDbByGuidAsync(userToUpdate.Guid);
-        updatedUser!.Status.Should().Be(UserStatus.Blocked);
-        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
-    }
-
-    [Fact]
-    public async Task UpdateUser_ReactivatesBlockedUser_SetsStatusActive()
-    {
-        var requester = await UserRepo.CreateUserAsync(
-            "mod@test.de",
-            role: UserRole.Moderator);
-
-        AuthenticateAs(requester);
-
-        var userToUpdate = await UserRepo.CreateUserAsync(
-            "blocked@test.de",
-            status: UserStatus.Blocked,
-            role: UserRole.User);
-
-        var requestDto = new UpdateUserRequestDto
-        {
-            FirstName = userToUpdate.FirstName,
-            LastName = userToUpdate.LastName,
-            Role = userToUpdate.Role,
-            Status = UserStatus.Active
-        };
-
-        var response = await Client.PatchAsJsonAsync(
-            $"{Routings.AdminUserRouting}/{userToUpdate.Guid}",
-            requestDto);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var updatedUser = await GetUserFromDbByGuidAsync(userToUpdate.Guid);
-        updatedUser!.Status.Should().Be(UserStatus.Active);
-        updatedUser.UpdatedByUserGuid.Should().Be(requester.Guid);
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
     }
 
     #endregion
 
-    #region ActivateUser
+    #region ActivateUser / BlockUser
 
+    /// <summary>
+    /// Tests Block User – Success – Sets Status Blocked.
+    /// </summary>
+    [Fact]
+    public async Task BlockUser_Success_SetsStatusBlocked()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var userToBlock = await UserRepo.CreateUserAsync("user@test.de", role: UserRole.User);
+
+        var response = await Client.PostAsync(
+            $"{Routings.AdminUserRouting}/{userToBlock.Guid}/block",
+            new StringContent(string.Empty));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updated = await GetUserFromDbByGuidAsync(userToBlock.Guid);
+        updated!.Status.Should().Be(UserStatus.Blocked);
+        updated.UpdatedByUserGuid.Should().Be(admin.Guid);
+    }
+
+    /// <summary>
+    /// Tests Block User – Self – Returns Forbidden.
+    /// </summary>
+    [Fact]
+    public async Task BlockUser_Self_ReturnsForbidden()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var response = await Client.PostAsync(
+            $"{Routings.AdminUserRouting}/{admin.Guid}/block",
+            new StringContent(string.Empty));
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    /// <summary>
+    /// Tests Activate User – Blocked User – Sets Status Active.
+    /// </summary>
+    [Fact]
+    public async Task ActivateUser_BlockedUser_SetsStatusActive()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var blocked = await UserRepo.CreateUserAsync(
+            "blocked@test.de", status: UserStatus.Blocked, role: UserRole.User);
+
+        var response = await Client.PostAsync(
+            $"{Routings.AdminUserRouting}/{blocked.Guid}/activate",
+            new StringContent(string.Empty));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updated = await GetUserFromDbByGuidAsync(blocked.Guid);
+        updated!.Status.Should().Be(UserStatus.Active);
+        updated.UpdatedByUserGuid.Should().Be(admin.Guid);
+    }
+
+    /// <summary>
+    /// Tests Activate User – Success.
+    /// </summary>
     [Fact]
     public async Task ActivateUser_Success()
     {
@@ -935,7 +1025,7 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
 
         var response = await Client.PostAsync(
-            $"{Routings.AdminUserRouting}/{userToActivate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToActivate.Guid}/activate",
             new StringContent(string.Empty));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -951,8 +1041,11 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             precision: TimeSpan.FromSeconds(5));
     }
 
+    /// <summary>
+    /// Tests Activate User – Already Active – Returns User Already Active.
+    /// </summary>
     [Fact]
-    public async Task ActivateUser_NoDeletedUser_ErrorCode()
+    public async Task ActivateUser_AlreadyActive_ReturnsUserAlreadyActive()
     {
         var requester = await UserRepo.CreateUserAsync(
             "test1@test.de",
@@ -966,12 +1059,12 @@ public class AdminModeratorUserControllerTests : IntegrationTestBase
             role: UserRole.Moderator);
 
         var response = await Client.PostAsync(
-            $"{Routings.AdminUserRouting}/{userToActivate.Guid}",
+            $"{Routings.AdminUserRouting}/{userToActivate.Guid}/activate",
             new StringContent(string.Empty));
 
         var error = await ReadErrorAsync(response);
 
-        error.ErrorCode.Should().Be((int)ErrorCode.NoUserFound);
+        error.ErrorCode.Should().Be((int)ErrorCode.UserAlreadyActive);
     }
 
     #endregion

@@ -7,7 +7,7 @@ using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Admin.Interfaces;
 
-namespace Zootify_Backend.Controllers.Admin;
+namespace Zootify_Backend.Controllers.AdminAndModerator;
 
 /// <summary>
 /// Exposes user management endpoints for Admin and Moderator roles.
@@ -72,15 +72,31 @@ public class AdminModeratorUserController : BaseRestController
     }
 
     /// <summary>
-    /// Re-activates a previously deleted user account.
+    /// Re-activates a user account that is currently blocked or deleted.
     /// </summary>
-    /// <param name="userGuid">The GUID of the deleted user to activate.</param>
+    /// <param name="userGuid">The GUID of the blocked or deleted user to activate.</param>
     [Authorize(Roles = Roles.Admin)]
-    [HttpPost("{userGuid:guid}")]
+    [HttpPost("{userGuid:guid}/activate")]
     public async Task<IActionResult> ActivateUserAsync(
         Guid userGuid)
     {
         await _adminModeratorUserService.ActivateUserAsync(
+            Authentication,
+            userGuid);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Blocks an active user account.
+    /// </summary>
+    /// <param name="userGuid">The GUID of the active user to block.</param>
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPost("{userGuid:guid}/block")]
+    public async Task<IActionResult> BlockUserAsync(
+        Guid userGuid)
+    {
+        await _adminModeratorUserService.BlockUserAsync(
             Authentication,
             userGuid);
 

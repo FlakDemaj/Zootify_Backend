@@ -5,16 +5,28 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
+/// <summary>
+/// EF Core configuration mapping <see cref="SpecimenEntity"/> to the <c>zootify.specimens</c> table,
+/// including its species, location, and audit-user relationships.
+/// </summary>
 public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<SpecimenEntity>
 {
+    /// <summary>The database table name the entity is mapped to.</summary>
     private string Table { get; }
 
+    /// <summary>
+    /// Initializes the configuration with the specimens table and zootify schema.
+    /// </summary>
     public SpecimenEntityConfiguration()
     {
         Table = "specimens";
         Schema = "zootify";
     }
 
+    /// <summary>
+    /// Configures the table mapping, columns, the species/location/audit relationships, and the indexes.
+    /// </summary>
+    /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<SpecimenEntity> builder)
     {
         builder.ToTable(Table, Schema);

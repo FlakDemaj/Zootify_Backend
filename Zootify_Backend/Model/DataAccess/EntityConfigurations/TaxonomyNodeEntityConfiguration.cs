@@ -5,16 +5,28 @@ using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.DataAccess.EntityConfigurations;
 
+/// <summary>
+/// EF Core configuration mapping <see cref="TaxonomyNodeEntity"/> to the <c>zootify.taxonomy_nodes</c> table,
+/// including its self-referencing parent relationship and audit-user relationships.
+/// </summary>
 public class TaxonomyNodeEntityConfiguration : BaseCreationEntityConfiguration<TaxonomyNodeEntity>
 {
+    /// <summary>The database table name the entity is mapped to.</summary>
     private string Table { get; }
 
+    /// <summary>
+    /// Initializes the configuration with the taxonomy-nodes table and zootify schema.
+    /// </summary>
     public TaxonomyNodeEntityConfiguration()
     {
         Table = "taxonomy_nodes";
         Schema = "zootify";
     }
 
+    /// <summary>
+    /// Configures the table mapping, columns, the parent/creator/approver relationships, and the unique index.
+    /// </summary>
+    /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<TaxonomyNodeEntity> builder)
     {
         builder.ToTable(Table, Schema);

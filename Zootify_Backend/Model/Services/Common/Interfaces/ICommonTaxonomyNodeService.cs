@@ -24,12 +24,11 @@ public interface ICommonTaxonomyNodeService
         CreateTaxonomyNodeRequestDto requestDto);
 
     /// <summary>
-    /// Returns all taxonomy nodes of the specified rank that match the given name fragment, each accompanied by their ancestor path.
+    /// Returns all active or pending species-rank taxonomy nodes that match the given name fragment, as a flat list.
     /// </summary>
-    /// <param name="filter">Optional name fragment to filter nodes by.</param>
-    /// <param name="rank">The taxonomy rank to filter by.</param>
-    /// <returns>A list of taxonomy chains, where each chain runs from root to the matching node.</returns>
-    Task<List<List<GetAllTaxonomyNodesByFilterDto>>> GetAllTaxonomyNodesAsync(
+    /// <param name="filter">Optional name fragment to filter species by.</param>
+    /// <returns>A flat list of matching species nodes, ordered by name.</returns>
+    Task<List<GetSpeciesForCreationDto>> GetAllActiveOrPendingSpeciesNodesForCreationAsync(
         string? filter);
 
     /// <summary>

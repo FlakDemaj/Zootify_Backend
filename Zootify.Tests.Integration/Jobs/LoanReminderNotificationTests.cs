@@ -41,6 +41,9 @@ public class LoanReminderNotificationTests : IntegrationTestBase
             .SendReminderBatchAsync();
     }
 
+    /// <summary>
+    /// Tests Send Reminder Batch – Sends Push To Both Recipients In Their Own Language.
+    /// </summary>
     [Fact]
     public async Task SendReminderBatch_SendsPushToBothRecipientsInTheirOwnLanguage()
     {
@@ -60,6 +63,9 @@ public class LoanReminderNotificationTests : IntegrationTestBase
         VerifyPushNotificationSent("fällig", Times.Once());   // lender (German)
     }
 
+    /// <summary>
+    /// Tests Send Reminder Batch – Borrower Push Disabled – Only Lender Receives Push.
+    /// </summary>
     [Fact]
     public async Task SendReminderBatch_BorrowerPushDisabled_OnlyLenderReceivesPush()
     {

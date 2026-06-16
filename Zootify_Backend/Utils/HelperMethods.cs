@@ -2,6 +2,9 @@ using Zootify_Backend.Enums;
 
 namespace Zootify_Backend;
 
+/// <summary>
+/// Small stateless helper methods shared across the application.
+/// </summary>
 public static class HelperMethods
 {
     /// <summary>

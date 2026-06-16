@@ -34,6 +34,9 @@ public class LoanReminderEmailLanguageTests : IntegrationTestBase
             .SendReminderBatchAsync();
     }
 
+    /// <summary>
+    /// Tests Send Reminder Batch – Passes Each Recipients Own Language.
+    /// </summary>
     [Fact]
     public async Task SendReminderBatch_PassesEachRecipientsOwnLanguage()
     {
@@ -64,6 +67,9 @@ public class LoanReminderEmailLanguageTests : IntegrationTestBase
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), false, "de"), Times.Once);
     }
 
+    /// <summary>
+    /// Tests Send Reminder Batch – Default Settings – Passes German Language.
+    /// </summary>
     [Fact]
     public async Task SendReminderBatch_DefaultSettings_PassesGermanLanguage()
     {

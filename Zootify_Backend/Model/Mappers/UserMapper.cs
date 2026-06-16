@@ -104,9 +104,7 @@ public class UserMapper : Profile
             .ForMember(d => d.FirstName,
                 o => o.MapFrom(s => s.FirstName))
             .ForMember(d => d.LastName,
-                o => o.MapFrom(s => s.LastName))
-            .ForMember(d => d.Status,
-                o => o.MapFrom(s => s.Status));
+                o => o.MapFrom(s => s.LastName));
 
         CreateMap<UpdateOwnUserRequestDto, UserEntity>(MemberList.None)
             .ForMember(d => d.FirstName,

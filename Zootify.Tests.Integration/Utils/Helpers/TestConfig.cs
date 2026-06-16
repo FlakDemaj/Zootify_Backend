@@ -1,5 +1,8 @@
 namespace Zootify.Tests.Integration.Utils.Helpers;
 
+/// <summary>
+/// Test Config — test support type.
+/// </summary>
 public class TestConfig
 {
     public const string TestJwtSecret =

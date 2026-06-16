@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Zootify_Backend.Controllers.Base;
 using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.DTOs.Common.Request;
-using Zootify_Backend.DTOs.Common.Request.Helpers;
 using Zootify_Backend.DTOs.Common.Response;
+using Zootify_Backend.DTOs.Common.Response.Helpers;
 using Zootify_Backend.Enums;
 using Zootify_Backend.Model.Services.Common.Interfaces;
 
@@ -65,7 +65,7 @@ public class CommonSpecimenController : BaseRestController
     /// <param name="specimen">The data required to create the specimen.</param>
     /// <returns>A DTO containing the GUID of the newly created specimen.</returns>
     [HttpPost]
-    public async Task<ActionResult<CreatedObjectResponseDto>> CreateSpecimen(
+    public async Task<ActionResult<CreatedObjectResponseDto>> CreateSpecimenAsync(
         [FromBody] CreateSpecimenRequestDto specimen)
     {
         return Ok(await _commonSpecimenService.CreateSpecimenAsync(Authentication, specimen));

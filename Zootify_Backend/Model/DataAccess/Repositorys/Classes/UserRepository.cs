@@ -161,6 +161,53 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     }
 
     /// <summary>
+    /// Detaches all foreign-key references to the given users so the users can be hard-deleted without
+    /// violating the <c>ON DELETE NO ACTION</c> constraints: audit columns (created/updated/deleted/
+    /// approved-by) on specimens, collections and taxonomy nodes are set to <c>null</c>, and loans in
+    /// which a purged user is the lender or borrower are deleted.
+    /// </summary>
+    /// <param name="userGuids">The GUIDs of the users about to be purged.</param>
+    public async Task PurgeUserReferencesAsync(List<Guid> userGuids)
+    {
+        // Specimens: null the three audit columns referencing the purged users.
+        await Context.Set<SpecimenEntity>()
+            .Where(s => s.CreatedByUserGuid != null && userGuids.Contains(s.CreatedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(s => s.CreatedByUserGuid, (Guid?)null));
+        await Context.Set<SpecimenEntity>()
+            .Where(s => s.UpdatedByUserGuid != null && userGuids.Contains(s.UpdatedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(s => s.UpdatedByUserGuid, (Guid?)null));
+        await Context.Set<SpecimenEntity>()
+            .Where(s => s.DeletedByUserGuid != null && userGuids.Contains(s.DeletedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(s => s.DeletedByUserGuid, (Guid?)null));
+
+        // Collections: same three audit columns.
+        await Context.Set<CollectionEntity>()
+            .Where(c => c.CreatedByUserGuid != null && userGuids.Contains(c.CreatedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(c => c.CreatedByUserGuid, (Guid?)null));
+        await Context.Set<CollectionEntity>()
+            .Where(c => c.UpdatedByUserGuid != null && userGuids.Contains(c.UpdatedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(c => c.UpdatedByUserGuid, (Guid?)null));
+        await Context.Set<CollectionEntity>()
+            .Where(c => c.DeletedByUserGuid != null && userGuids.Contains(c.DeletedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(c => c.DeletedByUserGuid, (Guid?)null));
+
+        // Taxonomy nodes: only created-by and approved-by reference users.
+        await Context.Set<TaxonomyNodeEntity>()
+            .Where(t => t.CreatedByUserGuid != null && userGuids.Contains(t.CreatedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.CreatedByUserGuid, (Guid?)null));
+        await Context.Set<TaxonomyNodeEntity>()
+            .Where(t => t.ApprovedByUserGuid != null && userGuids.Contains(t.ApprovedByUserGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.ApprovedByUserGuid, (Guid?)null));
+
+        // Loans referencing a purged user as lender or borrower are removed. (The borrower is not merely
+        // nulled because LoanEntity models BorrowerGuid as non-nullable, so a null borrower_guid could no
+        // longer be materialized by EF and would break the loan-reminder/return flows.)
+        await Context.Set<LoanEntity>()
+            .Where(l => userGuids.Contains(l.LenderGuid) || userGuids.Contains(l.BorrowerGuid))
+            .ExecuteDeleteAsync();
+    }
+
+    /// <summary>
     /// Applies filter criteria from the given DTO to the user queryable.
     /// </summary>
     /// <param name="userQuery">The base queryable to filter.</param>

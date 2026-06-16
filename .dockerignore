@@ -1,0 +1,25 @@
+# Build-Artefakte
+**/bin/
+**/obj/
+**/out/
+
+# IDE / VCS
+.git/
+.gitignore
+.vs/
+.idea/
+*.user
+*.suo
+
+# Tests werden nicht ins API-Image gebaut
+Zootify.Tests.Unit/
+Zootify.Tests.Integration/
+Zootify.Tests.Shared/
+
+# Docker / Doku / Secrets
+Dockerfile
+.dockerignore
+docker-compose*.yml
+.env
+**/.env
+README.md

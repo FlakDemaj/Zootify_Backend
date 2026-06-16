@@ -3,6 +3,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Home;
 
+/// <summary>
+/// Tests for Home Controller.
+/// </summary>
 public class HomeControllerTests : IntegrationTestBase
 {
     public HomeControllerTests(IntegrationTestFixture fixture) : base(fixture)
@@ -27,6 +30,9 @@ public class HomeControllerTests : IntegrationTestBase
 
     #region Visibility
 
+    /// <summary>
+    /// Tests Get Overview – Anonymous – Returns Only Public Specimens.
+    /// </summary>
     [Fact]
     public async Task GetOverview_Anonymous_ReturnsOnlyPublicSpecimens()
     {
@@ -43,6 +49,9 @@ public class HomeControllerTests : IntegrationTestBase
         result.Specimens.Single().Name.Should().Be(publicSpecimen.Name);
     }
 
+    /// <summary>
+    /// Tests Get Overview – Moderator – Sees All Including Others Non Public.
+    /// </summary>
     [Fact]
     public async Task GetOverview_Moderator_SeesAllIncludingOthersNonPublic()
     {
@@ -60,6 +69,9 @@ public class HomeControllerTests : IntegrationTestBase
         result.Specimens.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests Get Overview – Admin – Sees All Including Others Non Public.
+    /// </summary>
     [Fact]
     public async Task GetOverview_Admin_SeesAllIncludingOthersNonPublic()
     {
@@ -77,6 +89,9 @@ public class HomeControllerTests : IntegrationTestBase
         result.Specimens.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Tests Get Overview – Regular User – Sees Public And Own Non Public – But Not Others.
+    /// </summary>
     [Fact]
     public async Task GetOverview_RegularUser_SeesPublicAndOwnNonPublic_ButNotOthers()
     {
@@ -102,6 +117,9 @@ public class HomeControllerTests : IntegrationTestBase
 
     #region Paging & Sorting
 
+    /// <summary>
+    /// Tests Get Overview – Paging – Returns At Most20 Per Page.
+    /// </summary>
     [Fact]
     public async Task GetOverview_Paging_ReturnsAtMost20PerPage()
     {
@@ -117,6 +135,9 @@ public class HomeControllerTests : IntegrationTestBase
         result.Specimens.Should().HaveCount(20);
     }
 
+    /// <summary>
+    /// Tests Get Overview – Default Sort – Returns Newest First.
+    /// </summary>
     [Fact]
     public async Task GetOverview_DefaultSort_ReturnsNewestFirst()
     {
@@ -139,6 +160,9 @@ public class HomeControllerTests : IntegrationTestBase
 
     #region FilterByOrt
 
+    /// <summary>
+    /// Tests Get Overview – Filter By Ort – Returns Only Matching City.
+    /// </summary>
     [Fact]
     public async Task GetOverview_FilterByOrt_ReturnsOnlyMatchingCity()
     {
@@ -154,9 +178,13 @@ public class HomeControllerTests : IntegrationTestBase
 
         result!.TotalCount.Should().Be(1);
         result.Specimens.Should().ContainSingle(s => s.Name == siegenSpecimen.Name);
-        result.Specimens.Single().City.Should().Be("Siegen");
+        result.Specimens.Single().LocationPath
+            .Should().Contain(n => n.Level == GeographicLevel.City && n.Name == "Siegen");
     }
 
+    /// <summary>
+    /// Tests Get Overview – Filter By Ort – Is Case Insensitive.
+    /// </summary>
     [Fact]
     public async Task GetOverview_FilterByOrt_IsCaseInsensitive()
     {
@@ -168,7 +196,8 @@ public class HomeControllerTests : IntegrationTestBase
             $"{Routings.HomeAnimalsRouting}?filterByOrt=siegen");
 
         result!.TotalCount.Should().Be(1);
-        result.Specimens.Single().City.Should().Be("Siegen");
+        result.Specimens.Single().LocationPath
+            .Should().Contain(n => n.Level == GeographicLevel.City && n.Name == "Siegen");
     }
 
     #endregion

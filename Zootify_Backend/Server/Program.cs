@@ -6,6 +6,9 @@ using Zootify_Backend.Utils.Extensions;
 
 namespace Zootify_Backend.Server;
 
+/// <summary>
+/// Application host class containing the entry point that configures and runs the Zootify web application.
+/// </summary>
 public abstract class Program
 {
     /// <summary>
@@ -21,11 +24,14 @@ public abstract class Program
     /// <param name="args">Command-line arguments</param>
     public static async Task Main(string[] args)
     {
+        // Load configuration from a .env file (if present) into environment variables before the host
+        // builder reads them. Works both locally and in Docker; existing env vars are never overridden.
+        DotEnv.Load();
+
         // Configuration priority:
         // config.json →
         // appsettings →
-        // User Secrets →
-        // Env vars →
+        // Env vars (inkl. .env) →
         // CLI args
         var builder = WebApplication.CreateBuilder(args);
 

@@ -3,6 +3,9 @@ using Zootify.Tests.Integration.Utils;
 
 namespace Zootify.Tests.Integration.Localization;
 
+/// <summary>
+/// Tests for Localization.
+/// </summary>
 public class LocalizationTests : IntegrationTestBase
 {
     private const string UnknownEmail = "nobody@test.com";
