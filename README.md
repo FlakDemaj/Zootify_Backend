@@ -477,4 +477,4 @@ Dieses Projekt steht unter der **MIT-Lizenz** – Nutzung, Änderung und Weiterg
 Copyright- und Lizenzhinweis erhalten bleibt. Den vollständigen Text finden Sie in der Datei
 [`LICENSE`](LICENSE).
 
-Copyright (c) 2026 Flak Demaj, Justin Krause
+Copyright (c) 2026 Flakron Demaj
