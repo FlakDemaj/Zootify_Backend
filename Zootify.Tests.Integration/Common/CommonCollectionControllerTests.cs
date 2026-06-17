@@ -611,6 +611,60 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         dynamicDates.Should().BeInDescendingOrder();
     }
 
+    /// <summary>
+    /// Tests Get All Collections – Sort By Name – Static And Dynamic Collections Are Interleaved.
+    /// A dynamic collection that sorts before the first static collection must appear first, proving
+    /// the static collections are no longer pinned to the top but ordered together with the dynamic ones.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_SortByName_Asc_InterleavesStaticAndDynamicCollections()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        // "Aaa" sorts before the first static ("Alle Exemplare"); "Zzz" sorts after every static.
+        await CollectionRepo.CreateCollectionAsync(name: "Aaa Collection", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Zzz Collection", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Mmm Collection", isPrivate: false);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?sortBy=name&sortDirection=ASC");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var names = result!.Collections.Select(c => c.Name).ToList();
+
+        result.TotalCount.Should().Be(9); // 6 static + 3 dynamic
+        names.Should().BeInAscendingOrder();
+        names.First().Should().Be("Aaa Collection");
+        names.Last().Should().Be("Zzz Collection");
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Sort By Created At – Static Collections Are Always Last.
+    /// Virtual static collections have no creation date, so they must be ordered after every dynamic
+    /// collection regardless of the sort direction.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_SortByCreatedAt_StaticCollectionsAlwaysLast()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        await CollectionRepo.CreateCollectionAsync(name: "First", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Second", isPrivate: false);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}?sortBy=createdAt&sortDirection=ASC");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var collections = result!.Collections;
+
+        // The two dynamic collections (with a creation date) come first, the six statics (null) last.
+        collections.Take(2).Should().OnlyContain(c => c.CreatedAt.HasValue);
+        collections.Skip(2).Should().OnlyContain(c => c.CreatedAt == null);
+        collections.Skip(2).Should().HaveCount(6);
+    }
+
     #endregion
 
     #region UpdateCollection

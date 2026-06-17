@@ -42,7 +42,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Model\EmailTemplates\*.html" />
+    <!-- WithCulture=false stops MSBuild from treating the ".en." in names like
+         RegistrationEmail.en.html as a culture designator (which would route the file into the
+         "en" satellite assembly under a name with ".en" stripped). With this, the templates stay
+         in the main assembly with their full name, so the localized variants can be resolved. -->
+    <EmbeddedResource Include="Model\EmailTemplates\*.html">
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
     <EmbeddedResource Update="Resources\ErrorMessages.resx" />
     <EmbeddedResource Update="Resources\ErrorMessages.en.resx">
       <Culture>en</Culture>
