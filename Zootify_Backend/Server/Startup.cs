@@ -13,6 +13,7 @@ using Zootify_Backend.Model.Jobs;
 using Zootify_Backend.Model.Providers.SignalR;
 using Zootify_Backend.Persistance;
 using Zootify_Backend.Server.Middlewares;
+using Zootify_Backend.Server.Swagger;
 using AuthenticationMiddleware = Zootify_Backend.Server.Middlewares.AuthenticationMiddleware;
 
 namespace Zootify_Backend.Server;
@@ -140,6 +141,9 @@ public class Startup
                 securityRequirement.Add(schemeReference, []);
                 return securityRequirement;
             });
+
+            // Exposes an Accept-Language header field on every endpoint so the culture can be set from Swagger.
+            options.OperationFilter<AcceptLanguageHeaderOperationFilter>();
         });
     }
 

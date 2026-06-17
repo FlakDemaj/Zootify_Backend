@@ -202,7 +202,8 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             }
         }
 
-        var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
+        var affectedUserGuidList = affectedUserGuids.ToList();
+        var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuidList);
 
         // Each affected user is notified by email and/or in-app push depending on their settings, each
         // in their own preferred language. Dispatched only after the transaction commits so no one is
@@ -290,7 +291,8 @@ public class AdminTaxonomyService : IAdminTaxonomyService
         // The SetNull cascade on specimens.species_guid runs as part of this delete.
         await _taxonomyRepository.MassDeleteAsync(subtreeNodes);
 
-        var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuids.ToList());
+        var affectedUserGuidList = affectedUserGuids.ToList();
+        var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuidList);
 
         // Each affected user is notified by email and/or in-app push depending on their settings, each
         // in their own preferred language. Dispatched only after the transaction commits so no one is

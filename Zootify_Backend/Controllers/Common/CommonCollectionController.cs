@@ -32,7 +32,7 @@ public class CommonCollectionController : BaseRestController
     /// <param name="request">The collection data to create.</param>
     /// <returns>A DTO containing the GUID of the newly created collection.</returns>
     [HttpPost]
-    public async Task<ActionResult<CreatedObjectResponseDto>> CreateCollection(
+    public async Task<ActionResult<CreatedObjectResponseDto>> CreateCollectionAsync(
         [FromBody] CreateCollectionRequestDto request)
     {
         return Ok(await _commonCollectionService.CreateCollectionAsync(Authentication, request));

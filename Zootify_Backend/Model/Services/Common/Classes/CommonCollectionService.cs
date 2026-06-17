@@ -96,38 +96,25 @@ public class CommonCollectionService : ICommonCollectionService
             return await GetFuzzyFilteredCollectionsAsync(authentication, filterByName, paging, statics);
         }
 
-        // specimenCount sort must compare static (computed) and dynamic counts in a single ordering,
-        // which cannot be expressed in the DB query, so that path materializes the full set.
-        if (paging.SortBy == "specimenCount")
-        {
-            return await GetAllCollectionsSortedBySpecimenCountAsync(
-                authentication, null, paging, statics);
-        }
+        // Static collections are computed outside the database (counts, localized names), so a sort that
+        // must order them together with the dynamic collections cannot be expressed in the DB query.
+        // The full visible set is therefore materialized, sorted, and paged in memory.
+        var dynamicEntities = await _collectionRepository.GetAllCollectionsByNameFilterAsync(
+            authentication, null, paging, 0, int.MaxValue);
+        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(dynamicEntities);
 
-        // Stable order: static collections first (fixed order), then DB-ordered dynamic collections.
-        // Only the dynamic slice needed for the requested page is fetched from the database.
-        var dynamicTotal = await _collectionRepository
-            .CountCollectionsByNameFilterAsync(authentication, null);
+        var allCollections = statics.Concat(dynamic).ToList();
+        var combined = SortCollections(allCollections, paging);
 
-        var skip = (paging.Page - 1) * paging.PageSize;
-        var take = paging.PageSize;
-
-        var staticSlice = statics.Skip(skip).Take(take).ToList();
-        var remaining = take - staticSlice.Count;
-
-        var dynamicSlice = new List<GetCollectionResponseDto>();
-        if (remaining > 0)
-        {
-            var dynamicSkip = Math.Max(0, skip - statics.Count);
-            var dynamicEntities = await _collectionRepository.GetAllCollectionsByNameFilterAsync(
-                authentication, null, paging, dynamicSkip, remaining);
-            dynamicSlice = _mapper.Map<List<GetCollectionResponseDto>>(dynamicEntities);
-        }
+        var paged = combined
+            .Skip((paging.Page - 1) * paging.PageSize)
+            .Take(paging.PageSize)
+            .ToList();
 
         return new GetAllCollectionsPagedResponseDto
         {
-            TotalCount  = statics.Count + dynamicTotal,
-            Collections = staticSlice.Concat(dynamicSlice).ToList(),
+            TotalCount  = combined.Count,
+            Collections = paged,
         };
     }
 
@@ -148,19 +135,17 @@ public class CommonCollectionService : ICommonCollectionService
         BaseSortAndPagingDto paging,
         List<GetCollectionResponseDto> statics)
     {
-        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
-            await _collectionRepository.GetAllCollectionsByNameFilterAsync(
-                authentication, null, paging, 0, int.MaxValue));
+        var dynamicEntities = await _collectionRepository.GetAllCollectionsByNameFilterAsync(
+            authentication, null, paging, 0, int.MaxValue);
+        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(dynamicEntities);
 
-        var matched = FuzzyMatch.SearchAugmented(
-            filterByName, statics.Concat(dynamic), c => c.Name);
+        var allCollections = statics.Concat(dynamic).ToList();
+        var matched = FuzzyMatch.SearchAugmented(filterByName, allCollections, c => c.Name);
 
-        if (paging.SortBy == "specimenCount")
+        // An explicit sort overrides the fuzzy relevance ranking; without one the relevance order is kept.
+        if (!string.IsNullOrWhiteSpace(paging.SortBy))
         {
-            matched = (paging.SortDirection == SortDirection.Desc
-                    ? matched.OrderByDescending(c => c.SpecimenCount)
-                    : matched.OrderBy(c => c.SpecimenCount))
-                .ToList();
+            matched = SortCollections(matched, paging);
         }
 
         var paged = matched
@@ -176,41 +161,49 @@ public class CommonCollectionService : ICommonCollectionService
     }
 
     /// <summary>
-    /// Returns the combined static and dynamic collections ordered by specimen count. Because static
-    /// counts are computed outside the database, the full visible set is materialized, sorted, and
-    /// paged in memory.
+    /// Orders the combined static and dynamic collections by the requested field and direction, applying a
+    /// deterministic GUID tiebreaker. Virtual static collections (which have no creation date) are kept last
+    /// when sorting by <c>createdAt</c>. An unknown or unspecified sort field preserves the incoming order.
     /// </summary>
-    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
-    /// <param name="filterByName">Optional name fragment to filter collections by; <c>null</c> for no filter.</param>
-    /// <param name="paging">Paging and sorting parameters.</param>
-    /// <param name="statics">The caller's static (virtual) collections to include.</param>
-    /// <returns>A paged response containing the ordered collections and the total count.</returns>
-    private async Task<GetAllCollectionsPagedResponseDto> GetAllCollectionsSortedBySpecimenCountAsync(
-        IAuthentication? authentication,
-        string? filterByName,
-        BaseSortAndPagingDto paging,
-        List<GetCollectionResponseDto> statics)
+    /// <param name="collections">The combined set of static and dynamic collections to order.</param>
+    /// <param name="paging">Paging and sorting parameters supplying the sort field and direction.</param>
+    /// <returns>The ordered list of collections.</returns>
+    private static List<GetCollectionResponseDto> SortCollections(
+        IEnumerable<GetCollectionResponseDto> collections,
+        BaseSortAndPagingDto paging)
     {
-        var dynamic = _mapper.Map<List<GetCollectionResponseDto>>(
-            await _collectionRepository.GetAllCollectionsByNameFilterAsync(
-                authentication, filterByName, paging, 0, int.MaxValue));
+        var desc = paging.SortDirection == SortDirection.Desc;
 
-        var combined = statics.Concat(dynamic).ToList();
-
-        combined = paging.SortDirection == SortDirection.Desc
-            ? combined.OrderByDescending(c => c.SpecimenCount).ToList()
-            : combined.OrderBy(c => c.SpecimenCount).ToList();
-
-        var paged = combined
-            .Skip((paging.Page - 1) * paging.PageSize)
-            .Take(paging.PageSize)
-            .ToList();
-
-        return new GetAllCollectionsPagedResponseDto
+        IOrderedEnumerable<GetCollectionResponseDto> ordered;
+        switch (paging.SortBy)
         {
-            TotalCount  = combined.Count,
-            Collections = paged,
-        };
+            case "name":
+                ordered = desc
+                    ? collections.OrderByDescending(c => c.Name)
+                    : collections.OrderBy(c => c.Name);
+                break;
+            case "isPrivate":
+                ordered = desc
+                    ? collections.OrderByDescending(c => c.IsPrivate)
+                    : collections.OrderBy(c => c.IsPrivate);
+                break;
+            case "specimenCount":
+                ordered = desc
+                    ? collections.OrderByDescending(c => c.SpecimenCount)
+                    : collections.OrderBy(c => c.SpecimenCount);
+                break;
+            case "createdAt":
+                // Static collections have no CreatedAt; keep them last regardless of direction.
+                ordered = collections.OrderBy(c => c.CreatedAt is null);
+                ordered = desc
+                    ? ordered.ThenByDescending(c => c.CreatedAt)
+                    : ordered.ThenBy(c => c.CreatedAt);
+                break;
+            default:
+                return collections.ToList();
+        }
+
+        return ordered.ThenBy(c => c.Guid).ToList();
     }
 
     /// <summary>

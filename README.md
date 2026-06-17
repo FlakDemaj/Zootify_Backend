@@ -150,6 +150,9 @@ dotnet run --project Zootify_Backend
 > HTTPS auf `https://localhost:7227` das `https`-Profil wählen:
 > `dotnet run --project Zootify_Backend --launch-profile https`.
 
+> **Swagger öffnet automatisch:** Beide Launch-Profile (`http`/`https`) sind mit `launchBrowser` konfiguriert,
+> sodass beim Start (z. B. über die IDE oder `dotnet run`) die Swagger-UI automatisch im Browser geöffnet wird.
+
 Beim Start führt Evolve automatisch alle ausstehenden Migrationen gegen die Uni-Datenbank aus.
 
 ---
@@ -290,6 +293,10 @@ Zootify_Backend/
 - **Routen-Konvention:** `rest/[controller]/...` (definiert in `BaseRestController`).
 - **Authentifizierung:** JWT Bearer. Rollen: `User`, `Moderator`, `Admin` (`[Authorize(Roles = ...)]`).
 - **Dokumentation:** Swagger/OpenAPI unter `/swagger` (im Development-Environment).
+- **Sprache:** Die Antwortsprache (`de`/`en`, Default `de`) wird über den `Accept-Language`-Header gesteuert
+  (`RequestLocalization` mit `AcceptLanguageHeaderRequestCultureProvider`). In Swagger gibt es dafür bei jedem
+  Endpoint ein `Accept-Language`-Feld (per `AcceptLanguageHeaderOperationFilter`), über das sich die Culture
+  direkt auswählen lässt. Lokalisiert sind u. a. Fehlermeldungen und die E-Mail-Templates.
 - **Fehlerformat:** Fehler werden zentral über eine Middleware in eine einheitliche Antwort mit `ErrorCode`
   übersetzt; die Texte sind lokalisiert (`Resources/ErrorMessages.resx` / `.en.resx`).
 - **Echtzeit:** SignalR-Hub (`NotificationHub`) für Push-Benachrichtigungen an angemeldete Clients.

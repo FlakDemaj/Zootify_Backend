@@ -67,11 +67,13 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
         var failures = new List<ImportSpecimenFailureDto>(parseResult.Failures);
         var imported = 0;
 
-        var speciesNodes = (await _taxonomyRepository.GetAllNodesForTreeAsync())
+        var allTaxonomyNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
+        var speciesNodes = allTaxonomyNodes
             .Where(n => n.Rank == TaxonomyRank.Species)
             .ToList();
 
-        var tagsByName = (await _tagRepository.GetTagsByNameFilterAsync(null))
+        var allTags = await _tagRepository.GetTagsByNameFilterAsync(null);
+        var tagsByName = allTags
             .GroupBy(t => t.Tag, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First().Guid, StringComparer.OrdinalIgnoreCase);
 
