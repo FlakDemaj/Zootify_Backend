@@ -122,6 +122,8 @@ public class SpecimenMapper : Profile
                     path.Reverse();
                     return path;
                 }))
+            .ForMember(d => d.Tags,
+                o => o.MapFrom(s => s.SpecimensTags.Select(st => st.Tag)))
             .ForMember(d => d.TaxonomyPath,
                 o => o.Ignore());
 
