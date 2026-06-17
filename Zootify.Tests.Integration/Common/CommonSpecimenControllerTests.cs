@@ -954,6 +954,41 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Update Specimen Tags – With Multiple New Tags – Each Gets A Unique Guid.
+    /// Regression test: new tags must not all collapse onto Guid.Empty and collide on the tags primary key.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSpecimenTags_WithMultipleNewTags_CreatesAllWithUniqueGuids()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenTagsRequestDto
+        {
+            SpecimenTags =
+            [
+                new UpdateTagsDto { TagGuid = null, TagName = "first" },
+                new UpdateTagsDto { TagGuid = null, TagName = "second" },
+                new UpdateTagsDto { TagGuid = null, TagName = "third" }
+            ]
+        };
+
+        var response = await Client.PatchAsJsonAsync(
+            $"{Routings.CommonSpecimenRouting}/{specimen.Guid}/tags", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var relations = await GetTagRelationsForSpecimenFromDbAsync(specimen.Guid);
+        relations.Should().HaveCount(3);
+        relations.Select(r => r.TagGuid).Should().OnlyHaveUniqueItems();
+        relations.Select(r => r.TagGuid).Should().NotContain(Guid.Empty);
+    }
+
+    /// <summary>
     /// Tests Update Specimen Tags – Same Tags – Returns No Updated Data.
     /// </summary>
     [Fact]
