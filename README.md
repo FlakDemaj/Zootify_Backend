@@ -150,6 +150,9 @@ dotnet run --project Zootify_Backend
 > HTTPS auf `https://localhost:7227` das `https`-Profil wählen:
 > `dotnet run --project Zootify_Backend --launch-profile https`.
 
+> **Swagger öffnet automatisch:** Beide Launch-Profile (`http`/`https`) sind mit `launchBrowser` konfiguriert,
+> sodass beim Start (z. B. über die IDE oder `dotnet run`) die Swagger-UI automatisch im Browser geöffnet wird.
+
 Beim Start führt Evolve automatisch alle ausstehenden Migrationen gegen die Uni-Datenbank aus.
 
 ---
