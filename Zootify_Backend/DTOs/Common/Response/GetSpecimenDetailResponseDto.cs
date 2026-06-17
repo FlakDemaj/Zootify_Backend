@@ -73,4 +73,7 @@ public class GetSpecimenDetailResponseDto
 
     /// <summary>The taxonomy path (phylum → … → species) the specimen belongs to.</summary>
     public List<GetAllTaxonomyNodesByFilterDto> TaxonomyPath { get; set; } = [];
+
+    /// <summary>The tags assigned to the specimen (each with GUID and name).</summary>
+    public List<GetAllTagsByFilterDto> Tags { get; init; } = [];
 }

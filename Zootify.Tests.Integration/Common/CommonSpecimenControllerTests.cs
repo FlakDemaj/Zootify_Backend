@@ -1256,6 +1256,53 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Get Specimen Detail – Specimen With Tags – Returns Tags With Guid And Name.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_SpecimenWithTags_ReturnsTagsWithGuidAndName()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var tag1 = await TagRepo.CreateTagAsync("Big");
+        var tag2 = await TagRepo.CreateTagAsync("Blue");
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
+            species.Guid, location.Guid, [tag1, tag2], createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.Tags.Should().HaveCount(2);
+        result.Tags.Select(t => t.TagName).Should().BeEquivalentTo("Big", "Blue");
+        result.Tags.Select(t => t.TagGuid).Should().BeEquivalentTo([tag1.Guid, tag2.Guid]);
+    }
+
+    /// <summary>
+    /// Tests Get Specimen Detail – Specimen Without Tags – Returns Empty Tag List.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_SpecimenWithoutTags_ReturnsEmptyTagList()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.Tags.Should().BeEmpty();
+    }
+
+    /// <summary>
     /// Tests Get Specimen Detail – Own Private Specimen – Returns Detail.
     /// </summary>
     [Fact]

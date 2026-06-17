@@ -274,6 +274,8 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .Include(sp => sp.Image)
             .Include(sp => sp.Species)
             .Include(sp => sp.Collections)
+            .Include(sp => sp.SpecimensTags)
+                .ThenInclude(st => st.Tag)
             // Five levels of Parent cover the full geographic hierarchy depth
             // (Country → State → City → Postcode → Street → HouseNumber); EF cannot
             // load a self-referencing chain recursively, so each level is included explicitly.
