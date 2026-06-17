@@ -463,6 +463,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="collectionGuid">The GUID of the collection to add the specimen to.</param>
     /// <param name="specimenGuid">The GUID of the specimen to add.</param>
     /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
+    /// <exception cref="ZootifyException">Thrown when the collection is not in active status.</exception>
     /// <exception cref="ZootifyException">Thrown when no specimen with the given GUID exists.</exception>
     /// <exception cref="ZootifyException">Thrown when the specimen is already in the collection.</exception>
     [Transaction(ReadOnly = false)]
@@ -479,6 +480,11 @@ public class CommonCollectionService : ICommonCollectionService
         }
         
         CheckCollectionOwnership(authentication, collection);
+
+        if (collection.Status != CollectionStatus.Active)
+        {
+            throw new ZootifyException(ErrorCode.ObjectIsNotActive);
+        }
 
         var specimen = await _specimenRepository.GetSpecimenByGuidAsync(specimenGuid);
 
@@ -599,6 +605,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// <param name="collectionGuid">The GUID of the collection to remove the specimen from.</param>
     /// <param name="specimenGuid">The GUID of the specimen to remove.</param>
     /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>
+    /// <exception cref="ZootifyException">Thrown when the collection is not in active status.</exception>
     /// <exception cref="ZootifyException">Thrown when the specimen is not in the collection.</exception>
     [Transaction(ReadOnly = false)]
     public async Task RemoveSpecimenFromCollectionAsync(
@@ -614,7 +621,12 @@ public class CommonCollectionService : ICommonCollectionService
         }
         
         CheckCollectionOwnership(authentication, collection);
-        
+
+        if (collection.Status != CollectionStatus.Active)
+        {
+            throw new ZootifyException(ErrorCode.ObjectIsNotActive);
+        }
+
         var link = await _specimenCollectionRepository
             .GetByCollectionAndSpecimenAsync(collectionGuid, specimenGuid);
 
