@@ -1170,6 +1170,29 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Add Specimen To Collection – Collection Is Not Active – Returns Object Is Not Active.
+    /// </summary>
+    [Fact]
+    public async Task AddSpecimenToCollection_CollectionIsNotActive_ReturnsObjectIsNotActive()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            createdByUserGuid: user.Guid,
+            deletedByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.PostAsync(
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}/specimen/{specimen.Guid}", null);
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
+    }
+
+    /// <summary>
     /// Tests Add Specimen To Collection – As User On Other Users Collection – Returns Forbidden.
     /// </summary>
     [Fact]
@@ -1271,6 +1294,30 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var error = await ReadErrorAsync(response);
         error.ErrorCode.Should().Be((int)ErrorCode.Forbidden);
+    }
+
+    /// <summary>
+    /// Tests Remove Specimen From Collection – Collection Is Not Active – Returns Object Is Not Active.
+    /// </summary>
+    [Fact]
+    public async Task RemoveSpecimenFromCollection_CollectionIsNotActive_ReturnsObjectIsNotActive()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            createdByUserGuid: user.Guid,
+            deletedByUserGuid: user.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.DeleteAsync(
+            $"{Routings.CommonCollectionRouting}/{collection.Guid}/specimen/{specimen.Guid}");
+
+        var error = await ReadErrorAsync(response);
+        error.ErrorCode.Should().Be((int)ErrorCode.ObjectIsNotActive);
     }
 
     /// <summary>
