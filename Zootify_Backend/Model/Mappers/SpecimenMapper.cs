@@ -51,18 +51,19 @@ public class SpecimenMapper : Profile
                 opt =>
                     opt.MapFrom(src => src));
 
-        CreateMap<SpecimenEntity, SpecimenDto>()
+        CreateMap<SpecimenEntity, GetAllSpecimensDto>()
             .ForMember(d => d.SpecimenGuid,  o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.Name,          o => o.MapFrom(s => s.Name))
             .ForMember(d => d.LatinName,     o => o.MapFrom(s => s.LatinName))
             .ForMember(d => d.Latitude,      o => o.MapFrom(s => s.Latitude))
             .ForMember(d => d.Longitude,     o => o.MapFrom(s => s.Longitude))
             .ForMember(d => d.IsPublic,      o => o.MapFrom(s => s.IsPublic))
-            .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status));
-
+            .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status))
+            .ForMember(d => d.ImageGuid, o => o.MapFrom(s => s.Image != null ? s.Image.Guid : (Guid?)null));
+        
         // Same as SpecimenDto, plus the specimen's tags (via the TagEntity -> GetAllTagsByFilterDto map).
-        CreateMap<SpecimenEntity, SpecimenWithTagsDto>()
-            .IncludeBase<SpecimenEntity, SpecimenDto>()
+        CreateMap<SpecimenEntity, GetAllSpecimensWithTagsDto>()
+            .IncludeBase<SpecimenEntity, GetAllSpecimensDto>()
             .ForMember(d => d.Tags, o => o.MapFrom(s => s.SpecimensTags.Select(st => st.Tag)));
 
         CreateMap<SpecimenEntity, GetSpecimenDetailResponseDto>(MemberList.None)
@@ -142,6 +143,18 @@ public class SpecimenMapper : Profile
                     opt.MapFrom(src => src.DateOfDiscovery))
             .ForMember(d => d.IsPublic,
                 opt =>
-                    opt.MapFrom(src => src.IsPublic));
+                    opt.MapFrom(src => src.IsPublic))
+            .ForMember(d => d.StorageBuilding,
+                opt =>
+                    opt.MapFrom(src => src.StorageBuilding))
+            .ForMember(d => d.StorageCabinet,
+                opt =>
+                    opt.MapFrom(src => src.StorageCabinet))
+            .ForMember(d => d.StorageShelf,
+                opt =>
+                    opt.MapFrom(src => src.StorageShelf))
+            .ForMember(d => d.StorageCompartment,
+                opt =>
+                    opt.MapFrom(src => src.StorageCompartment));
     }
 }

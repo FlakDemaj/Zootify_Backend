@@ -106,14 +106,18 @@ public class SpecimenEntity : BaseDeletionEntity
     /// Determines whether the editable specimen fields differ from the given data.
     /// </summary>
     /// <param name="newSpecimenData">The candidate data to compare against the current values.</param>
-    /// <returns><c>true</c> if name, discovery date, latin name, comment, or visibility differ; otherwise <c>false</c>.</returns>
+    /// <returns><c>true</c> if name, discovery date, latin name, comment, visibility, or any storage field differ; otherwise <c>false</c>.</returns>
     public bool CheckChanges(SpecimenEntity newSpecimenData)
     {
         return Name != newSpecimenData.Name
                || DateOfDiscovery != newSpecimenData.DateOfDiscovery
                || LatinName != newSpecimenData.LatinName
                || Comment != newSpecimenData.Comment
-               || IsPublic != newSpecimenData.IsPublic;
+               || IsPublic != newSpecimenData.IsPublic
+               || StorageBuilding != newSpecimenData.StorageBuilding
+               || StorageCabinet != newSpecimenData.StorageCabinet
+               || StorageShelf != newSpecimenData.StorageShelf
+               || StorageCompartment != newSpecimenData.StorageCompartment;
 
     }
 
@@ -132,6 +136,10 @@ public class SpecimenEntity : BaseDeletionEntity
         LatinName = newSpecimenData.LatinName;
         Comment = newSpecimenData.Comment;
         IsPublic = newSpecimenData.IsPublic;
+        StorageBuilding = newSpecimenData.StorageBuilding;
+        StorageCabinet = newSpecimenData.StorageCabinet;
+        StorageShelf = newSpecimenData.StorageShelf;
+        StorageCompartment = newSpecimenData.StorageCompartment;
         SetUpdatedBy(requester);
 
     }

@@ -19,4 +19,16 @@ public class UpdateSpecimenRequestDto
 
     /// <summary>Whether the specimen should be publicly visible.</summary>
     public required bool IsPublic { get; init; }
+
+    /// <summary>The new storage building identifier, or <c>null</c> to clear it.</summary>
+    public string? StorageBuilding { get; init; }
+
+    /// <summary>The new storage cabinet identifier, or <c>null</c> to clear it.</summary>
+    public string? StorageCabinet { get; init; }
+
+    /// <summary>The new storage shelf identifier, or <c>null</c> to clear it.</summary>
+    public string? StorageShelf { get; init; }
+
+    /// <summary>The new storage compartment identifier, or <c>null</c> to clear it.</summary>
+    public string? StorageCompartment { get; init; }
 }
