@@ -556,6 +556,115 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Update Specimen – Updates Storage Fields.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSpecimen_UpdatesStorageFields()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = specimen.Name,
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = specimen.Comment,
+            IsPublic = specimen.IsPublic,
+            StorageBuilding = "Building A",
+            StorageCabinet = "Cabinet 3",
+            StorageShelf = "Shelf 2",
+            StorageCompartment = "Compartment B"
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await GetSpecimenFromDbAsync(specimen.Guid);
+        updated!.StorageBuilding.Should().Be("Building A");
+        updated.StorageCabinet.Should().Be("Cabinet 3");
+        updated.StorageShelf.Should().Be("Shelf 2");
+        updated.StorageCompartment.Should().Be("Compartment B");
+    }
+
+    /// <summary>
+    /// Tests Update Specimen – Only Storage Field Changed – Is Treated As A Change And Persisted.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSpecimen_OnlyStorageFieldChanged_UpdatesSpecimen()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = specimen.Name,
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = specimen.Comment,
+            IsPublic = specimen.IsPublic,
+            StorageBuilding = "Only this changed"
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await GetSpecimenFromDbAsync(specimen.Guid);
+        updated!.StorageBuilding.Should().Be("Only this changed");
+    }
+
+    /// <summary>
+    /// Tests Update Specimen – Clears Storage Fields When Omitted From The Request.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSpecimen_OmittedStorageFields_ClearsStorageFields()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        // First set the storage fields via the API.
+        await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", new UpdateSpecimenRequestDto
+        {
+            Name = specimen.Name,
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = specimen.Comment,
+            IsPublic = specimen.IsPublic,
+            StorageBuilding = "Building A",
+            StorageCabinet = "Cabinet 3"
+        });
+
+        // Then update without storage fields: they must be cleared (full-replacement semantics).
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = "Renamed",
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = specimen.Comment,
+            IsPublic = specimen.IsPublic
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await GetSpecimenFromDbAsync(specimen.Guid);
+        updated!.StorageBuilding.Should().BeNull();
+        updated.StorageCabinet.Should().BeNull();
+    }
+
+    /// <summary>
     /// Tests Update Specimen – No Changes – Returns No Updated Data.
     /// </summary>
     [Fact]
@@ -1850,7 +1959,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
             species.Guid, location.Guid, [tag1, tag2], createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         var returned = result!.Single(s => s.SpecimenGuid == specimen.Guid);
@@ -1870,7 +1979,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Single().Tags.Should().BeEmpty();
@@ -1888,7 +1997,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimen1 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
         var specimen2 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(2);
@@ -1910,7 +2019,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimen1 = await SpecimenRepo.CreateSpecimenAsync(species1.Guid, location.Guid, createdByUserGuid: owner.Guid);
         var specimen2 = await SpecimenRepo.CreateSpecimenAsync(species2.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{genus.Guid}");
 
         result!.Should().HaveCount(2);
@@ -1933,7 +2042,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{phylum.Guid}");
 
         result!.Should().HaveCount(1);
@@ -1956,7 +2065,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var specimenCat = await SpecimenRepo.CreateSpecimenAsync(speciesCat.Guid, location.Guid, createdByUserGuid: owner.Guid);
         var specimenDog = await SpecimenRepo.CreateSpecimenAsync(speciesDog.Guid, location.Guid, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{familyFeli.Guid}");
 
         result!.Should().HaveCount(1);
@@ -1973,7 +2082,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var genus = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera", TaxonomyRank.Genus);
         await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species, parentGuid: genus.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{genus.Guid}");
 
         result!.Should().BeEmpty();
@@ -2008,7 +2117,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var publicSpecimen  = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true,  createdByUserGuid: owner.Guid);
         var privateSpecimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(1);
@@ -2030,7 +2139,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(owner);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(2);
@@ -2053,7 +2162,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(viewer);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(1);
@@ -2076,12 +2185,229 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
 
         AuthenticateAs(admin);
 
-        var result = await Client.GetFromJsonAsync<List<SpecimenWithTagsDto>>(
+        var result = await Client.GetFromJsonAsync<List<GetAllSpecimensWithTagsDto>>(
             $"{Routings.CommonSpecimenRouting}/{species.Guid}");
 
         result!.Should().HaveCount(2);
         result.Select(s => s.SpecimenGuid).Should().Contain(publicSpecimen.Guid);
         result.Select(s => s.SpecimenGuid).Should().Contain(privateSpecimen.Guid);
+    }
+
+    #endregion
+
+    #region GetAllOwnCreatedSpecimens
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Returns Only Specimens Created By The Caller.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_ReturnsOnlyOwnSpecimens()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var other = await UserRepo.CreateUserAsync("other@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var ownSpecimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+        var otherSpecimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: other.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(Routings.CommonSpecimenRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == ownSpecimen.Guid);
+        result.Specimens.Should().NotContain(s => s.SpecimenGuid == otherSpecimen.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Specimen With Image – Returns Its Image Guid.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_SpecimenWithImage_ReturnsImageGuid()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenWithImageAsync(
+            species.Guid, location.Guid, imageBase64: "img", createdByUserGuid: owner.Guid);
+        var image = (await GetImagesForSpecimenFromDbAsync(specimen.Guid)).Single();
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(Routings.CommonSpecimenRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.Specimens.Should().ContainSingle()
+            .Which.ImageGuid.Should().Be(image.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Specimen Without Image – Image Guid Is Null.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_SpecimenWithoutImage_ImageGuidIsNull()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(Routings.CommonSpecimenRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.Specimens.Should().ContainSingle()
+            .Which.ImageGuid.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Filter By Name – Returns Matching Specimens Only.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_FilterByName_ReturnsMatchingOnly()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: "Lion");
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: "Tiger");
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}?filterByName=Lion");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Should().ContainSingle(s => s.Name == "Lion");
+        result.Specimens.Should().NotContain(s => s.Name == "Tiger");
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Filter By Name – No Match – Returns Empty.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_FilterByName_NoMatch_ReturnsEmpty()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: "Lion");
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}?filterByName=zzznomatch");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.TotalCount.Should().Be(0);
+        result.Specimens.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Paging – Returns Requested Page Size And Full Total.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_Paging_ReturnsCorrectPage()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        for (var i = 0; i < 5; i++)
+        {
+            await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: $"Specimen {i}");
+        }
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync($"{Routings.CommonSpecimenRouting}?page=1&pageSize=2");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.TotalCount.Should().Be(5);
+        result.Specimens.Should().HaveCount(2);
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Second Page – Does Not Overlap First Page.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_SecondPage_DoesNotOverlapFirstPage()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        for (var i = 0; i < 5; i++)
+        {
+            await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: $"Specimen {i}");
+        }
+
+        AuthenticateAs(owner);
+
+        var firstPage = await (await Client.GetAsync($"{Routings.CommonSpecimenRouting}?page=1&pageSize=2"))
+            .Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        var secondPage = await (await Client.GetAsync($"{Routings.CommonSpecimenRouting}?page=2&pageSize=2"))
+            .Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+
+        secondPage!.Specimens.Should().HaveCount(2);
+        secondPage.Specimens.Select(s => s.SpecimenGuid)
+            .Should().NotIntersectWith(firstPage!.Specimens.Select(s => s.SpecimenGuid));
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Sort By Name Descending – Orders Specimens Descending.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_SortByNameDescending_OrdersDescending()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: "Alpha");
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: "Beta");
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, createdByUserGuid: owner.Guid, name: "Gamma");
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenRouting}?sortBy=name&sortDirection=DESC");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.Specimens.Select(s => s.Name).Should().ContainInOrder("Gamma", "Beta", "Alpha");
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – No Specimens – Returns Empty Result.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_NoSpecimens_ReturnsEmpty()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync(Routings.CommonSpecimenRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimensPagedResponseDto>();
+        result!.TotalCount.Should().Be(0);
+        result.Specimens.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Tests Get All Own Created Specimens – Not Authenticated – Returns Unauthorized.
+    /// </summary>
+    [Fact]
+    public async Task GetAllOwnCreatedSpecimens_NotAuthenticated_ReturnsUnauthorized()
+    {
+        var response = await Client.GetAsync(Routings.CommonSpecimenRouting);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     #endregion

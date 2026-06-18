@@ -33,6 +33,18 @@ public interface ICommonSpecimenService
         IAuthentication? authentication,
         Guid specimenGuid,
         Guid collectionGuid);
+    
+    /// <summary>
+    /// Returns a paged list of the specimens created by the authenticated user, optionally filtered by name.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the requesting user.</param>
+    /// <param name="filterByName">Optional name fragment to filter the specimens by.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A paged response containing the matching specimens and the total count.</returns>
+    Task<GetAllSpecimensPagedResponseDto> GetAllSpecimensCreatedByUserAsync(
+        IAuthentication authentication,
+        string? filterByName,
+        BaseSortAndPagingDto paging);
 
     /// <summary>
     /// Returns all tags whose names contain the given fragment, ordered alphabetically.
@@ -101,5 +113,5 @@ public interface ICommonSpecimenService
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to search under.</param>
     /// <returns>A list of specimen DTOs (including their tags) matching the taxonomy subtree.</returns>
     /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
-    Task<List<SpecimenWithTagsDto>> GetSpecimensByTaxonomyNodeGuidAsync(IAuthentication? authentication, Guid taxonomyGuid);
+    Task<List<GetAllSpecimensWithTagsDto>> GetSpecimensByTaxonomyNodeGuidAsync(IAuthentication? authentication, Guid taxonomyGuid);
 }

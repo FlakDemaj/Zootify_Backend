@@ -112,6 +112,32 @@ public class CommonSpecimenService : ICommonSpecimenService
         }
         return result;
     }
+    
+    /// <summary>
+    /// Returns a paged list of the specimens created by the authenticated user, optionally filtered by name.
+    /// </summary>
+    /// <param name="authentication">The authentication context of the requesting user.</param>
+    /// <param name="filterByName">Optional name fragment to filter the specimens by.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A paged response containing the matching specimens and the total count.</returns>
+    [Transaction(ReadOnly = true)]
+    public async Task<GetAllSpecimensPagedResponseDto> GetAllSpecimensCreatedByUserAsync(
+        IAuthentication authentication,
+        string? filterByName,
+        BaseSortAndPagingDto paging)
+    {
+        var (items, total) = await _specimenRepository.GetSpecimensPagedAsync(
+            authentication.UserGuid,
+            filterByName,
+            status: null,
+            paging);
+
+        return new GetAllSpecimensPagedResponseDto
+        {
+            TotalCount = total,
+            Specimens  = _mapper.Map<List<GetAllSpecimensDto>>(items),
+        };
+    }
 
     /// <summary>
     /// Throws a <see cref="ZootifyException"/> if the caller does not have permission to view the given specimen.
@@ -382,7 +408,7 @@ public class CommonSpecimenService : ICommonSpecimenService
     /// <returns>A list of specimen DTOs (including their tags) matching the taxonomy subtree.</returns>
     /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
     [Transaction(ReadOnly = true)]
-    public async Task<List<SpecimenWithTagsDto>> GetSpecimensByTaxonomyNodeGuidAsync(
+    public async Task<List<GetAllSpecimensWithTagsDto>> GetSpecimensByTaxonomyNodeGuidAsync(
         IAuthentication? authentication,
         Guid taxonomyGuid)
     {
@@ -402,7 +428,7 @@ public class CommonSpecimenService : ICommonSpecimenService
         var specimens = await _specimenRepository.GetSpecimensBySpeciesGuidsAsync(
             speciesGuids, authentication, includeTags: true);
 
-        return _mapper.Map<List<SpecimenWithTagsDto>>(specimens);
+        return _mapper.Map<List<GetAllSpecimensWithTagsDto>>(specimens);
     }
 
     /// <summary>

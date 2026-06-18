@@ -251,7 +251,7 @@ public class CommonCollectionService : ICommonCollectionService
             DeletedAt       = collection.DeletionDate,
             Status          = collection.Status,
             TotalCount      = total,
-            Specimens       = _mapper.Map<List<SpecimenDto>>(items),
+            Specimens       = _mapper.Map<List<GetAllSpecimensDto>>(items),
         };
     }
 
@@ -316,7 +316,7 @@ public class CommonCollectionService : ICommonCollectionService
             CollectionName = name,
             Status         = CollectionStatus.Active,
             TotalCount     = total,
-            Specimens      = _mapper.Map<List<SpecimenDto>>(items),
+            Specimens      = _mapper.Map<List<GetAllSpecimensDto>>(items),
         };
     }
 

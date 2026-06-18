@@ -48,7 +48,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
 
         return await query.FirstOrDefaultAsync(sp => sp.Guid == guid);
     }
-
+    
     /// <summary>
     /// Returns the number of specimens owned by the authenticated user that have the given status.
     /// </summary>
@@ -87,6 +87,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
     /// Returns a paged list of specimens belonging to the specified collection, applying visibility rules based on the caller's authentication.
     /// </summary>
     /// <param name="collectionGuid">The GUID of the collection to retrieve specimens from.</param>
+    /// <param name="filterByName">The filter name, that should be in the specimen name</param>
     /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
@@ -137,7 +138,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         SpecimenStatus? status,
         BaseSortAndPagingDto paging)
     {
-        var query = Context.GetTrackingSet<SpecimenEntity>();
+        var query = Context.GetTrackingSet<SpecimenEntity>()
+            .Include(sp => sp.Image)
+            .AsQueryable();
 
         if (userGuid.HasValue)
         {

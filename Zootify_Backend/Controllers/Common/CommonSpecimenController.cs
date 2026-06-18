@@ -44,6 +44,23 @@ public class CommonSpecimenController : BaseRestController
             specimenGuid,
             collectionGuid));
     }
+    
+    /// <summary>
+    /// Returns a paged list of the specimens created by the authenticated user, optionally filtered by name.
+    /// </summary>
+    /// <param name="filterByName">Optional name fragment to filter the specimens by.</param>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A paged response containing the matching specimens and the total count.</returns>
+    [HttpGet]
+    public async Task<ActionResult<GetAllSpecimensPagedResponseDto>> GetAllOwnCreatedSpecimensAsync(
+        [FromQuery] string? filterByName,
+        [FromQuery] BaseSortAndPagingDto paging)
+    {
+        return Ok(await _commonSpecimenService.GetAllSpecimensCreatedByUserAsync(
+            Authentication,
+            filterByName,
+            paging));
+    }
 
     /// <summary>
     /// Returns all specimens belonging to the given taxonomy node or any of its descendant species,
@@ -53,7 +70,7 @@ public class CommonSpecimenController : BaseRestController
     /// <returns>A list of specimen DTOs (with tags) matching the taxonomy subtree.</returns>
     [AllowAnonymous]
     [HttpGet("{taxonomyGuid:guid}")]
-    public async Task<ActionResult<List<SpecimenWithTagsDto>>> GetSpecimensByTaxonomyGuidAsync(Guid taxonomyGuid)
+    public async Task<ActionResult<List<GetAllSpecimensWithTagsDto>>> GetSpecimensByTaxonomyGuidAsync(Guid taxonomyGuid)
     {
         return Ok(await _commonSpecimenService.GetSpecimensByTaxonomyNodeGuidAsync(
             OptionalAuthentication,

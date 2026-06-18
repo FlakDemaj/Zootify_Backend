@@ -39,5 +39,5 @@ public class GetAllSpecimenInCollectionResponseDto
     public int TotalCount { get; init; }
 
     /// <summary>The specimens on the current page.</summary>
-    public List<SpecimenDto> Specimens { get; init; } = [];
+    public List<GetAllSpecimensDto> Specimens { get; init; } = [];
 }
