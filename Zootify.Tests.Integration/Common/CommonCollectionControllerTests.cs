@@ -1633,6 +1633,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
         result!.CollectionGuid.Should().Be(collection.Guid);
         result.CollectionName.Should().Be("My Birds");
+        result.CreatedUserGuid.Should().Be(user.Guid);
         result.Status.Should().Be(CollectionStatus.Active);
         result.CreatedAt.Should().NotBeNull();
     }

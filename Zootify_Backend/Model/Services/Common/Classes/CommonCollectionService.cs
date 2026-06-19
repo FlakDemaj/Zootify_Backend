@@ -245,6 +245,7 @@ public class CommonCollectionService : ICommonCollectionService
             CollectionName  = collection.Name,
             CreatedByName   = FormatUserName(collection.CreatedByUser),
             CreatedAt       = collection.CreationDate,
+            CreatedUserGuid = collection.CreatedByUserGuid,
             UpdatedByName   = FormatUserName(collection.UpdatedByUser),
             UpdatedAt       = collection.UpdatedDate,
             DeletedByName   = FormatUserName(collection.DeletedByUser),

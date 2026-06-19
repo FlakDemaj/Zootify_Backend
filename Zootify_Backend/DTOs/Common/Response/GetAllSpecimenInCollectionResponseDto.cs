@@ -13,6 +13,9 @@ public class GetAllSpecimenInCollectionResponseDto
 
     /// <summary>The collection's display name.</summary>
     public required string CollectionName { get; init; }
+    
+    /// <summary>The Guid of the user who created the collection.</summary>
+    public Guid? CreatedUserGuid { get; init; }
 
     /// <summary>The display name of the user who created the collection.</summary>
     public string? CreatedByName { get; init; }
