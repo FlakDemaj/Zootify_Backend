@@ -68,7 +68,7 @@ public class AdminTaxonomyController : BaseRestController
         Guid taxonomyGuid,
         [FromBody] RejectTaxonomyRequestDto request)
     {
-        await _adminTaxonomyService.RejectTaxonomyAsync(Authentication, taxonomyGuid, request);
+        await _adminTaxonomyService.RejectTaxonomyAsync(taxonomyGuid, request);
         return Ok();
     }
 }

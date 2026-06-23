@@ -12,7 +12,7 @@ public class CollectionEntity : BaseDeletionEntity
 
     public string? Description { get; set; }
 
-    public bool IsPrivate { get; set; }
+    public bool IsPublic { get; set; } = true;
 
     public CollectionStatus Status { get; set; } = CollectionStatus.Active;
 
@@ -27,16 +27,18 @@ public class CollectionEntity : BaseDeletionEntity
     {
         return Name != newData.Name
             || Description != newData.Description
-            || IsPrivate != newData.IsPrivate;
+            || IsPublic != newData.IsPublic;
     }
 
     /// <summary>
-    /// Soft-deletes the collection by setting its status to deleted and recording the requester.
+    /// Soft-deletes the collection by setting its status to deleted, recording the requester
+    /// and set the collection to private.
     /// </summary>
     /// <param name="requesterGuid">The GUID of the user performing the deletion.</param>
     public void DeleteCollection(Guid requesterGuid)
     {
         Status = CollectionStatus.Deleted;
+        IsPublic = false;
         SetDeletedBy(requesterGuid);
     }
 
@@ -60,7 +62,7 @@ public class CollectionEntity : BaseDeletionEntity
     {
         Name = newData.Name;
         Description = newData.Description;
-        IsPrivate = newData.IsPrivate;
+        IsPublic = newData.IsPublic;
         SetUpdatedBy(requesterGuid);
     }
 }

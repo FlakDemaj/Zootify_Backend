@@ -71,12 +71,14 @@ public class SpecimenEntity : BaseDeletionEntity
     }
 
     /// <summary>
-    /// Soft-deletes the specimen by setting its status to deleted and recording the requester.
+    /// Soft-deletes the specimen by setting its status to deleted, recording the requester and set the
+    /// Specimen to private.
     /// </summary>
     /// <param name="requesterGuid">The GUID of the user performing the deletion.</param>
     public void DeleteSpecimen(Guid requesterGuid)
     {
         Status = SpecimenStatus.Deleted;
+        IsPublic = false;
         SetDeletedBy(requesterGuid);
     }
 

@@ -29,10 +29,11 @@ public class CommonHomeService : ICommonHomeService
     }
 
     /// <summary>
-    /// Returns a paged public overview of specimens, newest first, optionally filtered by city.
-    /// Non-public specimens are only visible to moderators and admins.
+    /// Returns a paged public overview of active specimens, newest first, optionally filtered by city.
+    /// Anonymous users see only active public specimens, regular users additionally see their own active
+    /// specimens, and moderators and admins see all active specimens.
     /// </summary>
-    /// <param name="authentication">The optional authentication context; anonymous or regular users see only public specimens.</param>
+    /// <param name="authentication">The optional authentication context; anonymous users see only active public specimens, regular users additionally see their own active specimens, and moderators and admins see all active specimens.</param>
     /// <param name="filterByCity">Optional case-insensitive city name to filter by.</param>
     /// <param name="paging">Paging parameters (page and page size).</param>
     /// <returns>A paged response with the total count and the page of overview items.</returns>

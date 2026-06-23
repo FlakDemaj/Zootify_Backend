@@ -114,6 +114,77 @@ public class HomeControllerTests : IntegrationTestBase
         result.Specimens.Should().Contain(s => s.SpecimenGuid == ownNonPublic.Guid);
     }
 
+    /// <summary>
+    /// Tests Get Overview – Anonymous – Hides Non Active Specimens.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_Anonymous_HidesNonActiveSpecimens()
+    {
+        var (species, location) = await ArrangeAsync();
+        var active = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, status: SpecimenStatus.Active);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, status: SpecimenStatus.Pending);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, status: SpecimenStatus.Rejected);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, status: SpecimenStatus.Deleted);
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        // Only the active public specimen is returned; pending, rejected, and deleted are hidden.
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == active.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get Overview – Regular User – Hides Own Non Active Specimens.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_RegularUser_HidesOwnNonActiveSpecimens()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de", role: UserRole.User);
+        var (species, location) = await ArrangeAsync();
+        var ownActive = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: false, status: SpecimenStatus.Active, createdByUserGuid: user.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: false, status: SpecimenStatus.Pending, createdByUserGuid: user.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: false, status: SpecimenStatus.Rejected, createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        // Only the user's own active specimen is returned; their pending and rejected ones are hidden.
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == ownActive.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get Overview – Moderator – Hides Non Active Specimens.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_Moderator_HidesNonActiveSpecimens()
+    {
+        var moderator = await UserRepo.CreateUserAsync("mod@test.de", role: UserRole.Moderator);
+        var (species, location) = await ArrangeAsync();
+        var active = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: false, status: SpecimenStatus.Active);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: false, status: SpecimenStatus.Pending);
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: false, status: SpecimenStatus.Deleted);
+
+        AuthenticateAs(moderator);
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        // Moderators see all active specimens regardless of visibility, but pending and deleted are hidden.
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == active.Guid);
+    }
+
     #endregion
 
     #region Paging & Sorting

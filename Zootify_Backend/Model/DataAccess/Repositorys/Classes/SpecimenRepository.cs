@@ -175,10 +175,11 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
 
     /// <summary>
     /// Returns a paged list of specimens for the public overview, ordered by creation date descending,
-    /// eagerly loading the image, taxonomy chain, and geographic location chain. Non-public specimens
-    /// are only included for moderators and admins; an optional city name filters the result.
+    /// eagerly loading the image, taxonomy chain, and geographic location chain. Only active specimens are
+    /// returned; non-public specimens are additionally only included for their creator (regular users) or for
+    /// moderators and admins. An optional city name filters the result.
     /// </summary>
-    /// <param name="authentication">The optional authentication context; anonymous or regular users see only public specimens.</param>
+    /// <param name="authentication">The optional authentication context; anonymous users see only active public specimens, regular users additionally see their own active specimens, and moderators and admins see all active specimens.</param>
     /// <param name="filterByCity">Optional case-insensitive city name to filter by; <c>null</c> for no filter.</param>
     /// <param name="paging">Paging parameters (page and page size).</param>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
@@ -208,7 +209,10 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
                 .ThenInclude(g => g.Parent)
             .AsQueryable();
 
-        // Not logged in: only public. Regular users: public plus their own. Moderators and admins: everything.
+        // Every caller only ever sees active specimens; pending, rejected, and deleted are never listed here.
+        query = query.Where(sp => sp.Status == SpecimenStatus.Active);
+
+        // Not logged in: only public. Regular users: public plus their own. Moderators and admins: all active.
         if (authentication == null)
         {
             query = query.Where(sp => sp.IsPublic);

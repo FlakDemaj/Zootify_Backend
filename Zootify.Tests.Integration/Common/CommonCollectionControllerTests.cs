@@ -29,7 +29,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         {
             Name = "My Collection",
             Description = "A test collection",
-            IsPrivate = false
+            IsPublic = true
         };
 
         var response = await Client.PostAsJsonAsync(Routings.CommonCollectionRouting, request);
@@ -50,7 +50,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     [Fact]
     public async Task CreateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
-        var request = new CreateCollectionRequestDto { Name = "X", IsPrivate = false };
+        var request = new CreateCollectionRequestDto { Name = "X", IsPublic = true };
         var response = await Client.PostAsJsonAsync(Routings.CommonCollectionRouting, request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -89,8 +89,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_Authenticated_ReturnsStaticPlusDbCollections()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Collection A", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Collection B", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Collection A", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Collection B", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -112,7 +112,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var collection = await CollectionRepo.CreateCollectionAsync(
-            name: "Counted", isPrivate: false, createdByUserGuid: user.Guid);
+            name: "Counted", isPublic: true, createdByUserGuid: user.Guid);
 
         var first = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             createdByUserGuid: user.Guid);
@@ -144,7 +144,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var collection = await CollectionRepo.CreateCollectionAsync(
-            name: "Mixed", isPrivate: false, createdByUserGuid: owner.Guid);
+            name: "Mixed", isPublic: true, createdByUserGuid: owner.Guid);
 
         var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             isPublic: true, createdByUserGuid: owner.Guid);
@@ -179,7 +179,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var collection = await CollectionRepo.CreateCollectionAsync(
-            name: "Mixed", isPrivate: false, createdByUserGuid: owner.Guid);
+            name: "Mixed", isPublic: true, createdByUserGuid: owner.Guid);
 
         var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             isPublic: true, createdByUserGuid: owner.Guid);
@@ -208,8 +208,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     {
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var viewer = await UserRepo.CreateUserAsync("viewer@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Public", isPrivate: false, createdByUserGuid: owner.Guid);
-        await CollectionRepo.CreateCollectionAsync(name: "Private", isPrivate: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "Public", isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "Private", isPublic: false, createdByUserGuid: owner.Guid);
 
         AuthenticateAs(viewer);
 
@@ -227,7 +227,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_OwnPrivateCollectionIsVisible()
     {
         var user = await UserRepo.CreateUserAsync("user@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "My Secret", isPrivate: true, createdByUserGuid: user.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "My Secret", isPublic: false, createdByUserGuid: user.Guid);
 
         AuthenticateAs(user);
 
@@ -244,8 +244,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_DeletedCollectionsNotReturned()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "ActiveColl", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "DeletedColl", isPrivate: false,
+        await CollectionRepo.CreateCollectionAsync(name: "ActiveColl", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "DeletedColl", isPublic: true,
             deletedByUserGuid: user.Guid);
 
         AuthenticateAs(user);
@@ -380,8 +380,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_FilterByName_ReturnsDynamicMatchesOnly()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Birds of Europe", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Birds of Europe", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -399,8 +399,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_FuzzyFilter_FindsCollectionDespiteTypo()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Birds of Europe", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Birds of Europe", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPublic: true);
         AuthenticateAs(user);
 
         // "Birts of Europe" is a typo of "Birds of Europe" → fuzzy matching still finds it.
@@ -454,7 +454,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_FilterByName_NoMatch_ReturnsEmptyCollections()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Birds", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Birds", isPublic: true);
         AuthenticateAs(user);
 
         var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}?filterByName=zzznomatch");
@@ -477,7 +477,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         for (var i = 0; i < 5; i++)
         {
-            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPublic: true);
         }
 
         AuthenticateAs(user);
@@ -499,7 +499,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         for (var i = 0; i < 5; i++)
         {
-            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPublic: true);
         }
 
         AuthenticateAs(user);
@@ -519,9 +519,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_Paging_TotalCountMatchesWithFilter()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Birds A", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Birds B", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Birds A", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Birds B", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPublic: true);
         AuthenticateAs(user);
 
         var response = await Client.GetAsync(
@@ -543,9 +543,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_SortByName_Asc_ReturnsDynamicCollectionsSortedAscending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Zebra Collection", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Aardvark Collection", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Zebra Collection", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Aardvark Collection", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -568,9 +568,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_SortByName_Desc_ReturnsDynamicCollectionsSortedDescending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Zebra Collection", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Aardvark Collection", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Zebra Collection", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Aardvark Collection", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Mammals", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -596,9 +596,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
 
-        var colA = await CollectionRepo.CreateCollectionAsync(name: "Col A", isPrivate: false,
+        var colA = await CollectionRepo.CreateCollectionAsync(name: "Col A", isPublic: true,
             createdByUserGuid: user.Guid);
-        var colB = await CollectionRepo.CreateCollectionAsync(name: "Col B", isPrivate: false,
+        var colB = await CollectionRepo.CreateCollectionAsync(name: "Col B", isPublic: true,
             createdByUserGuid: user.Guid);
 
         var sp1 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
@@ -634,9 +634,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
 
-        var colA = await CollectionRepo.CreateCollectionAsync(name: "Col A", isPrivate: false,
+        var colA = await CollectionRepo.CreateCollectionAsync(name: "Col A", isPublic: true,
             createdByUserGuid: user.Guid);
-        var colB = await CollectionRepo.CreateCollectionAsync(name: "Col B", isPrivate: false,
+        var colB = await CollectionRepo.CreateCollectionAsync(name: "Col B", isPublic: true,
             createdByUserGuid: user.Guid);
 
         var sp1 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
@@ -665,9 +665,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_SortByCreatedAt_Desc_ReturnsDynamicCollectionsSortedDescending()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "First", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Second", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Third", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "First", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Second", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Third", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -694,9 +694,9 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
         // "Aaa" sorts before the first static ("Alle Exemplare"); "Zzz" sorts after every static.
-        await CollectionRepo.CreateCollectionAsync(name: "Aaa Collection", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Zzz Collection", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Mmm Collection", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Aaa Collection", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Zzz Collection", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Mmm Collection", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -721,8 +721,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_SortByCreatedAt_StaticCollectionsAlwaysLast()
     {
         var user = await UserRepo.CreateUserAsync("test@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "First", isPrivate: false);
-        await CollectionRepo.CreateCollectionAsync(name: "Second", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "First", isPublic: true);
+        await CollectionRepo.CreateCollectionAsync(name: "Second", isPublic: true);
 
         AuthenticateAs(user);
 
@@ -752,7 +752,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Old Name",
             description: "Old Description",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: user.Guid);
 
         AuthenticateAs(user);
@@ -761,7 +761,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         {
             Name = "New Name",
             Description = "New Description",
-            IsPrivate = true
+            IsPublic = false
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -772,7 +772,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var updated = await GetCollectionFromDbAsync(collection.Guid);
         updated!.Name.Should().Be("New Name");
         updated.Description.Should().Be("New Description");
-        updated.IsPrivate.Should().BeTrue();
+        updated.IsPublic.Should().BeFalse();
         updated.UpdatedByUserGuid.Should().Be(user.Guid);
         updated.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
     }
@@ -786,7 +786,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Old Name",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: user.Guid);
 
         AuthenticateAs(user);
@@ -795,7 +795,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         {
             Name = "New Name",
             Description = collection.Description,
-            IsPrivate = collection.IsPrivate
+            IsPublic = collection.IsPublic
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -817,7 +817,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Name",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: user.Guid);
 
         AuthenticateAs(user);
@@ -826,7 +826,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         {
             Name = collection.Name,
             Description = collection.Description,
-            IsPrivate = collection.IsPrivate
+            IsPublic = collection.IsPublic
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -848,7 +848,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var request = new UpdateCollectionRequestDto
         {
             Name = "New Name",
-            IsPrivate = false
+            IsPublic = true
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -868,7 +868,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var otherUser = await UserRepo.CreateUserAsync("other@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Owners Collection",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: owner.Guid);
 
         AuthenticateAs(otherUser);
@@ -876,7 +876,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var request = new UpdateCollectionRequestDto
         {
             Name = "Hijacked Name",
-            IsPrivate = false
+            IsPublic = true
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -896,7 +896,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Old Name",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: owner.Guid);
 
         AuthenticateAs(admin);
@@ -904,7 +904,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var request = new UpdateCollectionRequestDto
         {
             Name = "Updated By Admin",
-            IsPrivate = true
+            IsPublic = false
         };
 
         var response = await Client.PatchAsJsonAsync(
@@ -923,7 +923,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     [Fact]
     public async Task UpdateCollection_NotAuthenticated_ReturnsUnauthorized()
     {
-        var request = new UpdateCollectionRequestDto { Name = "X", IsPrivate = false };
+        var request = new UpdateCollectionRequestDto { Name = "X", IsPublic = true };
         var response = await Client.PatchAsJsonAsync(
             $"{Routings.CommonCollectionRouting}/{Guid.CreateVersion7()}", request);
 
@@ -939,13 +939,13 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Deleted Collection",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: user.Guid,
             deletedByUserGuid: user.Guid);
 
         AuthenticateAs(user);
 
-        var request = new UpdateCollectionRequestDto { Name = "New Name", IsPrivate = false };
+        var request = new UpdateCollectionRequestDto { Name = "New Name", IsPublic = true };
 
         var response = await Client.PatchAsJsonAsync(
             $"{Routings.CommonCollectionRouting}/{collection.Guid}", request);
@@ -979,6 +979,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         deleted!.DeletedByUserGuid.Should().Be(user.Guid);
         deleted.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
         deleted.Status.Should().Be(CollectionStatus.Deleted);
+        deleted.IsPublic.Should().BeFalse();
     }
 
     /// <summary>
@@ -1439,7 +1440,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true);
 
         var lion = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, name: "Lion");
         var tiger = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, name: "Tiger");
@@ -1466,7 +1467,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: user.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: user.Guid);
 
         var active = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             SpecimenStatus.Active, createdByUserGuid: user.Guid);
@@ -1499,7 +1500,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
 
         var active = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             SpecimenStatus.Active, createdByUserGuid: owner.Guid);
@@ -1527,7 +1528,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
 
         var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             isPublic: true, createdByUserGuid: owner.Guid);
@@ -1557,7 +1558,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true);
         var sp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, sp.Guid);
 
@@ -1581,7 +1582,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true);
         var publicSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         var privateSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicSp.Guid);
@@ -1606,7 +1607,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true);
         var privateSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: user.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, privateSp.Guid);
 
@@ -1628,7 +1629,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: true, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: false, createdByUserGuid: owner.Guid);
         var sp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, sp.Guid);
 
@@ -1649,7 +1650,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     {
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var other = await UserRepo.CreateUserAsync("other@test.de");
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: true, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: false, createdByUserGuid: owner.Guid);
 
         AuthenticateAs(other);
 
@@ -1670,7 +1671,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var publicSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         var privateSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicSp.Guid);
@@ -1694,7 +1695,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var other = await UserRepo.CreateUserAsync("other@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: owner.Guid,
             deletedByUserGuid: owner.Guid);
 
@@ -1732,7 +1733,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true);
 
         for (var i = 0; i < 5; i++)
         {
@@ -1759,7 +1760,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true);
 
         var sp1 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true);
         var sp2 = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true);
@@ -1787,7 +1788,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("test@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "My Birds",
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: user.Guid);
 
         AuthenticateAs(user);
@@ -1888,7 +1889,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     [Fact]
     public async Task GetAllCollections_Anonymous_AllowsUnauthenticatedAccess()
     {
-        await CollectionRepo.CreateCollectionAsync(name: "Public", isPrivate: false);
+        await CollectionRepo.CreateCollectionAsync(name: "Public", isPublic: true);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
@@ -1927,7 +1928,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var collection = await CollectionRepo.CreateCollectionAsync(
-            name: "Mixed", isPrivate: false, createdByUserGuid: owner.Guid);
+            name: "Mixed", isPublic: true, createdByUserGuid: owner.Guid);
 
         var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
             isPublic: true, createdByUserGuid: owner.Guid);
@@ -1953,8 +1954,8 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllCollections_Anonymous_PrivateCollectionIsNotReturned()
     {
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
-        await CollectionRepo.CreateCollectionAsync(name: "Secret", isPrivate: true, createdByUserGuid: owner.Guid);
-        await CollectionRepo.CreateCollectionAsync(name: "Open", isPrivate: false, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "Secret", isPublic: false, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateCollectionAsync(name: "Open", isPublic: true, createdByUserGuid: owner.Guid);
 
         var response = await Client.GetAsync(Routings.CommonCollectionRouting);
 
@@ -1973,7 +1974,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     {
         for (var i = 0; i < 5; i++)
         {
-            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPrivate: false);
+            await CollectionRepo.CreateCollectionAsync(name: $"Col {i}", isPublic: true);
         }
 
         var response = await Client.GetAsync(
@@ -1998,7 +1999,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var publicSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         var privateSp = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicSp.Guid);
@@ -2019,7 +2020,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     public async Task GetAllSpecimensInCollection_Anonymous_PrivateCollection_ReturnsForbidden()
     {
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: true, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: false, createdByUserGuid: owner.Guid);
 
         var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
 
@@ -2070,7 +2071,7 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     {
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var collection = await CollectionRepo.CreateCollectionAsync(
-            isPrivate: false,
+            isPublic: true,
             createdByUserGuid: owner.Guid,
             deletedByUserGuid: owner.Guid);
 

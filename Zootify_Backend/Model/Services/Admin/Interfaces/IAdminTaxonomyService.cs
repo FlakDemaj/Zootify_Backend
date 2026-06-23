@@ -36,9 +36,8 @@ public interface IAdminTaxonomyService
     /// <summary>
     /// Rejects a taxonomy node, hard-deletes its entire subtree, rejects all associated specimens, and notifies affected users.
     /// </summary>
-    /// <param name="authentication">The authentication context of the rejecting moderator or admin.</param>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to reject.</param>
     /// <param name="request">Contains the rejection comment to send to affected users.</param>
     /// <exception cref="ZootifyException">Thrown when no taxonomy node with the given GUID exists.</exception>
-    Task RejectTaxonomyAsync(IAuthentication authentication, Guid taxonomyGuid, RejectTaxonomyRequestDto request);
+    Task RejectTaxonomyAsync(Guid taxonomyGuid, RejectTaxonomyRequestDto request);
 }

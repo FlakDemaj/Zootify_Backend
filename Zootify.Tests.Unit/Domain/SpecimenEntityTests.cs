@@ -323,4 +323,48 @@ public class SpecimenEntityTests
     }
 
     #endregion
+
+    #region DeleteSpecimen
+
+    /// <summary>
+    /// Tests Delete Specimen – Sets Status To Deleted.
+    /// </summary>
+    [Fact]
+    public void DeleteSpecimen_SetsStatusToDeleted()
+    {
+        var specimen = CreateSpecimen();
+
+        specimen.DeleteSpecimen(Guid.CreateVersion7());
+
+        specimen.Status.Should().Be(SpecimenStatus.Deleted);
+    }
+
+    /// <summary>
+    /// Tests Delete Specimen – Sets Deleted By User Guid.
+    /// </summary>
+    [Fact]
+    public void DeleteSpecimen_SetsDeletedByUserGuid()
+    {
+        var specimen = CreateSpecimen();
+        var requester = Guid.CreateVersion7();
+
+        specimen.DeleteSpecimen(requester);
+
+        specimen.DeletedByUserGuid.Should().Be(requester);
+    }
+
+    /// <summary>
+    /// Tests Delete Specimen – Sets Is Public To False.
+    /// </summary>
+    [Fact]
+    public void DeleteSpecimen_SetsIsPublicToFalse()
+    {
+        var specimen = CreateSpecimen(isPublic: true);
+
+        specimen.DeleteSpecimen(Guid.CreateVersion7());
+
+        specimen.IsPublic.Should().BeFalse();
+    }
+
+    #endregion
 }

@@ -11,6 +11,6 @@ public class CreateCollectionRequestDto
     /// <summary>Optional description of the collection.</summary>
     public string? Description { get; init; }
 
-    /// <summary>Whether the collection is private (visible only to its owner).</summary>
-    public required bool IsPrivate { get; init; }
+    /// <summary>Whether the collection is public (visible to everyone, not just its owner).</summary>
+    public required bool IsPublic { get; init; }
 }

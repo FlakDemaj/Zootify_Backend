@@ -10,14 +10,14 @@ public class CollectionEntityTests
     private static CollectionEntity CreateCollection(
         string name = "My Collection",
         string? description = null,
-        bool isPrivate = false,
+        bool isPublic = true,
         CollectionStatus status = CollectionStatus.Active)
     {
         return new CollectionEntity
         {
             Name = name,
             Description = description,
-            IsPrivate = isPrivate,
+            IsPublic = isPublic,
             Status = status
         };
     }
@@ -63,6 +63,19 @@ public class CollectionEntityTests
         collection.DeleteCollection(Guid.CreateVersion7());
 
         collection.DeletionDate.Should().BeOnOrAfter(before);
+    }
+
+    /// <summary>
+    /// Tests Delete Collection – Sets Is Public To False.
+    /// </summary>
+    [Fact]
+    public void DeleteCollection_SetsIsPublicToFalse()
+    {
+        var collection = CreateCollection(isPublic: true);
+
+        collection.DeleteCollection(Guid.CreateVersion7());
+
+        collection.IsPublic.Should().BeFalse();
     }
 
     #endregion
@@ -136,8 +149,8 @@ public class CollectionEntityTests
     [Fact]
     public void CheckChanges_IdenticalData_ReturnsFalse()
     {
-        var collection = CreateCollection(name: "A", description: "B", isPrivate: true);
-        var same = CreateCollection(name: "A", description: "B", isPrivate: true);
+        var collection = CreateCollection(name: "A", description: "B", isPublic: false);
+        var same = CreateCollection(name: "A", description: "B", isPublic: false);
 
         collection.CheckChanges(same).Should().BeFalse();
     }
@@ -167,13 +180,13 @@ public class CollectionEntityTests
     }
 
     /// <summary>
-    /// Tests Check Changes – Different Is Private – Returns True.
+    /// Tests Check Changes – Different Is Public – Returns True.
     /// </summary>
     [Fact]
-    public void CheckChanges_DifferentIsPrivate_ReturnsTrue()
+    public void CheckChanges_DifferentIsPublic_ReturnsTrue()
     {
-        var collection = CreateCollection(isPrivate: false);
-        var updated = CreateCollection(isPrivate: true);
+        var collection = CreateCollection(isPublic: true);
+        var updated = CreateCollection(isPublic: false);
 
         collection.CheckChanges(updated).Should().BeTrue();
     }
@@ -188,15 +201,15 @@ public class CollectionEntityTests
     [Fact]
     public void UpdateData_CopiesAllFields()
     {
-        var collection = CreateCollection(name: "Old", description: null, isPrivate: false);
-        var newData = CreateCollection(name: "New", description: "Desc", isPrivate: true);
+        var collection = CreateCollection(name: "Old", description: null, isPublic: true);
+        var newData = CreateCollection(name: "New", description: "Desc", isPublic: false);
         var requester = Guid.CreateVersion7();
 
         collection.UpdateData(newData, requester);
 
         collection.Name.Should().Be("New");
         collection.Description.Should().Be("Desc");
-        collection.IsPrivate.Should().BeTrue();
+        collection.IsPublic.Should().BeFalse();
     }
 
     /// <summary>

@@ -182,10 +182,10 @@ public class CommonCollectionService : ICommonCollectionService
                     ? collections.OrderByDescending(c => c.Name)
                     : collections.OrderBy(c => c.Name);
                 break;
-            case "isPrivate":
+            case "isPublic":
                 ordered = desc
-                    ? collections.OrderByDescending(c => c.IsPrivate)
-                    : collections.OrderBy(c => c.IsPrivate);
+                    ? collections.OrderByDescending(c => c.IsPublic)
+                    : collections.OrderBy(c => c.IsPublic);
                 break;
             case "specimenCount":
                 ordered = desc
@@ -374,7 +374,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// <exception cref="ZootifyException">Thrown when the caller does not have permission.</exception>
     private static void CheckCollectionVisibility(IAuthentication? authentication, CollectionEntity collection)
     {
-        var isPublicActive = !collection.IsPrivate && collection.Status == CollectionStatus.Active;
+        var isPublicActive = collection.IsPublic && collection.Status == CollectionStatus.Active;
         if (isPublicActive)
         {
             return;
@@ -453,7 +453,7 @@ public class CommonCollectionService : ICommonCollectionService
     {
         Guid          = guid,
         Name          = CollectionNamesManager.GetString(key, culture) ?? key,
-        IsPrivate     = true,
+        IsPublic      = false,
         SpecimenCount = specimenCount,
         CreatedAt = null
     };

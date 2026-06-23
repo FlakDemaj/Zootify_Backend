@@ -44,8 +44,8 @@ public class CollectionEntityConfiguration : BaseDeletionEntityConfiguration<Col
             .HasMaxLength(400);
         
         builder
-            .Property(e => e.IsPrivate)
-            .HasColumnName("private")
+            .Property(e => e.IsPublic)
+            .HasColumnName("is_public")
             .IsRequired();
 
         builder
