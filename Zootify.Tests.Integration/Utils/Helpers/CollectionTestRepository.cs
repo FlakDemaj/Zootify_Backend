@@ -19,7 +19,7 @@ public class CollectionTestRepository
     /// </summary>
     public async Task<CollectionEntity> CreateCollectionAsync(
         string name = "Test Collection",
-        bool isPrivate = false,
+        bool isPublic = true,
         string? description = null,
         Guid? createdByUserGuid = null,
         Guid? deletedByUserGuid = null)
@@ -27,7 +27,7 @@ public class CollectionTestRepository
         var collection = new CollectionEntity
         {
             Name = name,
-            IsPrivate = isPrivate,
+            IsPublic = isPublic,
             Description = description
         };
 

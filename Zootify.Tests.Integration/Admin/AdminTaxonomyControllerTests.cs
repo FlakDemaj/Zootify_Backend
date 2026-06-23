@@ -268,6 +268,8 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
         var updatedPending = await GetSpecimenFromDbAsync(pendingSpecimen.Guid);
         updatedActive!.Status.Should().Be(SpecimenStatus.Rejected);
         updatedPending!.Status.Should().Be(SpecimenStatus.Rejected);
+        updatedActive.IsPublic.Should().BeFalse();
+        updatedPending.IsPublic.Should().BeFalse();
     }
 
     /// <summary>

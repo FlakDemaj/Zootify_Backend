@@ -132,12 +132,12 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
     {
         if (authentication == null)
         {
-            query = query.Where(c => !c.IsPrivate && c.Status == CollectionStatus.Active);
+            query = query.Where(c => c.IsPublic && c.Status == CollectionStatus.Active);
         }
 
         if (authentication != null && authentication.Role == UserRole.User)
         {
-            query = query.Where(c => (!c.IsPrivate && c.Status == CollectionStatus.Active)
+            query = query.Where(c => (c.IsPublic && c.Status == CollectionStatus.Active)
                                      || c.CreatedByUserGuid == authentication.UserGuid);
         }
 
@@ -168,9 +168,9 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
             return desc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name);
         }
 
-        if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "isPrivate")
+        if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "isPublic")
         {
-            return desc ? query.OrderByDescending(c => c.IsPrivate) : query.OrderBy(c => c.IsPrivate);
+            return desc ? query.OrderByDescending(c => c.IsPublic) : query.OrderBy(c => c.IsPublic);
         }
 
         if (!string.IsNullOrWhiteSpace(sortBy) && sortBy == "createdAt")

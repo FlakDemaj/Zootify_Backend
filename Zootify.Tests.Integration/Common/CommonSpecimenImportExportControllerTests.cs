@@ -236,7 +236,7 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         var user = await UserRepo.CreateUserAsync("user@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Papilio machaon", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: user.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: user.Guid);
 
         var specimen = await SpecimenRepo.CreateSpecimenAsync(
             species.Guid, location.Guid, isPublic: true, createdByUserGuid: user.Guid, name: "Schwalbenschwanz");
@@ -269,7 +269,7 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         var viewer = await UserRepo.CreateUserAsync("viewer@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Papilio machaon", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
 
         var publicSpecimen = await SpecimenRepo.CreateSpecimenAsync(
             species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid, name: "Public");

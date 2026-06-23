@@ -1302,7 +1302,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
@@ -1327,7 +1327,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
@@ -1358,7 +1358,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var genus   = await SpecimenRepo.CreateTaxonomyNodeAsync("Panthera",  TaxonomyRank.Genus,  parentGuid: family.Guid);
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo",       TaxonomyRank.Species, parentGuid: genus.Guid);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
@@ -1383,7 +1383,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var country = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
         var city    = await SpecimenRepo.CreateGeographicLocationAsync("Munich", GeographicLevel.City, parentGuid: country.Guid);
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, city.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
@@ -1410,7 +1410,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
         var tag1 = await TagRepo.CreateTagAsync("Big");
         var tag2 = await TagRepo.CreateTagAsync("Blue");
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenWithTagsAsync(
             species.Guid, location.Guid, [tag1, tag2], createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
@@ -1434,7 +1434,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
@@ -1515,7 +1515,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
 
         AuthenticateAs(owner);
@@ -1630,6 +1630,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         deleted!.DeletedByUserGuid.Should().Be(owner.Guid);
         deleted.DeletionDate.Should().BeCloseTo(DateTime.UtcNow, precision: TimeSpan.FromSeconds(5));
         deleted.Status.Should().Be(SpecimenStatus.Deleted);
+        deleted.IsPublic.Should().BeFalse();
     }
 
     /// <summary>
@@ -1827,7 +1828,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
@@ -1867,7 +1868,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var owner = await UserRepo.CreateUserAsync("owner@test.de");
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
 
         var response = await Client.GetAsync(
@@ -1888,7 +1889,7 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         var @class  = await SpecimenRepo.CreateTaxonomyNodeAsync("Mammalia",  TaxonomyRank.Class, parentGuid: phylum.Guid);
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo",       TaxonomyRank.Species, parentGuid: @class.Guid);
         var location = await SpecimenRepo.CreateGeographicLocationAsync();
-        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
         var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
 
