@@ -28,17 +28,17 @@ public class HomeController : BaseRestController
     /// Returns the public animal overview, newest first, optionally filtered by city.
     /// Anonymous and regular users see only public animals; moderators and admins see all.
     /// </summary>
-    /// <param name="filterByOrt">Optional case-insensitive city name to filter by.</param>
+    /// <param name="filterByCity">Optional case-insensitive city name to filter by.</param>
     /// <param name="paging">Paging parameters (page and page size, 20 per page by default).</param>
     /// <returns>A paged response with the total count and the page of overview items.</returns>
     [HttpGet("animals")]
     public async Task<ActionResult<GetPublicSpecimenOverviewResponseDto>> GetPublicSpecimenOverviewAsync(
-        [FromQuery] string? filterByOrt,
+        [FromQuery] string? filterByCity,
         [FromQuery] BaseSortAndPagingDto paging)
     {
         return Ok(await _commonHomeService.GetPublicSpecimenOverviewAsync(
             OptionalAuthentication,
-            filterByOrt,
+            filterByCity,
             paging));
     }
 }
