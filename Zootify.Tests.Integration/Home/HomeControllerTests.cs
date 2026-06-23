@@ -162,7 +162,7 @@ public class HomeControllerTests : IntegrationTestBase
     #region FilterByCity
 
     /// <summary>
-    /// Tests Get Overview – Filter By Ort – Returns Only Matching City.
+    /// Tests Get Overview – Filter By City – Returns Only Matching City.
     /// </summary>
     [Fact]
     public async Task GetOverview_FilterByCity_ReturnsOnlyMatchingCity()
@@ -184,7 +184,7 @@ public class HomeControllerTests : IntegrationTestBase
     }
 
     /// <summary>
-    /// Tests Get Overview – Filter By Ort – Is Case Insensitive.
+    /// Tests Get Overview – Filter By City – Is Case Insensitive.
     /// </summary>
     [Fact]
     public async Task GetOverview_FilterByCity_IsCaseInsensitive()
