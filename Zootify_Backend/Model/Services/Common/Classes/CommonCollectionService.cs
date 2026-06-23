@@ -211,6 +211,7 @@ public class CommonCollectionService : ICommonCollectionService
     /// </summary>
     /// <param name="authentication">The optional authentication context used to enforce visibility rules.</param>
     /// <param name="collectionGuid">The GUID of the collection to retrieve specimens from.</param>
+    /// <param name="filterByName">The filter for the specimens in the collections</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A response containing the collection metadata and its paged specimens.</returns>
     /// <exception cref="ZootifyException">Thrown when the collection is not found.</exception>

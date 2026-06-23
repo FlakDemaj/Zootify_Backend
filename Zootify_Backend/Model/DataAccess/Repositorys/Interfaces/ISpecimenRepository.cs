@@ -50,6 +50,7 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     /// Returns a paged list of specimens belonging to the specified collection, applying visibility rules.
     /// </summary>
     /// <param name="collectionGuid">The GUID of the collection to retrieve specimens from.</param>
+    /// <param name="filterByName">The filter for the specimens in the collections</param>
     /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
@@ -63,6 +64,7 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     /// Returns a paged list of specimens, optionally filtered by owner and status.
     /// </summary>
     /// <param name="userGuid">Optional GUID of the owning user; if <c>null</c>, only public specimens are returned.</param>
+    /// <param name="filterByName">The filter for the specimens in the collections</param>
     /// <param name="status">Optional status filter.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
