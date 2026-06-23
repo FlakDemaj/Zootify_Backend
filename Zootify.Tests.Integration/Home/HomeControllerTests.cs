@@ -159,13 +159,13 @@ public class HomeControllerTests : IntegrationTestBase
 
     #endregion
 
-    #region FilterByOrt
+    #region FilterByCity
 
     /// <summary>
     /// Tests Get Overview – Filter By Ort – Returns Only Matching City.
     /// </summary>
     [Fact]
-    public async Task GetOverview_FilterByOrt_ReturnsOnlyMatchingCity()
+    public async Task GetOverview_FilterByCity_ReturnsOnlyMatchingCity()
     {
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var siegen = await CreateCityLocationAsync("Siegen");
@@ -175,7 +175,7 @@ public class HomeControllerTests : IntegrationTestBase
         await SpecimenRepo.CreateSpecimenAsync(species.Guid, koeln.Guid, isPublic: true, name: "Köln Animal");
 
         var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(
-            $"{Routings.HomeAnimalsRouting}?filterByOrt=Siegen");
+            $"{Routings.HomeAnimalsRouting}?filterByCity=Siegen");
 
         result!.TotalCount.Should().Be(1);
         result.Specimens.Should().ContainSingle(s => s.SpecimenGuid == siegenSpecimen.Guid);
@@ -187,14 +187,14 @@ public class HomeControllerTests : IntegrationTestBase
     /// Tests Get Overview – Filter By Ort – Is Case Insensitive.
     /// </summary>
     [Fact]
-    public async Task GetOverview_FilterByOrt_IsCaseInsensitive()
+    public async Task GetOverview_FilterByCity_IsCaseInsensitive()
     {
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
         var siegen = await CreateCityLocationAsync("Siegen");
         await SpecimenRepo.CreateSpecimenAsync(species.Guid, siegen.Guid, isPublic: true, name: "Siegen Animal");
 
         var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(
-            $"{Routings.HomeAnimalsRouting}?filterByOrt=siegen");
+            $"{Routings.HomeAnimalsRouting}?filterByCity=siegen");
 
         result!.TotalCount.Should().Be(1);
         result.Specimens.Single().LocationPath

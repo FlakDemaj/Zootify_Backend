@@ -29,15 +29,6 @@ public interface ICollectionRepository : IBaseRepository<CollectionEntity>
         int take);
 
     /// <summary>
-    /// Returns the number of collections visible to the caller that match the optional name filter.
-    /// </summary>
-    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
-    /// <param name="filterByName">Optional name fragment to filter collections by.</param>
-    Task<int> CountCollectionsByNameFilterAsync(
-        IAuthentication? authentication,
-        string? filterByName);
-
-    /// <summary>
     /// Returns the collection with the given GUID, including its specimen-collection links, or <c>null</c> if not found.
     /// </summary>
     /// <param name="guid">The GUID of the collection to retrieve.</param>

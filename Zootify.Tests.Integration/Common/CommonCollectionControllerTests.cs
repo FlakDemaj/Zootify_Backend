@@ -114,10 +114,16 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         var collection = await CollectionRepo.CreateCollectionAsync(
             name: "Counted", isPrivate: false, createdByUserGuid: user.Guid);
 
-        var first = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
-        var second = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
+        var first = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            createdByUserGuid: user.Guid);
+        var second = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            createdByUserGuid: user.Guid);
+        // An inactive specimen in the same collection must not be counted.
+        var inactive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Deleted, createdByUserGuid: user.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, first.Guid);
         await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, second.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, inactive.Guid);
 
         AuthenticateAs(user);
 
@@ -125,6 +131,73 @@ public class CommonCollectionControllerTests : IntegrationTestBase
 
         var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
         result!.Collections.Single(c => c.Name == "Counted").SpecimenCount.Should().Be(2);
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Dynamic Collection – Regular User Does Not Count Others' Private Specimens.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_DynamicCollection_User_OnlyCountsActiveVisibleSpecimens()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var viewer = await UserRepo.CreateUserAsync("viewer@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            name: "Mixed", isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: true, createdByUserGuid: owner.Guid);
+        var ownPrivateActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: false, createdByUserGuid: viewer.Guid);
+        var othersPrivateActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: false, createdByUserGuid: owner.Guid);
+        var publicInactive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Pending, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, ownPrivateActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, othersPrivateActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicInactive.Guid);
+
+        AuthenticateAs(viewer);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        // Public active + own private active are counted; others' private and the inactive one are not.
+        result!.Collections.Single(c => c.Name == "Mixed").SpecimenCount.Should().Be(2);
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Dynamic Collection – Admin Counts All Active Specimens Regardless Of Visibility.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_DynamicCollection_Admin_CountsAllActiveSpecimens()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            name: "Mixed", isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: true, createdByUserGuid: owner.Guid);
+        var othersPrivateActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: false, createdByUserGuid: owner.Guid);
+        var inactive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Deleted, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, othersPrivateActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, inactive.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        // Admin counts every active specimen (public and private), but never the inactive one.
+        result!.Collections.Single(c => c.Name == "Mixed").SpecimenCount.Should().Be(2);
     }
 
     /// <summary>
@@ -1385,6 +1458,97 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Get All Specimens In Collection – Inactive Specimens – Are Excluded For The Owner.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_InactiveSpecimens_AreExcludedForOwner()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: user.Guid);
+
+        var active = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Active, createdByUserGuid: user.Guid);
+        var pending = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Pending, createdByUserGuid: user.Guid);
+        var deleted = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Deleted, createdByUserGuid: user.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, active.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, pending.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, deleted.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        // Only the active specimen is returned; pending and deleted ones are excluded even for the owner.
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Single().SpecimenGuid.Should().Be(active.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Inactive Specimens – Are Excluded For Admins.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_InactiveSpecimens_AreExcludedForAdmin()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var active = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Active, createdByUserGuid: owner.Guid);
+        var deleted = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Deleted, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, active.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, deleted.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        // Admins see all visibilities but still never inactive specimens.
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Single().SpecimenGuid.Should().Be(active.Guid);
+    }
+
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Anonymous – Returns Only Active Public Specimens.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_Anonymous_ReturnsOnlyActivePublicSpecimens()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: true, createdByUserGuid: owner.Guid);
+        var privateActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: false, createdByUserGuid: owner.Guid);
+        var publicInactive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Pending, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, privateActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicInactive.Guid);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        // Anonymous callers only see the active public specimen.
+        result!.TotalCount.Should().Be(1);
+        result.Specimens.Single().SpecimenGuid.Should().Be(publicActive.Guid);
+    }
+
+    /// <summary>
     /// Tests Get All Specimens In Collection – Public Collection – Returns Public Specimens.
     /// </summary>
     [Fact]
@@ -1751,6 +1915,35 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.Collections.Should().ContainSingle()
             .Which.Guid.Should().Be(new Guid("00000000-0000-0000-0000-000000000001"));
         result.Collections.Should().NotContain(c => c.Guid == new Guid("00000000-0000-0000-0000-000000000002"));
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Anonymous – Dynamic Collection Counts Only Active Public Specimens.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_Anonymous_DynamicCollection_OnlyCountsActivePublicSpecimens()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(
+            name: "Mixed", isPrivate: false, createdByUserGuid: owner.Guid);
+
+        var publicActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: true, createdByUserGuid: owner.Guid);
+        var privateActive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            isPublic: false, createdByUserGuid: owner.Guid);
+        var publicInactive = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid,
+            SpecimenStatus.Pending, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, privateActive.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, publicInactive.Guid);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        // Only the active public specimen counts; the private and the inactive one are excluded.
+        result!.Collections.Single(c => c.Name == "Mixed").SpecimenCount.Should().Be(1);
     }
 
     /// <summary>

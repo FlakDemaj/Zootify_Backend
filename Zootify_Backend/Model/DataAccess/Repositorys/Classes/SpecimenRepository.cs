@@ -98,6 +98,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         BaseSortAndPagingDto paging)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>()
+            .Where(sp => sp.Status == SpecimenStatus.Active)
             .Where(sp => sp.Collections.Any(sc => sc.CollectionGuid == collectionGuid));
 
         if (authentication == null)
@@ -129,6 +130,7 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
     /// Returns a paged list of specimens, optionally filtered by owner and status.
     /// </summary>
     /// <param name="userGuid">Optional GUID of the owning user; if <c>null</c>, only public specimens are returned.</param>
+    /// <param name="filterByName">The filter for the specimens in the collections</param>
     /// <param name="status">Optional status filter.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>

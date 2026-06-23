@@ -39,29 +39,23 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
         int skip,
         int take)
     {
-        // Include the specimen-collection links so the mapper can project the specimen count.
+        // Regular and anonymous callers only ever see active specimens that are public or their own; moderators
+        // and admins see every active specimen. Inactive specimens are never counted for anyone.
+        var userGuid = authentication?.UserGuid;
+        var restrictVisibility = authentication == null || authentication.Role == UserRole.User;
+
+        // Filtered include so the specimen-collection links the mapper counts already exclude
+        // inactive (and, for restricted callers, non-visible) specimens.
         IQueryable<CollectionEntity> query = Context.GetTrackingSet<CollectionEntity>()
-            .Include(c => c.Collection);
+            .Include(c => c.Collection.Where(sc =>
+                sc.Specimen.Status == SpecimenStatus.Active
+                && (!restrictVisibility
+                    || sc.Specimen.IsPublic
+                    || sc.Specimen.CreatedByUserGuid == userGuid)));
 
         query = AddFilter(query, authentication, filterByName, paging);
 
         return await query.Skip(skip).Take(take).ToListAsync();
-    }
-
-    /// <summary>
-    /// Counts the collections visible to the caller that match the optional name filter (ignoring paging).
-    /// </summary>
-    /// <param name="authentication">The optional authentication context used for visibility filtering.</param>
-    /// <param name="filterByName">Optional name fragment to filter collections by.</param>
-    /// <returns>The number of matching collections.</returns>
-    public async Task<int> CountCollectionsByNameFilterAsync(
-        IAuthentication? authentication,
-        string? filterByName)
-    {
-        var query = ApplyVisibilityAndNameFilter(
-            Context.GetTrackingSet<CollectionEntity>(), authentication, filterByName);
-
-        return await query.CountAsync();
     }
 
     /// <summary>

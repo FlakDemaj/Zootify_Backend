@@ -235,7 +235,7 @@ public class CommonTaxonomyService : ICommonTaxonomyNodeService
         string filter)
     {
         // A node whose name matches the prefix is returned with its complete subtree.
-        if (NameMatchesPrefix(node.Name, filter))
+        if (NameMatchesPrefix(node.Name, filter) || node.Name.Contains(filter))
         {
             return BuildTreeNode(node, byParent);
         }
