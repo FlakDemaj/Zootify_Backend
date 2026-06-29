@@ -290,6 +290,80 @@ public class BrevoProvider : IBrevoProvider
     }
 
     /// <summary>
+    /// Sends an email notifying an approver that a new loan request has been submitted and awaits their decision.
+    /// </summary>
+    /// <param name="recipientEmail">The approver's email address.</param>
+    /// <param name="recipientName">The approver's full name.</param>
+    /// <param name="requesterName">The full name of the user requesting the loan.</param>
+    /// <param name="specimenName">The common name of the requested specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the requested specimen.</param>
+    /// <param name="desiredDueDate">The requester's desired return date.</param>
+    /// <param name="language">The recipient's preferred language code (e.g. "de" or "en"); German is used when null or unrecognized.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
+    public async Task<bool> SendLoanRequestSubmittedEmail(
+        string recipientEmail,
+        string recipientName,
+        string requesterName,
+        string specimenName,
+        string specimenLatinName,
+        DateTime desiredDueDate,
+        string? language)
+    {
+        var isEnglish = IsEnglish(language);
+        var dateFormat = isEnglish ? "MM/dd/yyyy" : "dd.MM.yyyy";
+
+        var template = await LoadTemplateAsync("LoanRequestSubmittedEmail", isEnglish);
+        template = template.Replace("{recipientName}", recipientName);
+        template = template.Replace("{requesterName}", requesterName);
+        template = template.Replace("{specimenName}", specimenName);
+        template = template.Replace("{specimenLatinName}", specimenLatinName);
+        template = template.Replace("{desiredDueDate}", desiredDueDate.ToString(dateFormat));
+
+        var (sender, recipients) = CreateSenderAndRecipient(recipientName, recipientEmail);
+
+        var subject = isEnglish
+            ? $"New loan request: {specimenName}"
+            : $"Neue Ausleih-Anfrage: {specimenName}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    /// <summary>
+    /// Sends an email notifying the requester that their loan request has been rejected, with the reason.
+    /// </summary>
+    /// <param name="requesterEmail">The requester's email address.</param>
+    /// <param name="requesterName">The requester's full name.</param>
+    /// <param name="specimenName">The common name of the requested specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the requested specimen.</param>
+    /// <param name="reason">The rejection reason provided by the approver.</param>
+    /// <param name="language">The recipient's preferred language code (e.g. "de" or "en"); German is used when null or unrecognized.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
+    public async Task<bool> SendLoanRequestRejectedEmail(
+        string requesterEmail,
+        string requesterName,
+        string specimenName,
+        string specimenLatinName,
+        string reason,
+        string? language)
+    {
+        var isEnglish = IsEnglish(language);
+
+        var template = await LoadTemplateAsync("LoanRequestRejectedEmail", isEnglish);
+        template = template.Replace("{userName}", requesterName);
+        template = template.Replace("{specimenName}", specimenName);
+        template = template.Replace("{specimenLatinName}", specimenLatinName);
+        template = template.Replace("{reason}", reason);
+
+        var (sender, recipients) = CreateSenderAndRecipient(requesterName, requesterEmail);
+
+        var subject = isEnglish
+            ? $"Loan request rejected: {specimenName}"
+            : $"Ausleih-Anfrage abgelehnt: {specimenName}";
+
+        return await BrevoClient.SendAsync(sender, recipients, subject, template, isHtml: true);
+    }
+
+    /// <summary>
     /// Sends a loan confirmation email to the borrower with all loan details.
     /// </summary>
     /// <param name="borrowerEmail">The borrower's email address.</param>

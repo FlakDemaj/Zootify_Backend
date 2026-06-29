@@ -131,6 +131,21 @@
   <data name="LoanAlreadyReturned" xml:space="preserve">
     <value>Diese Ausleihe wurde bereits zurückgegeben.</value>
   </data>
+  <data name="LoanRequestNotFound" xml:space="preserve">
+    <value>Die angegebene Ausleih-Anfrage wurde nicht gefunden.</value>
+  </data>
+  <data name="SpecimenAlreadyRequested" xml:space="preserve">
+    <value>Für dieses Tier liegt bereits eine offene Ausleih-Anfrage vor.</value>
+  </data>
+  <data name="SpecimenAlreadyOnLoan" xml:space="preserve">
+    <value>Dieses Tier ist derzeit ausgeliehen.</value>
+  </data>
+  <data name="LoanRequestAlreadyDecided" xml:space="preserve">
+    <value>Über diese Ausleih-Anfrage wurde bereits entschieden.</value>
+  </data>
+  <data name="NotAllowedToDecideLoanRequest" xml:space="preserve">
+    <value>Sie sind nicht berechtigt, über diese Ausleih-Anfrage zu entscheiden.</value>
+  </data>
   <data name="ImageNotFound" xml:space="preserve">
     <value>Das Bild wurde nicht gefunden.</value>
   </data>

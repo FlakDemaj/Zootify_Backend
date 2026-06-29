@@ -135,11 +135,5 @@ public class UserMapper : Profile
                 o => o.MapFrom(s => s.Role))
             .ForMember(d => d.Status,
                 o => o.MapFrom(s => s.Status));
-        
-        CreateMap<UserEntity, BorrowerPickerDto>()
-            .ForMember(d => d.UserGuid,
-                o => o.MapFrom(s => s.Guid))
-            .ForMember(d => d.FullName,
-                o => o.MapFrom(s => $"{s.FirstName} {s.LastName}"));
     }
 }

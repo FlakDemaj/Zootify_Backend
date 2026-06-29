@@ -131,6 +131,21 @@
   <data name="LoanAlreadyReturned" xml:space="preserve">
     <value>This item has already been returned.</value>
   </data>
+  <data name="LoanRequestNotFound" xml:space="preserve">
+    <value>The requested loan request could not be found.</value>
+  </data>
+  <data name="SpecimenAlreadyRequested" xml:space="preserve">
+    <value>There is already an open loan request for this animal.</value>
+  </data>
+  <data name="SpecimenAlreadyOnLoan" xml:space="preserve">
+    <value>This animal is currently out on loan.</value>
+  </data>
+  <data name="LoanRequestAlreadyDecided" xml:space="preserve">
+    <value>This loan request has already been decided.</value>
+  </data>
+  <data name="NotAllowedToDecideLoanRequest" xml:space="preserve">
+    <value>You are not allowed to decide this loan request.</value>
+  </data>
   <data name="ImageNotFound" xml:space="preserve">
     <value>The image could not be found.</value>
   </data>

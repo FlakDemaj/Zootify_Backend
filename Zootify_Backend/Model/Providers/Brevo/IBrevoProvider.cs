@@ -86,6 +86,45 @@ public interface IBrevoProvider
         string? language);
 
     /// <summary>
+    /// Sends an email notifying an approver (admin/moderator or the specimen's creator) that a new loan
+    /// request has been submitted and awaits their decision.
+    /// </summary>
+    /// <param name="recipientEmail">The approver's email address.</param>
+    /// <param name="recipientName">The approver's full name.</param>
+    /// <param name="requesterName">The full name of the user requesting the loan.</param>
+    /// <param name="specimenName">The common name of the requested specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the requested specimen.</param>
+    /// <param name="desiredDueDate">The requester's desired return date.</param>
+    /// <param name="language">The recipient's preferred language code (e.g. "de" or "en"); German is used when null or unrecognized.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
+    public Task<bool> SendLoanRequestSubmittedEmail(
+        string recipientEmail,
+        string recipientName,
+        string requesterName,
+        string specimenName,
+        string specimenLatinName,
+        DateTime desiredDueDate,
+        string? language);
+
+    /// <summary>
+    /// Sends an email notifying the requester that their loan request has been rejected, with the reason.
+    /// </summary>
+    /// <param name="requesterEmail">The requester's email address.</param>
+    /// <param name="requesterName">The requester's full name.</param>
+    /// <param name="specimenName">The common name of the requested specimen.</param>
+    /// <param name="specimenLatinName">The latin name of the requested specimen.</param>
+    /// <param name="reason">The rejection reason provided by the approver.</param>
+    /// <param name="language">The recipient's preferred language code (e.g. "de" or "en"); German is used when null or unrecognized.</param>
+    /// <returns><c>true</c> if the email was sent successfully.</returns>
+    public Task<bool> SendLoanRequestRejectedEmail(
+        string requesterEmail,
+        string requesterName,
+        string specimenName,
+        string specimenLatinName,
+        string reason,
+        string? language);
+
+    /// <summary>
     /// Sends a loan confirmation email to the borrower with all loan details.
     /// </summary>
     /// <param name="borrowerEmail">The borrower's email address.</param>
