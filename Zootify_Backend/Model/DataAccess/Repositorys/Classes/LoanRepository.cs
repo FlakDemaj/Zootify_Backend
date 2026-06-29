@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Zootify_Backend.DTOs.Base;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.DataAccess.Entitys;
@@ -31,7 +33,45 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
             .Include(l => l.Specimen)
             .FirstOrDefaultAsync(l => l.Guid == guid);
     }
-    
+
+    /// <summary>
+    /// Returns a paged list of active (not yet returned) loans, eagerly loading borrower and specimen details.
+    /// </summary>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A tuple containing the page of active loans and the total matching count.</returns>
+    public async Task<(List<LoanEntity> Items, int TotalCount)> GetActiveLoansPagedAsync(BaseSortAndPagingDto paging)
+    {
+        // Only to-one navigations are included, so paging stays a single query.
+        var query = Context.GetTrackingSet<LoanEntity>()
+            .Include(l => l.Borrower)
+            .Include(l => l.Specimen).ThenInclude(s => s.Image)
+            .Where(l => l.ReturnDate == null);
+
+        var total = await query.CountAsync();
+
+        var items = await ApplySort(query, paging.SortBy, paging.SortDirection)
+            .Skip((paging.Page - 1) * paging.PageSize)
+            .Take(paging.PageSize)
+            .ToListAsync();
+
+        return (items, total);
+    }
+
+    /// <summary>
+    /// Returns the active (not yet returned) loan with the given GUID, eagerly loading borrower, lender,
+    /// and specimen (including its image) details, or <c>null</c> if no active loan with that GUID exists.
+    /// </summary>
+    /// <param name="guid">The GUID of the loan to retrieve.</param>
+    public async Task<LoanEntity?> GetActiveLoanByGuidWithDetailsAsync(Guid guid)
+    {
+        return await Context.GetTrackingSet<LoanEntity>()
+            .Include(l => l.Borrower)
+            .Include(l => l.Lender)
+            .Include(l => l.Specimen).ThenInclude(s => s.Image)
+            .Where(l => l.ReturnDate == null)
+            .FirstOrDefaultAsync(l => l.Guid == guid);
+    }
+
     /// <summary>
     /// Returns a batch of unreturned loans due before the given date that have not yet had a stage-1 reminder sent.
     /// </summary>
@@ -89,5 +129,29 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
             .Include(l => l.Specimen)
             .Where(l => l.ReturnDate == null)
             .OrderBy(l => l.DueDate);
+    }
+
+    /// <summary>
+    /// Applies ordering to the loan query based on the given sort field and direction.
+    /// </summary>
+    /// <param name="query">The queryable to sort.</param>
+    /// <param name="sortBy">The name of the field to sort by.</param>
+    /// <param name="sortDirection">The sort direction.</param>
+    /// <returns>The ordered queryable.</returns>
+    private static IQueryable<LoanEntity> ApplySort(
+        IQueryable<LoanEntity> query,
+        string? sortBy,
+        SortDirection sortDirection)
+    {
+        var desc = sortDirection == SortDirection.Desc;
+        return sortBy switch
+        {
+            "specimenName" => desc ? query.OrderByDescending(l => l.Specimen.Name)      : query.OrderBy(l => l.Specimen.Name),
+            "borrowerName" => desc ? query.OrderByDescending(l => l.Borrower.FirstName).ThenByDescending(l => l.Borrower.LastName)
+                                   : query.OrderBy(l => l.Borrower.FirstName).ThenBy(l => l.Borrower.LastName),
+            "loanDate"     => desc ? query.OrderByDescending(l => l.LoanDate)            : query.OrderBy(l => l.LoanDate),
+            "dueDate"      => desc ? query.OrderByDescending(l => l.DueDate)             : query.OrderBy(l => l.DueDate),
+            _              => query.OrderBy(l => l.DueDate),
+        };
     }
 }

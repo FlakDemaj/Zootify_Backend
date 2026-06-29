@@ -68,6 +68,41 @@ public class AdminLoanService : IAdminLoanService
     }
 
     /// <summary>
+    /// Returns a paged list of active (not yet returned) loans.
+    /// </summary>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A paged response containing the active loans and the total count.</returns>
+    [Transaction(ReadOnly = true)]
+    public async Task<GetActiveLoansPagedResponseDto> GetActiveLoansAsync(BaseSortAndPagingDto paging)
+    {
+        var (items, total) = await _loanRepository.GetActiveLoansPagedAsync(paging);
+
+        return new GetActiveLoansPagedResponseDto
+        {
+            TotalCount = total,
+            Loans      = _mapper.Map<List<LoanOverviewDto>>(items),
+        };
+    }
+
+    /// <summary>
+    /// Returns the full detail view of the active loan with the given GUID.
+    /// </summary>
+    /// <param name="loanGuid">The GUID of the loan to retrieve.</param>
+    /// <returns>The detail DTO of the active loan.</returns>
+    /// <exception cref="ZootifyException">Thrown when no active loan with the given GUID is found.</exception>
+    [Transaction(ReadOnly = true)]
+    public async Task<LoanDetailDto> GetActiveLoanByGuidAsync(Guid loanGuid)
+    {
+        var loan = await _loanRepository.GetActiveLoanByGuidWithDetailsAsync(loanGuid);
+        if (loan == null)
+        {
+            throw new ZootifyException(ErrorCode.LoanNotFound);
+        }
+
+        return _mapper.Map<LoanDetailDto>(loan);
+    }
+
+    /// <summary>
     /// Creates a new loan record, verifies the specimen and borrower exist, and sends a confirmation email to the borrower.
     /// </summary>
     /// <param name="authentication">The authentication context of the lending user.</param>

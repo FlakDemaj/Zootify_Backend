@@ -1,3 +1,4 @@
+using Zootify_Backend.DTOs.Base;
 using Zootify_Backend.Model.DataAccess.Entitys;
 using Zootify_Backend.Model.DataAccess.Repositorys.Base.Interfaces;
 
@@ -13,6 +14,20 @@ public interface ILoanRepository : IBaseRepository<LoanEntity>
     /// </summary>
     /// <param name="guid">The GUID of the loan to retrieve.</param>
     Task<LoanEntity?> GetLoanByGuidWithDetailsAsync(Guid guid);
+
+    /// <summary>
+    /// Returns a paged list of active (not yet returned) loans, eagerly loading borrower and specimen details.
+    /// </summary>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A tuple containing the page of active loans and the total matching count.</returns>
+    Task<(List<LoanEntity> Items, int TotalCount)> GetActiveLoansPagedAsync(BaseSortAndPagingDto paging);
+
+    /// <summary>
+    /// Returns the active (not yet returned) loan with the given GUID, eagerly loading borrower, lender,
+    /// and specimen (including its image) details, or <c>null</c> if no active loan with that GUID exists.
+    /// </summary>
+    /// <param name="guid">The GUID of the loan to retrieve.</param>
+    Task<LoanEntity?> GetActiveLoanByGuidWithDetailsAsync(Guid guid);
 
     /// <summary>
     /// Returns a batch of unreturned loans whose due date falls within the stage-1 band and that have

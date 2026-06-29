@@ -39,6 +39,29 @@ public class AdminLoanController : BaseRestController
     }
 
     /// <summary>
+    /// Returns a paged list of all active (not yet returned) loans.
+    /// </summary>
+    /// <param name="paging">Paging and sorting parameters.</param>
+    /// <returns>A paged response containing the active loans and the total count.</returns>
+    [HttpGet("active")]
+    public async Task<ActionResult<GetActiveLoansPagedResponseDto>> GetActiveLoansAsync(
+        [FromQuery] BaseSortAndPagingDto paging)
+    {
+        return Ok(await _adminLoanService.GetActiveLoansAsync(paging));
+    }
+
+    /// <summary>
+    /// Returns the full detail view of a single active (not yet returned) loan.
+    /// </summary>
+    /// <param name="loanGuid">The GUID of the loan to retrieve.</param>
+    /// <returns>The detail DTO of the active loan.</returns>
+    [HttpGet("{loanGuid:guid}")]
+    public async Task<ActionResult<LoanDetailDto>> GetActiveLoanAsync(Guid loanGuid)
+    {
+        return Ok(await _adminLoanService.GetActiveLoanByGuidAsync(loanGuid));
+    }
+
+    /// <summary>
     /// Creates a new loan record and sends a confirmation email to the borrower.
     /// </summary>
     /// <param name="request">The details of the loan to create.</param>
