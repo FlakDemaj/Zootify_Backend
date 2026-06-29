@@ -130,6 +130,47 @@ public class UserPurgeServiceTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Purge Batch – User With Loan Requests – Removes Own Requests And Clears Approver References.
+    /// </summary>
+    [Fact]
+    public async Task PurgeBatch_UserWithLoanRequests_RemovesOwnAndClearsApprover()
+    {
+        var purgedUser = await UserRepo.CreateUserAsync("authored@test.de", status: UserStatus.Deleted);
+        await OverrideDeletionDateAsync(purgedUser, OldEnough);
+
+        var otherUser = await UserRepo.CreateUserAsync("other@test.de", status: UserStatus.Active);
+
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Felidae", TaxonomyRank.Family);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid);
+
+        // A request made BY the purged user must be removed (requester_guid is non-nullable).
+        var ownRequest = await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, purgedUser.Guid);
+        // A request by another user that the purged user has admin-approved must survive with the
+        // approver reference cleared.
+        var approvedRequest = await LoanRequestRepo.CreateLoanRequestAsync(
+            specimen.Guid, otherUser.Guid, adminApproverGuid: purgedUser.Guid, adminApprovedAt: DateTime.UtcNow);
+
+        using var scope = CreateScope();
+        var purged = await scope.ServiceProvider.GetRequiredService<IUserPurgeService>().PurgeBatchAsync();
+
+        purged.Should().Be(1);
+
+        (await Fixture.DbContext.Set<UserEntity>().AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Guid == purgedUser.Guid)).Should().BeNull();
+
+        var remainingRequestGuids = await Fixture.DbContext.Set<LoanRequestEntity>().AsNoTracking()
+            .Select(r => r.Guid)
+            .ToListAsync();
+        remainingRequestGuids.Should().NotContain(ownRequest.Guid);
+        remainingRequestGuids.Should().Contain(approvedRequest.Guid);
+
+        var survivor = await Fixture.DbContext.Set<LoanRequestEntity>().AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Guid == approvedRequest.Guid);
+        survivor!.AdminApproverGuid.Should().BeNull();
+    }
+
+    /// <summary>
     /// Tests Purge Batch – Multiple Eligible – All Purged.
     /// </summary>
     [Fact]

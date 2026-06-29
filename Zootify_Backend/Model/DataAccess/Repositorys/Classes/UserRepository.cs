@@ -127,23 +127,6 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
     }
 
     /// <summary>
-    /// Returns all active users whose full name or first/last name contains the given fragment, ordered by first then last name.
-    /// </summary>
-    /// <param name="filter">The name fragment to search for.</param>
-    /// <returns>The matching active <see cref="UserEntity"/> records.</returns>
-    public async Task<List<UserEntity>> GetActiveUsersByNameFilterAsync(string filter)
-    {
-        return await Context.GetTrackingSet<UserEntity>()
-            .Where(u => u.Status == UserStatus.Active
-                && ((u.FirstName + " " + u.LastName).Contains(filter)
-                    || u.FirstName.Contains(filter)
-                    || u.LastName.Contains(filter)))
-            .OrderBy(u => u.FirstName)
-            .ThenBy(u => u.LastName)
-            .ToListAsync();
-    }
-
-    /// <summary>
     /// Returns a batch of soft-deleted users whose deletion date is older than the given cutoff, for purging.
     /// </summary>
     /// <param name="cutoff">The exclusive upper bound for the deletion date.</param>
@@ -205,6 +188,21 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
         await Context.Set<LoanEntity>()
             .Where(l => userGuids.Contains(l.LenderGuid) || userGuids.Contains(l.BorrowerGuid))
             .ExecuteDeleteAsync();
+
+        // Loan requests made by a purged user are removed (requester_guid is non-nullable). The nullable
+        // approver/rejecter references are cleared so a purged approver no longer blocks the hard-delete.
+        await Context.Set<LoanRequestEntity>()
+            .Where(r => userGuids.Contains(r.RequesterGuid))
+            .ExecuteDeleteAsync();
+        await Context.Set<LoanRequestEntity>()
+            .Where(r => r.AdminApproverGuid != null && userGuids.Contains(r.AdminApproverGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(r => r.AdminApproverGuid, (Guid?)null));
+        await Context.Set<LoanRequestEntity>()
+            .Where(r => r.CreatorApproverGuid != null && userGuids.Contains(r.CreatorApproverGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(r => r.CreatorApproverGuid, (Guid?)null));
+        await Context.Set<LoanRequestEntity>()
+            .Where(r => r.RejectedByGuid != null && userGuids.Contains(r.RejectedByGuid.Value))
+            .ExecuteUpdateAsync(set => set.SetProperty(r => r.RejectedByGuid, (Guid?)null));
     }
 
     /// <summary>

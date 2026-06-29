@@ -1,7 +1,7 @@
-namespace Zootify_Backend.DTOs.Admin.Response;
+namespace Zootify_Backend.DTOs.Common.Response;
 
 /// <summary>
-/// A lightweight active-loan entry used within the admin loan overview listing.
+/// A lightweight active-loan entry used within the loan overview listings.
 /// </summary>
 public class LoanOverviewDto
 {

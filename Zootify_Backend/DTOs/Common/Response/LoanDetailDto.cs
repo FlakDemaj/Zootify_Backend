@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Admin.Response;
+namespace Zootify_Backend.DTOs.Common.Response;
 
 /// <summary>
 /// The full detail view of a single active loan, including specimen, borrower, and lender information.

@@ -27,6 +27,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly TagTestRepository TagRepo;
     protected readonly CollectionTestRepository CollectionRepo;
     protected readonly LoanTestRepository LoanRepo;
+    protected readonly LoanRequestTestRepository LoanRequestRepo;
     protected Mock<INominatimProvider> NominatimMock => Fixture.NominatimMock;
     protected Mock<IHubContext<NotificationHub>> HubContextMock => Fixture.HubContextMock;
 
@@ -46,6 +47,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         TagRepo = new TagTestRepository(_dbContext);
         CollectionRepo = new CollectionTestRepository(_dbContext);
         LoanRepo = new LoanTestRepository(_dbContext);
+        LoanRequestRepo = new LoanRequestTestRepository(_dbContext);
     }
 
     /// <summary>

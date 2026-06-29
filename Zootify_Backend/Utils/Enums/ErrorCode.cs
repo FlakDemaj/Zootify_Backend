@@ -121,6 +121,21 @@ public enum ErrorCode
     /// <summary>The loan has already been returned.</summary>
     LoanAlreadyReturned = -1009002,
 
+    /// <summary>No matching loan request was found.</summary>
+    LoanRequestNotFound = -1009003,
+
+    /// <summary>The specimen already has an open loan request.</summary>
+    SpecimenAlreadyRequested = -1009004,
+
+    /// <summary>The specimen is already out on an active loan.</summary>
+    SpecimenAlreadyOnLoan = -1009005,
+
+    /// <summary>The loan request has already been approved or rejected.</summary>
+    LoanRequestAlreadyDecided = -1009006,
+
+    /// <summary>The caller is not allowed to decide this loan request.</summary>
+    NotAllowedToDecideLoanRequest = -1009007,
+
     /// <summary>No matching image was found.</summary>
     ImageNotFound = -1010001,
 

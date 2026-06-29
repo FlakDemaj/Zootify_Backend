@@ -1,4 +1,4 @@
-namespace Zootify_Backend.DTOs.Admin.Response;
+namespace Zootify_Backend.DTOs.Common.Response;
 
 /// <summary>
 /// A paged list of active loans together with the total match count.

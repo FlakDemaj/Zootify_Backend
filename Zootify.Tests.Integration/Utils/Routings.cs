@@ -14,8 +14,6 @@ internal static class Routings
     #region Admin
 
     internal const string AdminUserRouting              = "/rest/AdminModeratorUser";
-    internal const string AdminLoanRouting              = "/rest/AdminLoan";
-    internal const string AdminLoanActiveRouting        = "/rest/AdminLoan/active";
     internal const string AdminTaxonomyRouting          = "/rest/AdminTaxonomy";
     internal const string AdminTaxonomyForApprovalRouting = "/rest/AdminTaxonomy/for-approval";
 
@@ -32,6 +30,11 @@ internal static class Routings
     internal const string CommonTaxonomyTreeRouting = "/rest/CommonTaxonomy/tree";
     internal const string CommonUserSettingsRouting = "/rest/CommonUserSettings";
     internal const string CommonSpecimenImportExportRouting = "/rest/CommonSpecimenImportExport";
+    internal const string CommonLoanRequestRouting = "/rest/CommonLoanRequest";
+    internal const string CommonLoanRequestPendingRouting = "/rest/CommonLoanRequest/pending";
+    internal const string CommonLoanRouting = "/rest/CommonLoan";
+    internal const string CommonLoanActiveRouting = "/rest/CommonLoan/active";
+    internal const string CommonLoanBorrowedRouting = "/rest/CommonLoan/borrowed";
 
     #endregion
 
