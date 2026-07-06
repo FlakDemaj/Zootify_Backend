@@ -2,6 +2,7 @@ using AutoMapper;
 using Zootify_Backend.DTOs.Common.Request;
 using Zootify_Backend.DTOs.Common.Response;
 using Zootify_Backend.DTOs.Common.Response.Helpers;
+using Zootify_Backend.Enums;
 using Zootify_Backend.Model.DataAccess.Entitys;
 
 namespace Zootify_Backend.Model.Mappers;
@@ -21,6 +22,12 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.Comment,
                 opt =>
                     opt.MapFrom(src => src.Comment))
+            .ForMember(d => d.Size,
+                opt =>
+                    opt.MapFrom(src => src.Size))
+            .ForMember(d => d.Weight,
+                opt =>
+                    opt.MapFrom(src => src.Weight))
             .ForMember(d => d.Name,
                 opt =>
                     opt.MapFrom(src => src.Name))
@@ -85,6 +92,14 @@ public class SpecimenMapper : Profile
                 o => o.MapFrom(s => s.CreationDate))
             .ForMember(d => d.Comment,
                 o => o.MapFrom(s => s.Comment))
+            .ForMember(d => d.Size,
+                o => o.MapFrom(s => s.Size))
+            .ForMember(d => d.Weight,
+                o => o.MapFrom(s => s.Weight))
+            .ForMember(d => d.LoanStatus,
+                o => o.MapFrom(s => s.Loans.Any(l => l.ReturnDate == null)
+                    ? SpecimenLoanStatus.OnLoan
+                    : SpecimenLoanStatus.Available))
             .ForMember(d => d.DateOfDiscovery,
                 o => o.MapFrom(s => s.DateOfDiscovery))
             .ForMember(d => d.Longitude,
@@ -132,6 +147,12 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.Comment,
                 opt =>
                     opt.MapFrom(src => src.Comment))
+            .ForMember(d => d.Size,
+                opt =>
+                    opt.MapFrom(src => src.Size))
+            .ForMember(d => d.Weight,
+                opt =>
+                    opt.MapFrom(src => src.Weight))
             .ForMember(d => d.Name,
                 opt =>
                     opt.MapFrom(src => src.Name))

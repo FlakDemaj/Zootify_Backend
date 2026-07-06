@@ -24,7 +24,7 @@ public interface ICommonLoanRequestService
     /// Returns the pending loan requests the caller still needs to decide on.
     /// </summary>
     /// <param name="authentication">The authentication context of the caller.</param>
-    Task<List<LoanRequestOverviewDto>> GetPendingForApproverAsync(IAuthentication authentication);
+    Task<List<GetLoanRequestOverviewDto>> GetPendingForApproverAsync(IAuthentication authentication);
 
     /// <summary>
     /// Returns the detail view of a loan request the caller is allowed to see (requester, an admin/moderator,
@@ -32,7 +32,7 @@ public interface ICommonLoanRequestService
     /// </summary>
     /// <param name="authentication">The authentication context of the caller.</param>
     /// <param name="requestGuid">The GUID of the loan request.</param>
-    Task<LoanRequestDetailDto> GetRequestDetailAsync(IAuthentication authentication, Guid requestGuid);
+    Task<GetLoanRequestDetailDto> GetRequestDetailAsync(IAuthentication authentication, Guid requestGuid);
 
     /// <summary>
     /// Registers the caller's approval of a loan request. Once all required approvals are present, a loan is

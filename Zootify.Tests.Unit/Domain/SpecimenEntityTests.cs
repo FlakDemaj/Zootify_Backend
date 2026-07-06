@@ -13,7 +13,9 @@ public class SpecimenEntityTests
         string? comment = null,
         bool isPublic = true,
         SpecimenStatus status = SpecimenStatus.Active,
-        DateTime? dateOfDiscovery = null)
+        DateTime? dateOfDiscovery = null,
+        double? size = null,
+        double? weight = null)
     {
         return new SpecimenEntity
         {
@@ -23,6 +25,8 @@ public class SpecimenEntityTests
             IsPublic = isPublic,
             Status = status,
             DateOfDiscovery = dateOfDiscovery ?? new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Size = size,
+            Weight = weight,
             SpecimensTags = new List<RelationSpecimensTagEntity>()
         };
     }
@@ -102,6 +106,30 @@ public class SpecimenEntityTests
     }
 
     /// <summary>
+    /// Tests Check Changes – Different Size – Returns True.
+    /// </summary>
+    [Fact]
+    public void CheckChanges_DifferentSize_ReturnsTrue()
+    {
+        var specimen = CreateSpecimen(size: null);
+        var updated = CreateSpecimen(size: 12.5);
+
+        specimen.CheckChanges(updated).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Tests Check Changes – Different Weight – Returns True.
+    /// </summary>
+    [Fact]
+    public void CheckChanges_DifferentWeight_ReturnsTrue()
+    {
+        var specimen = CreateSpecimen(weight: 3.4);
+        var updated = CreateSpecimen(weight: 4.2);
+
+        specimen.CheckChanges(updated).Should().BeTrue();
+    }
+
+    /// <summary>
     /// Tests Check Changes – Different Status Only – Returns False.
     /// </summary>
     [Fact]
@@ -131,7 +159,9 @@ public class SpecimenEntityTests
             comment: null,
             isPublic: true,
             status: SpecimenStatus.Active,
-            dateOfDiscovery: new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            dateOfDiscovery: new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            size: 10.0,
+            weight: 2.0);
 
         var newData = CreateSpecimen(
             name: "New Name",
@@ -139,7 +169,9 @@ public class SpecimenEntityTests
             comment: "new comment",
             isPublic: false,
             status: SpecimenStatus.Pending,
-            dateOfDiscovery: new DateTime(2023, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+            dateOfDiscovery: new DateTime(2023, 6, 15, 0, 0, 0, DateTimeKind.Utc),
+            size: 15.5,
+            weight: 3.4);
 
         var requester = Guid.CreateVersion7();
         specimen.UpdateData(requester, newData);
@@ -149,6 +181,8 @@ public class SpecimenEntityTests
         specimen.Comment.Should().Be("new comment");
         specimen.IsPublic.Should().BeFalse();
         specimen.DateOfDiscovery.Should().Be(new DateTime(2023, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+        specimen.Size.Should().Be(15.5);
+        specimen.Weight.Should().Be(3.4);
         // Status is not part of the update; it must stay as it was.
         specimen.Status.Should().Be(SpecimenStatus.Active);
     }

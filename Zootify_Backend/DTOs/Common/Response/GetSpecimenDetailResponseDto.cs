@@ -41,11 +41,20 @@ public class GetSpecimenDetailResponseDto
     /// <summary>Optional free-text comment.</summary>
     public string? Comment { get; init; }
 
+    /// <summary>Optional size of the specimen.</summary>
+    public double? Size { get; init; }
+
+    /// <summary>Optional weight of the specimen.</summary>
+    public double? Weight { get; init; }
+
     /// <summary>Whether the specimen is publicly visible.</summary>
     public bool IsPublic { get; init; }
 
     /// <summary>The specimen's lifecycle status.</summary>
     public SpecimenStatus Status { get; init; }
+
+    /// <summary>Whether the specimen is currently loaned out.</summary>
+    public SpecimenLoanStatus LoanStatus { get; init; }
 
     /// <summary>The GUID of the specimen's image, if any.</summary>
     public Guid? ImageGuid { get; init; }

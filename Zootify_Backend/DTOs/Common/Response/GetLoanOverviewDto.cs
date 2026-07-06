@@ -3,7 +3,7 @@ namespace Zootify_Backend.DTOs.Common.Response;
 /// <summary>
 /// A lightweight active-loan entry used within the loan overview listings.
 /// </summary>
-public class LoanOverviewDto
+public class GetLoanOverviewDto
 {
     /// <summary>The loan's GUID.</summary>
     public Guid LoanGuid { get; init; }

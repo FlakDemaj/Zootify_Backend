@@ -9,5 +9,5 @@ public class GetPublicSpecimenOverviewResponseDto
     public int TotalCount { get; init; }
 
     /// <summary>The specimen overviews on the current page.</summary>
-    public List<PublicSpecimenOverviewDto> Specimens { get; init; } = [];
+    public List<GetPublicSpecimenOverviewDto> Specimens { get; init; } = [];
 }

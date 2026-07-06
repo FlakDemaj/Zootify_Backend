@@ -134,11 +134,11 @@ public class CommonLoanRequestService : ICommonLoanRequestService
     /// </summary>
     /// <param name="authentication">The authentication context of the caller.</param>
     [Transaction(ReadOnly = true)]
-    public async Task<List<LoanRequestOverviewDto>> GetPendingForApproverAsync(IAuthentication authentication)
+    public async Task<List<GetLoanRequestOverviewDto>> GetPendingForApproverAsync(IAuthentication authentication)
     {
         var requests = await _loanRequestRepository.GetPendingForApproverAsync(authentication);
 
-        return _mapper.Map<List<LoanRequestOverviewDto>>(requests);
+        return _mapper.Map<List<GetLoanRequestOverviewDto>>(requests);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public class CommonLoanRequestService : ICommonLoanRequestService
     /// <param name="requestGuid">The GUID of the loan request.</param>
     /// <exception cref="ZootifyException">Thrown when the request does not exist or is not visible to the caller.</exception>
     [Transaction(ReadOnly = true)]
-    public async Task<LoanRequestDetailDto> GetRequestDetailAsync(IAuthentication authentication, Guid requestGuid)
+    public async Task<GetLoanRequestDetailDto> GetRequestDetailAsync(IAuthentication authentication, Guid requestGuid)
     {
         var loanRequest = await _loanRequestRepository.GetByGuidWithDetailsAsync(requestGuid);
         if (loanRequest == null)
@@ -167,7 +167,7 @@ public class CommonLoanRequestService : ICommonLoanRequestService
             throw new ZootifyException(ErrorCode.LoanRequestNotFound);
         }
 
-        return _mapper.Map<LoanRequestDetailDto>(loanRequest);
+        return _mapper.Map<GetLoanRequestDetailDto>(loanRequest);
     }
 
     /// <summary>

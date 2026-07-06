@@ -36,6 +36,10 @@ public class SpecimenEntity : BaseDeletionEntity
 
     public string? Comment { get; set; }
 
+    public double? Size { get; set; }
+
+    public double? Weight { get; set; }
+
     public bool IsPublic { get; set; } = true;
 
     public SpecimenStatus Status { get; set; } = SpecimenStatus.Active;
@@ -108,7 +112,7 @@ public class SpecimenEntity : BaseDeletionEntity
     /// Determines whether the editable specimen fields differ from the given data.
     /// </summary>
     /// <param name="newSpecimenData">The candidate data to compare against the current values.</param>
-    /// <returns><c>true</c> if name, discovery date, latin name, comment, visibility, or any storage field differ; otherwise <c>false</c>.</returns>
+    /// <returns><c>true</c> if name, discovery date, latin name, comment, visibility, size, weight, or any storage field differ; otherwise <c>false</c>.</returns>
     public bool CheckChanges(SpecimenEntity newSpecimenData)
     {
         return Name != newSpecimenData.Name
@@ -116,6 +120,8 @@ public class SpecimenEntity : BaseDeletionEntity
                || LatinName != newSpecimenData.LatinName
                || Comment != newSpecimenData.Comment
                || IsPublic != newSpecimenData.IsPublic
+               || Size != newSpecimenData.Size
+               || Weight != newSpecimenData.Weight
                || StorageBuilding != newSpecimenData.StorageBuilding
                || StorageCabinet != newSpecimenData.StorageCabinet
                || StorageShelf != newSpecimenData.StorageShelf
@@ -138,6 +144,8 @@ public class SpecimenEntity : BaseDeletionEntity
         LatinName = newSpecimenData.LatinName;
         Comment = newSpecimenData.Comment;
         IsPublic = newSpecimenData.IsPublic;
+        Size = newSpecimenData.Size;
+        Weight = newSpecimenData.Weight;
         StorageBuilding = newSpecimenData.StorageBuilding;
         StorageCabinet = newSpecimenData.StorageCabinet;
         StorageShelf = newSpecimenData.StorageShelf;

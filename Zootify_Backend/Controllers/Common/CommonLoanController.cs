@@ -47,7 +47,7 @@ public class CommonLoanController : BaseRestController
     /// <param name="loanGuid">The GUID of the loan to retrieve.</param>
     /// <returns>The detail DTO of the active loan.</returns>
     [HttpGet("{loanGuid:guid}")]
-    public async Task<ActionResult<LoanDetailDto>> GetActiveLoanAsync(Guid loanGuid)
+    public async Task<ActionResult<GetLoanDetailDto>> GetActiveLoanAsync(Guid loanGuid)
     {
         return Ok(await _commonLoanService.GetActiveLoanByGuidAsync(Authentication, loanGuid));
     }
@@ -57,7 +57,7 @@ public class CommonLoanController : BaseRestController
     /// </summary>
     /// <returns>A list of the caller's active borrowed loans.</returns>
     [HttpGet("borrowed")]
-    public async Task<ActionResult<List<LoanOverviewDto>>> GetBorrowedAsync()
+    public async Task<ActionResult<List<GetLoanOverviewDto>>> GetBorrowedAsync()
     {
         return Ok(await _commonLoanService.GetBorrowedLoansAsync(Authentication));
     }

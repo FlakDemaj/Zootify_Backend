@@ -3,7 +3,7 @@ namespace Zootify_Backend.DTOs.Common.Response;
 /// <summary>
 /// The full detail view of a single active loan, including specimen, borrower, and lender information.
 /// </summary>
-public class LoanDetailDto
+public class GetLoanDetailDto
 {
     /// <summary>The loan's GUID.</summary>
     public Guid LoanGuid { get; init; }

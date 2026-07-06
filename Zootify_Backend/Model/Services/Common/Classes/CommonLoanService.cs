@@ -56,7 +56,7 @@ public class CommonLoanService : ICommonLoanService
         return new GetActiveLoansPagedResponseDto
         {
             TotalCount = total,
-            Loans      = _mapper.Map<List<LoanOverviewDto>>(items),
+            Loans      = _mapper.Map<List<GetLoanOverviewDto>>(items),
         };
     }
 
@@ -69,7 +69,7 @@ public class CommonLoanService : ICommonLoanService
     /// <returns>The detail DTO of the active loan.</returns>
     /// <exception cref="ZootifyException">Thrown when no active loan with the given GUID is visible to the caller.</exception>
     [Transaction(ReadOnly = true)]
-    public async Task<LoanDetailDto> GetActiveLoanByGuidAsync(IAuthentication authentication, Guid loanGuid)
+    public async Task<GetLoanDetailDto> GetActiveLoanByGuidAsync(IAuthentication authentication, Guid loanGuid)
     {
         var loan = await _loanRepository.GetActiveLoanByGuidWithDetailsAsync(authentication, loanGuid);
         if (loan == null)
@@ -77,7 +77,7 @@ public class CommonLoanService : ICommonLoanService
             throw new ZootifyException(ErrorCode.LoanNotFound);
         }
 
-        return _mapper.Map<LoanDetailDto>(loan);
+        return _mapper.Map<GetLoanDetailDto>(loan);
     }
 
     /// <summary>
@@ -85,11 +85,11 @@ public class CommonLoanService : ICommonLoanService
     /// </summary>
     /// <param name="authentication">The authentication context of the borrowing user.</param>
     [Transaction(ReadOnly = true)]
-    public async Task<List<LoanOverviewDto>> GetBorrowedLoansAsync(IAuthentication authentication)
+    public async Task<List<GetLoanOverviewDto>> GetBorrowedLoansAsync(IAuthentication authentication)
     {
         var loans = await _loanRepository.GetActiveBorrowedLoansAsync(authentication.UserGuid);
 
-        return _mapper.Map<List<LoanOverviewDto>>(loans);
+        return _mapper.Map<List<GetLoanOverviewDto>>(loans);
     }
 
     /// <summary>

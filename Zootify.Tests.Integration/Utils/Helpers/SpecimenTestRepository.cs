@@ -63,7 +63,9 @@ public class SpecimenTestRepository
         SpecimenStatus status = SpecimenStatus.Active,
         bool isPublic = true,
         Guid? createdByUserGuid = null,
-        string name = "Test Specimen")
+        string name = "Test Specimen",
+        double? size = null,
+        double? weight = null)
     {
         var specimen = new SpecimenEntity
         {
@@ -73,7 +75,9 @@ public class SpecimenTestRepository
             GeographicLocationGuid = geoLocationGuid,
             DateOfDiscovery = DateTime.UtcNow,
             Status = status,
-            IsPublic = isPublic
+            IsPublic = isPublic,
+            Size = size,
+            Weight = weight
         };
         if (createdByUserGuid.HasValue)
         {

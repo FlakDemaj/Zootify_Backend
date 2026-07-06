@@ -47,6 +47,7 @@ public class CollectionRepository : BaseRepository<CollectionEntity>, ICollectio
         // Filtered include so the specimen-collection links the mapper counts already exclude
         // inactive (and, for restricted callers, non-visible) specimens.
         IQueryable<CollectionEntity> query = Context.GetTrackingSet<CollectionEntity>()
+            .Include(c => c.CreatedByUser)
             .Include(c => c.Collection.Where(sc =>
                 sc.Specimen.Status == SpecimenStatus.Active
                 && (!restrictVisibility

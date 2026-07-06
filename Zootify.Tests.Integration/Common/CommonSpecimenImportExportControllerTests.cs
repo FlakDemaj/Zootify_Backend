@@ -100,6 +100,42 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Import – Size And Weight – Are Persisted On The Created Specimen.
+    /// </summary>
+    [Fact]
+    public async Task Import_SizeAndWeight_ArePersisted()
+    {
+        SetupNominatimMock();
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        await SpecimenRepo.CreateTaxonomyNodeAsync("Papilio machaon", TaxonomyRank.Species);
+        AuthenticateAs(user);
+
+        var row = new ImportSpecimenRowDto
+        {
+            RowNumber = 0,
+            Name = "Schwalbenschwanz",
+            LatinName = "Papilio machaon",
+            Latitude = 50.0,
+            Longitude = 8.0,
+            DateOfDiscovery = new DateTime(2024, 5, 1),
+            TaxonomySpeciesLatinName = "Papilio machaon",
+            Size = 42.5,
+            Weight = 7.3,
+        };
+        var bytes = Excel.WriteExport([row]);
+
+        var response = await Client.PostAsync(
+            $"{Routings.CommonSpecimenImportExportRouting}/import", BuildUpload(bytes));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var created = await GetSpecimensCreatedByAsync(user.Guid);
+        var specimen = created.Should().ContainSingle().Subject;
+        specimen.Size.Should().Be(42.5);
+        specimen.Weight.Should().Be(7.3);
+    }
+
+    /// <summary>
     /// Tests Import – Similar Species Name – Is Matched Fuzzily.
     /// </summary>
     [Fact]

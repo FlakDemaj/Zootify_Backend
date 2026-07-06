@@ -393,6 +393,46 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Get All Collections – Returns Description And Creator For Dynamic Collections.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_DynamicCollection_ReturnsDescriptionAndCreator()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de", firstName: "Ada", lastName: "Lovelace");
+        await CollectionRepo.CreateCollectionAsync(
+            name: "Beetles",
+            isPublic: true,
+            description: "A collection of beetles",
+            createdByUserGuid: user.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}?filterByName=Beetles");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var beetles = result!.Collections.Single(c => c.Name == "Beetles");
+        beetles.Description.Should().Be("A collection of beetles");
+        beetles.CreatedBy.Should().Be("Ada Lovelace");
+    }
+
+    /// <summary>
+    /// Tests Get All Collections – Static Collections Have No Description Or Creator.
+    /// </summary>
+    [Fact]
+    public async Task GetAllCollections_StaticCollection_HasNoDescriptionOrCreator()
+    {
+        var user = await UserRepo.CreateUserAsync("test@test.de");
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(Routings.CommonCollectionRouting);
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllCollectionsPagedResponseDto>();
+        var meineSammlung = result!.Collections.Single(c => c.Name == "Meine Sammlung");
+        meineSammlung.Description.Should().BeNull();
+        meineSammlung.CreatedBy.Should().BeNull();
+    }
+
+    /// <summary>
     /// Tests Get All Collections – Fuzzy Filter – Finds Collection Despite Typo.
     /// </summary>
     [Fact]

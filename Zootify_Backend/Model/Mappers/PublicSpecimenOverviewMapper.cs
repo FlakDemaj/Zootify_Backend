@@ -13,11 +13,11 @@ namespace Zootify_Backend.Model.Mappers;
 public class PublicSpecimenOverviewMapper : Profile
 {
     /// <summary>
-    /// Configures the mapping from <see cref="SpecimenEntity"/> to <see cref="PublicSpecimenOverviewDto"/>.
+    /// Configures the mapping from <see cref="SpecimenEntity"/> to <see cref="GetPublicSpecimenOverviewDto"/>.
     /// </summary>
     public PublicSpecimenOverviewMapper()
     {
-        CreateMap<SpecimenEntity, PublicSpecimenOverviewDto>()
+        CreateMap<SpecimenEntity, GetPublicSpecimenOverviewDto>()
             .ForMember(d => d.SpecimenGuid,
                 o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.Name,
@@ -35,7 +35,11 @@ public class PublicSpecimenOverviewMapper : Profile
             .ForMember(d => d.LocationPath,
                 o => o.MapFrom((s, _) => BuildLocationPath(s.GeographicLocation)))
             .ForMember(d => d.TaxonGroup,
-                o => o.MapFrom((s, _) => ResolveTaxonGroup(s.Species)));
+                o => o.MapFrom((s, _) => ResolveTaxonGroup(s.Species)))
+            .ForMember(d => d.LoanStatus,
+                o => o.MapFrom(s => s.Loans.Any(l => l.ReturnDate == null)
+                    ? SpecimenLoanStatus.OnLoan
+                    : SpecimenLoanStatus.Available));
     }
 
     /// <summary>

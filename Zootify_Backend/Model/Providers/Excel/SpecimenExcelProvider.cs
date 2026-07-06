@@ -28,6 +28,8 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
     private const string FieldLongitude = "Longitude";
     private const string FieldDate = "DateOfDiscovery";
     private const string FieldComment = "Comment";
+    private const string FieldSize = "Size";
+    private const string FieldWeight = "Weight";
     private const string FieldStorageBuilding = "StorageBuilding";
     private const string FieldStorageCabinet = "StorageCabinet";
     private const string FieldStorageShelf = "StorageShelf";
@@ -48,6 +50,8 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
         ["longitude"] = FieldLongitude,
         ["dateofdiscovery"] = FieldDate,
         ["comment"] = FieldComment,
+        ["size"] = FieldSize,
+        ["weight"] = FieldWeight,
         ["storagebuilding"] = FieldStorageBuilding,
         ["storagecabinet"] = FieldStorageCabinet,
         ["storageshelf"] = FieldStorageShelf,
@@ -65,6 +69,8 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
         (FieldLongitude, "Longitude"),
         (FieldDate, "Date of Discovery"),
         (FieldComment, "Comment"),
+        (FieldSize, "Size"),
+        (FieldWeight, "Weight"),
         (FieldStorageBuilding, "Storage Building"),
         (FieldStorageCabinet, "Storage Cabinet"),
         (FieldStorageShelf, "Storage Shelf"),
@@ -140,18 +146,11 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
         var rowIndex = 2;
         foreach (var row in rows)
         {
-            worksheet.Cell(rowIndex, 1).Value = row.Name;
-            worksheet.Cell(rowIndex, 2).Value = row.LatinName;
-            worksheet.Cell(rowIndex, 3).Value = row.TaxonomySpeciesLatinName;
-            worksheet.Cell(rowIndex, 4).Value = row.Latitude;
-            worksheet.Cell(rowIndex, 5).Value = row.Longitude;
-            worksheet.Cell(rowIndex, 6).Value = row.DateOfDiscovery;
-            worksheet.Cell(rowIndex, 7).Value = row.Comment;
-            worksheet.Cell(rowIndex, 8).Value = row.StorageBuilding;
-            worksheet.Cell(rowIndex, 9).Value = row.StorageCabinet;
-            worksheet.Cell(rowIndex, 10).Value = row.StorageShelf;
-            worksheet.Cell(rowIndex, 11).Value = row.StorageCompartment;
-            worksheet.Cell(rowIndex, 12).Value = row.Tags;
+            for (var i = 0; i < ExportColumns.Length; i++)
+            {
+                worksheet.Cell(rowIndex, i + 1).Value = ExportCellValue(row, ExportColumns[i].Field);
+            }
+
             rowIndex++;
         }
 
@@ -159,6 +158,28 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
         workbook.SaveAs(memoryStream);
         return memoryStream.ToArray();
     }
+
+    /// <summary>
+    /// Resolves the export cell value for the given row and canonical field key.
+    /// </summary>
+    private static XLCellValue ExportCellValue(ImportSpecimenRowDto row, string field) => field switch
+    {
+        FieldName => row.Name,
+        FieldLatinName => row.LatinName,
+        FieldSpecies => row.TaxonomySpeciesLatinName,
+        FieldLatitude => row.Latitude,
+        FieldLongitude => row.Longitude,
+        FieldDate => row.DateOfDiscovery,
+        FieldComment => row.Comment,
+        FieldSize => row.Size,
+        FieldWeight => row.Weight,
+        FieldStorageBuilding => row.StorageBuilding,
+        FieldStorageCabinet => row.StorageCabinet,
+        FieldStorageShelf => row.StorageShelf,
+        FieldStorageCompartment => row.StorageCompartment,
+        FieldTags => row.Tags,
+        _ => Blank.Value,
+    };
 
     /// <summary>
     /// Returns the worksheet named "Import" (case-insensitive), or the first worksheet if none matches.
@@ -324,6 +345,8 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
             DateOfDiscovery = dateOfDiscovery,
             TaxonomySpeciesLatinName = species!.Trim(),
             Comment = GetString(row, columns, FieldComment),
+            Size = GetNullableDouble(row, columns, FieldSize),
+            Weight = GetNullableDouble(row, columns, FieldWeight),
             StorageBuilding = GetString(row, columns, FieldStorageBuilding),
             StorageCabinet = GetString(row, columns, FieldStorageCabinet),
             StorageShelf = GetString(row, columns, FieldStorageShelf),
@@ -344,6 +367,27 @@ public class SpecimenExcelProvider : ISpecimenExcelProvider
 
         var value = row.Cell(column).GetString().Trim();
         return string.IsNullOrEmpty(value) ? null : value;
+    }
+
+    /// <summary>
+    /// Reads an optional numeric cell: returns <c>null</c> when the column is absent, empty, or holds
+    /// non-numeric text; otherwise the parsed value. Used for the optional size and weight fields.
+    /// </summary>
+    private static double? GetNullableDouble(IXLRow row, Dictionary<string, int> columns, string field)
+    {
+        if (!columns.TryGetValue(field, out var column))
+        {
+            return null;
+        }
+
+        var cell = row.Cell(column);
+        if (cell.DataType == XLDataType.Number)
+        {
+            return cell.GetDouble();
+        }
+
+        var text = cell.GetString().Trim();
+        return text.Length > 0 && TryParseDouble(text, out var value) ? value : null;
     }
 
     private static bool TryGetDouble(IXLRow row, Dictionary<string, int> columns, string field, out double value)

@@ -17,6 +17,12 @@ public class UpdateSpecimenRequestDto
     /// <summary>The new free-text comment, or <c>null</c> to clear it.</summary>
     public required string? Comment { get; init; }
 
+    /// <summary>The new size, or <c>null</c> to clear it.</summary>
+    public double? Size { get; init; }
+
+    /// <summary>The new weight, or <c>null</c> to clear it.</summary>
+    public double? Weight { get; init; }
+
     /// <summary>Whether the specimen should be publicly visible.</summary>
     public required bool IsPublic { get; init; }
 

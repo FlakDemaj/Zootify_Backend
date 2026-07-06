@@ -29,6 +29,12 @@ public class ImportSpecimenRowDto
     /// <summary>Optional free-text comment.</summary>
     public string? Comment { get; init; }
 
+    /// <summary>Optional size of the specimen.</summary>
+    public double? Size { get; init; }
+
+    /// <summary>Optional weight of the specimen.</summary>
+    public double? Weight { get; init; }
+
     /// <summary>Optional storage building identifier.</summary>
     public string? StorageBuilding { get; init; }
 

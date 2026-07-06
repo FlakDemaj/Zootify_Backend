@@ -14,7 +14,7 @@ public class LoanMapper : Profile
     /// </summary>
     public LoanMapper()
     {
-        CreateMap<LoanEntity, LoanOverviewDto>()
+        CreateMap<LoanEntity, GetLoanOverviewDto>()
             .ForMember(d => d.LoanGuid,
                 o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.SpecimenName,
@@ -32,7 +32,7 @@ public class LoanMapper : Profile
             .ForMember(d => d.ImageGuid,
                 o => o.MapFrom(s => s.Specimen.Image != null ? s.Specimen.Image.Guid : Guid.Empty));
 
-        CreateMap<LoanEntity, LoanDetailDto>()
+        CreateMap<LoanEntity, GetLoanDetailDto>()
             .ForMember(d => d.LoanGuid,
                 o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.SpecimenGuid,

@@ -10,6 +10,12 @@ public class CreateSpecimenRequestDto
     /// <summary>Optional free-text comment about the specimen.</summary>
     public string? Comment { get; init; }
 
+    /// <summary>Optional size of the specimen.</summary>
+    public double? Size { get; init; }
+
+    /// <summary>Optional weight of the specimen.</summary>
+    public double? Weight { get; init; }
+
     /// <summary>The specimen's common display name.</summary>
     public required string Name { get; init; }
 

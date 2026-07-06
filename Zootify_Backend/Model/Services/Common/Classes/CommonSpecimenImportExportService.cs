@@ -179,6 +179,8 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
             // one, so fall back to the matched species' latin name when the row leaves it empty.
             LatinName = string.IsNullOrWhiteSpace(row.LatinName) ? speciesLatinName : row.LatinName!,
             Comment = row.Comment,
+            Size = row.Size,
+            Weight = row.Weight,
             Location = new GeoDto { Latitude = row.Latitude, Longitude = row.Longitude },
             DateOfDiscovery = row.DateOfDiscovery,
             TaxonomySpeciesGuid = speciesGuid,
@@ -244,6 +246,8 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
         DateOfDiscovery = specimen.DateOfDiscovery,
         TaxonomySpeciesLatinName = specimen.Species?.Name ?? string.Empty,
         Comment = specimen.Comment,
+        Size = specimen.Size,
+        Weight = specimen.Weight,
         StorageBuilding = specimen.StorageBuilding,
         StorageCabinet = specimen.StorageCabinet,
         StorageShelf = specimen.StorageShelf,
