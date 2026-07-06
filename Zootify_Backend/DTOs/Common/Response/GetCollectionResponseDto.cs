@@ -10,7 +10,10 @@ public class GetCollectionResponseDto
 
     /// <summary>The collection's display name.</summary>
     public required string Name { get; init; }
-
+    
+    /// <summary>The collection's description.</summary>
+    public string? Description { get; init; }
+    
     /// <summary>Whether the collection is public (visible to everyone, not just its owner).</summary>
     public required bool IsPublic { get; init; }
 
@@ -19,4 +22,7 @@ public class GetCollectionResponseDto
 
     /// <summary>When the collection was created.</summary>
     public DateTime? CreatedAt { get; init; }
+    
+    /// <summary>The creator of the collection.</summary>
+    public string? CreatedBy { get; init; }
 }

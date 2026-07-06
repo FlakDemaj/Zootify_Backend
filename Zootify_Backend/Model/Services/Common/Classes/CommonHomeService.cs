@@ -51,7 +51,7 @@ public class CommonHomeService : ICommonHomeService
         return new GetPublicSpecimenOverviewResponseDto
         {
             TotalCount = total,
-            Specimens = _mapper.Map<List<PublicSpecimenOverviewDto>>(items),
+            Specimens = _mapper.Map<List<GetPublicSpecimenOverviewDto>>(items),
         };
     }
 }

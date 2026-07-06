@@ -27,13 +27,13 @@ public interface ICommonLoanService
     /// <param name="loanGuid">The GUID of the loan to retrieve.</param>
     /// <returns>The detail DTO of the active loan.</returns>
     /// <exception cref="ZootifyException">Thrown when no active loan with the given GUID is visible to the caller.</exception>
-    Task<LoanDetailDto> GetActiveLoanByGuidAsync(IAuthentication authentication, Guid loanGuid);
+    Task<GetLoanDetailDto> GetActiveLoanByGuidAsync(IAuthentication authentication, Guid loanGuid);
 
     /// <summary>
     /// Returns the active (not yet returned) loans the caller has borrowed.
     /// </summary>
     /// <param name="authentication">The authentication context of the borrowing user.</param>
-    Task<List<LoanOverviewDto>> GetBorrowedLoansAsync(IAuthentication authentication);
+    Task<List<GetLoanOverviewDto>> GetBorrowedLoansAsync(IAuthentication authentication);
 
     /// <summary>
     /// Marks a loan the caller has borrowed as returned.

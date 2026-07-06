@@ -96,6 +96,14 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasMaxLength(2000);
 
         builder
+            .Property(p => p.Size)
+            .HasColumnName("size");
+
+        builder
+            .Property(p => p.Weight)
+            .HasColumnName("weight");
+
+        builder
             .Property(p => p.IsPublic)
             .HasColumnName("is_public");
 

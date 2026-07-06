@@ -28,9 +28,12 @@ public class CollectionMapper : Profile
         CreateMap<CollectionEntity, GetCollectionResponseDto>()
             .ForMember(d => d.Guid, o => o.MapFrom(s => s.Guid))
             .ForMember(d => d.Name, o => o.MapFrom(s => s.Name))
+            .ForMember(d => d.Description, o => o.MapFrom(s => s.Description))
             .ForMember(d => d.IsPublic, o => o.MapFrom(s => s.IsPublic))
             .ForMember(d => d.SpecimenCount, o => o.MapFrom(s => s.Collection.Count))
-            .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreationDate));
-
+            .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreationDate))
+            .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.CreatedByUser != null
+                ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}".Trim()
+                : null));
     }
 }

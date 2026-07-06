@@ -459,7 +459,7 @@ public class CommonLoanRequestControllerTests : IntegrationTestBase
         var request   = await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
         AuthenticateAs(admin);
 
-        var result = await Client.GetFromJsonAsync<List<LoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
+        var result = await Client.GetFromJsonAsync<List<GetLoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
 
         result.Should().NotBeNull();
         result!.Should().ContainSingle(r => r.RequestGuid == request.Guid);
@@ -478,7 +478,7 @@ public class CommonLoanRequestControllerTests : IntegrationTestBase
         var request   = await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
         AuthenticateAs(creator);
 
-        var result = await Client.GetFromJsonAsync<List<LoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
+        var result = await Client.GetFromJsonAsync<List<GetLoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
 
         result.Should().NotBeNull();
         result!.Should().ContainSingle(r => r.RequestGuid == request.Guid);
@@ -497,7 +497,7 @@ public class CommonLoanRequestControllerTests : IntegrationTestBase
         await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
         AuthenticateAs(outsider);
 
-        var result = await Client.GetFromJsonAsync<List<LoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
+        var result = await Client.GetFromJsonAsync<List<GetLoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
 
         result.Should().NotBeNull();
         result!.Should().BeEmpty();
@@ -515,7 +515,7 @@ public class CommonLoanRequestControllerTests : IntegrationTestBase
         await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, admin.Guid);
         AuthenticateAs(admin);
 
-        var result = await Client.GetFromJsonAsync<List<LoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
+        var result = await Client.GetFromJsonAsync<List<GetLoanRequestOverviewDto>>(Routings.CommonLoanRequestPendingRouting);
 
         result.Should().NotBeNull();
         result!.Should().BeEmpty();
@@ -536,7 +536,7 @@ public class CommonLoanRequestControllerTests : IntegrationTestBase
         var request   = await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
         AuthenticateAs(requester);
 
-        var result = await Client.GetFromJsonAsync<LoanRequestDetailDto>(
+        var result = await Client.GetFromJsonAsync<GetLoanRequestDetailDto>(
             $"{Routings.CommonLoanRequestRouting}/{request.Guid}");
 
         result.Should().NotBeNull();

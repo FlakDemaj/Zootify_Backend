@@ -44,7 +44,7 @@ public class CommonLoanRequestController : BaseRestController
     /// </summary>
     /// <returns>A list of pending loan-request overview DTOs.</returns>
     [HttpGet("pending")]
-    public async Task<ActionResult<List<LoanRequestOverviewDto>>> GetPendingAsync()
+    public async Task<ActionResult<List<GetLoanRequestOverviewDto>>> GetPendingAsync()
     {
         return Ok(await _commonLoanRequestService.GetPendingForApproverAsync(Authentication));
     }
@@ -55,7 +55,7 @@ public class CommonLoanRequestController : BaseRestController
     /// <param name="requestGuid">The GUID of the loan request.</param>
     /// <returns>The detail DTO of the loan request.</returns>
     [HttpGet("{requestGuid:guid}")]
-    public async Task<ActionResult<LoanRequestDetailDto>> GetRequestAsync(Guid requestGuid)
+    public async Task<ActionResult<GetLoanRequestDetailDto>> GetRequestAsync(Guid requestGuid)
     {
         return Ok(await _commonLoanRequestService.GetRequestDetailAsync(Authentication, requestGuid));
     }

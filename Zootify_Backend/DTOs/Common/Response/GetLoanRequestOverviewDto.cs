@@ -5,7 +5,7 @@ namespace Zootify_Backend.DTOs.Common.Response;
 /// <summary>
 /// A lightweight loan-request entry used within the pending-approvals listing.
 /// </summary>
-public class LoanRequestOverviewDto
+public class GetLoanRequestOverviewDto
 {
     /// <summary>The loan request's GUID.</summary>
     public Guid RequestGuid { get; init; }

@@ -5,7 +5,7 @@ namespace Zootify_Backend.DTOs.Common.Response;
 /// <summary>
 /// The full detail view of a single loan request, including specimen, requester, and decision information.
 /// </summary>
-public class LoanRequestDetailDto
+public class GetLoanRequestDetailDto
 {
     /// <summary>The loan request's GUID.</summary>
     public Guid RequestGuid { get; init; }

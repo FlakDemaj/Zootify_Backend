@@ -67,7 +67,9 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
             storageBuilding:    "Building A",
             storageCabinet:     "Cabinet 3",
             storageShelf:       "Shelf 2",
-            storageCompartment: "Compartment B");
+            storageCompartment: "Compartment B",
+            size:               42.5,
+            weight:             7.3);
 
         var response = await Client.PostAsJsonAsync(Routings.CommonSpecimenRouting, request);
 
@@ -84,6 +86,8 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         specimen.StorageCabinet.Should().Be("Cabinet 3");
         specimen.StorageShelf.Should().Be("Shelf 2");
         specimen.StorageCompartment.Should().Be("Compartment B");
+        specimen.Size.Should().Be(42.5);
+        specimen.Weight.Should().Be(7.3);
         specimen.TaxonomySpeciesGuid.Should().Be(species.Guid);
         specimen.CreatedByUserGuid.Should().Be(user.Guid);
     }
@@ -589,6 +593,39 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         updated.StorageCabinet.Should().Be("Cabinet 3");
         updated.StorageShelf.Should().Be("Shelf 2");
         updated.StorageCompartment.Should().Be("Compartment B");
+    }
+
+    /// <summary>
+    /// Tests Update Specimen – Updates Size And Weight.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSpecimen_UpdatesSizeAndWeight()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, createdByUserGuid: user.Guid, size: 10.0, weight: 2.0);
+
+        AuthenticateAs(user);
+
+        var request = new UpdateSpecimenRequestDto
+        {
+            Name = specimen.Name,
+            LatinName = specimen.LatinName,
+            DateOfDiscovery = specimen.DateOfDiscovery,
+            Comment = specimen.Comment,
+            IsPublic = specimen.IsPublic,
+            Size = 15.5,
+            Weight = 3.4
+        };
+
+        var response = await Client.PatchAsJsonAsync($"{Routings.CommonSpecimenRouting}/{specimen.Guid}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await GetSpecimenFromDbAsync(specimen.Guid);
+        updated!.Size.Should().Be(15.5);
+        updated.Weight.Should().Be(3.4);
     }
 
     /// <summary>
@@ -1270,6 +1307,8 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         string? storageCabinet    = null,
         string? storageShelf      = null,
         string? storageCompartment = null,
+        double? size              = null,
+        double? weight            = null,
         List<Guid>? tags          = null,
         List<string>? tagsToCreate = null,
         string? base64Image       = null) => new()
@@ -1280,6 +1319,8 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         Location           = new GeoDto { Latitude = 48.137, Longitude = 11.575 },
         TaxonomySpeciesGuid = taxonomySpeciesGuid,
         Comment            = comment,
+        Size               = size,
+        Weight             = weight,
         StorageBuilding    = storageBuilding,
         StorageCabinet     = storageCabinet,
         StorageShelf       = storageShelf,
@@ -1342,6 +1383,97 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
         result.Status.Should().Be(specimen.Status);
         result.IsPublic.Should().Be(specimen.IsPublic);
         result.CreatedAt.Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// Tests Get Specimen Detail – Returns Size And Weight.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_ReturnsSizeAndWeight()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid, size: 42.5, weight: 7.3);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.Size.Should().Be(42.5);
+        result.Weight.Should().Be(7.3);
+    }
+
+    /// <summary>
+    /// Tests Get Specimen Detail – Specimen Without Loan – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_WithoutLoan_LoanStatusIsAvailable()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.LoanStatus.Should().Be(SpecimenLoanStatus.Available);
+    }
+
+    /// <summary>
+    /// Tests Get Specimen Detail – Specimen With Open Loan – Loan Status Is On Loan.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_WithOpenLoan_LoanStatusIsOnLoan()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var borrower = await UserRepo.CreateUserAsync("borrower@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+        await LoanRepo.CreateLoanAsync(specimen.Guid, owner.Guid, borrower.Guid, DateTime.UtcNow.AddDays(14));
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.LoanStatus.Should().Be(SpecimenLoanStatus.OnLoan);
+    }
+
+    /// <summary>
+    /// Tests Get Specimen Detail – Specimen With Returned Loan – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_WithReturnedLoan_LoanStatusIsAvailable()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var borrower = await UserRepo.CreateUserAsync("borrower@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+        await LoanRepo.CreateLoanAsync(
+            specimen.Guid, owner.Guid, borrower.Guid, DateTime.UtcNow.AddDays(14), returnDate: DateTime.UtcNow);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.LoanStatus.Should().Be(SpecimenLoanStatus.Available);
     }
 
     /// <summary>

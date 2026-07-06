@@ -9,5 +9,5 @@ public class GetActiveLoansPagedResponseDto
     public int TotalCount { get; init; }
 
     /// <summary>The active loans on the current page.</summary>
-    public List<LoanOverviewDto> Loans { get; init; } = [];
+    public List<GetLoanOverviewDto> Loans { get; init; } = [];
 }

@@ -66,7 +66,7 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen();
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.Name.Should().Be(specimen.Name);
         dto.LatinName.Should().Be(specimen.LatinName);
@@ -90,7 +90,7 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen(orderName: expectedOrder, latinName: latinName);
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.TaxonGroup.Should().Be(expectedOrder);
     }
@@ -105,7 +105,7 @@ public class PublicSpecimenOverviewMapperTests
         // Replace the species chain with a species that has no order ancestor.
         specimen.Species = new TaxonomyNodeEntity { Name = "Lonely", Rank = TaxonomyRank.Species };
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.TaxonGroup.Should().BeEmpty();
     }
@@ -118,7 +118,7 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen();
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.LocationPath.Select(p => p.Name).Should()
             .ContainInOrder("Deutschland", "NRW", "Siegen", "Buchhauerstraße 37");
@@ -134,7 +134,7 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen(latitude: 12.34, longitude: 56.78);
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.Latitude.Should().Be(12.34);
         dto.Longitude.Should().Be(56.78);
@@ -148,7 +148,7 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen(withImage: true);
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.ImageGuid.Should().Be(specimen.Image!.Guid);
     }
@@ -161,7 +161,7 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen(withImage: false);
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.ImageGuid.Should().BeNull();
     }
@@ -174,8 +174,49 @@ public class PublicSpecimenOverviewMapperTests
     {
         var specimen = BuildSpecimen();
 
-        var dto = _mapper.Map<PublicSpecimenOverviewDto>(specimen);
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
 
         dto.LocationPath.Should().Contain(n => n.Level == GeographicLevel.City && n.Name == "Siegen");
+    }
+
+    /// <summary>
+    /// Tests Map – No Loans – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public void Map_NoLoans_LoanStatusIsAvailable()
+    {
+        var specimen = BuildSpecimen();
+
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
+
+        dto.LoanStatus.Should().Be(SpecimenLoanStatus.Available);
+    }
+
+    /// <summary>
+    /// Tests Map – Open Loan – Loan Status Is On Loan.
+    /// </summary>
+    [Fact]
+    public void Map_OpenLoan_LoanStatusIsOnLoan()
+    {
+        var specimen = BuildSpecimen();
+        specimen.Loans.Add(new LoanEntity { ReturnDate = null });
+
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
+
+        dto.LoanStatus.Should().Be(SpecimenLoanStatus.OnLoan);
+    }
+
+    /// <summary>
+    /// Tests Map – Only Returned Loans – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public void Map_OnlyReturnedLoans_LoanStatusIsAvailable()
+    {
+        var specimen = BuildSpecimen();
+        specimen.Loans.Add(new LoanEntity { ReturnDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) });
+
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
+
+        dto.LoanStatus.Should().Be(SpecimenLoanStatus.Available);
     }
 }

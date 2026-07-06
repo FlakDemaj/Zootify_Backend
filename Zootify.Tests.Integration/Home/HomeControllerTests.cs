@@ -273,4 +273,62 @@ public class HomeControllerTests : IntegrationTestBase
     }
 
     #endregion
+
+    #region LoanStatus
+
+    /// <summary>
+    /// Tests Get Overview – Specimen Without Loan – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_SpecimenWithoutLoan_LoanStatusIsAvailable()
+    {
+        var (species, location) = await ArrangeAsync();
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true);
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        result!.Specimens.Single().LoanStatus.Should().Be(SpecimenLoanStatus.Available);
+    }
+
+    /// <summary>
+    /// Tests Get Overview – Specimen With Open Loan – Loan Status Is On Loan.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_SpecimenWithOpenLoan_LoanStatusIsOnLoan()
+    {
+        var (species, location) = await ArrangeAsync();
+        var lender = await UserRepo.CreateUserAsync("lender@test.de");
+        var borrower = await UserRepo.CreateUserAsync("borrower@test.de");
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, createdByUserGuid: lender.Guid);
+        await LoanRepo.CreateLoanAsync(specimen.Guid, lender.Guid, borrower.Guid, DateTime.UtcNow.AddDays(14));
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        result!.Specimens.Single(s => s.SpecimenGuid == specimen.Guid)
+            .LoanStatus.Should().Be(SpecimenLoanStatus.OnLoan);
+    }
+
+    /// <summary>
+    /// Tests Get Overview – Specimen With Returned Loan – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_SpecimenWithReturnedLoan_LoanStatusIsAvailable()
+    {
+        var (species, location) = await ArrangeAsync();
+        var lender = await UserRepo.CreateUserAsync("lender@test.de");
+        var borrower = await UserRepo.CreateUserAsync("borrower@test.de");
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, createdByUserGuid: lender.Guid);
+        await LoanRepo.CreateLoanAsync(
+            specimen.Guid, lender.Guid, borrower.Guid, DateTime.UtcNow.AddDays(14),
+            returnDate: DateTime.UtcNow);
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        result!.Specimens.Single(s => s.SpecimenGuid == specimen.Guid)
+            .LoanStatus.Should().Be(SpecimenLoanStatus.Available);
+    }
+
+    #endregion
 }

@@ -1,11 +1,12 @@
 using Zootify_Backend.DTOs.Common.Response.Helpers;
+using Zootify_Backend.Enums;
 
 namespace Zootify_Backend.DTOs.Common.Response;
 
 /// <summary>
 /// A public-facing overview of a specimen, used on map/list views without sensitive details.
 /// </summary>
-public class PublicSpecimenOverviewDto
+public class GetPublicSpecimenOverviewDto
 {
     /// <summary> The specimen´s Guid</summary>
     public required Guid SpecimenGuid { get; init; }
@@ -33,4 +34,7 @@ public class PublicSpecimenOverviewDto
 
     /// <summary>The high-level taxon group (e.g. the phylum or class name) the specimen belongs to.</summary>
     public string TaxonGroup { get; init; } = string.Empty;
+
+    /// <summary>Whether the specimen is currently loaned out.</summary>
+    public SpecimenLoanStatus LoanStatus { get; init; }
 }

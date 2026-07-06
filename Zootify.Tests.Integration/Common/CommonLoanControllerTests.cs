@@ -38,7 +38,7 @@ public class CommonLoanControllerTests : IntegrationTestBase
         await LoanRepo.CreateLoanAsync(specimen.Guid, admin.Guid, other.Guid, DateTime.UtcNow.AddDays(14));
         AuthenticateAs(user);
 
-        var result = await Client.GetFromJsonAsync<List<LoanOverviewDto>>(Routings.CommonLoanBorrowedRouting);
+        var result = await Client.GetFromJsonAsync<List<GetLoanOverviewDto>>(Routings.CommonLoanBorrowedRouting);
 
         result.Should().NotBeNull();
         result!.Should().ContainSingle(l => l.LoanGuid == ownLoan.Guid);
@@ -56,7 +56,7 @@ public class CommonLoanControllerTests : IntegrationTestBase
             specimen.Guid, admin.Guid, user.Guid, DateTime.UtcNow.AddDays(14), returnDate: DateTime.UtcNow);
         AuthenticateAs(user);
 
-        var result = await Client.GetFromJsonAsync<List<LoanOverviewDto>>(Routings.CommonLoanBorrowedRouting);
+        var result = await Client.GetFromJsonAsync<List<GetLoanOverviewDto>>(Routings.CommonLoanBorrowedRouting);
 
         result.Should().NotBeNull();
         result!.Should().BeEmpty();
@@ -468,7 +468,7 @@ public class CommonLoanControllerTests : IntegrationTestBase
             specimen.Guid, admin.Guid, borrower.Guid, dueDate, notes: "Handle with care.");
         AuthenticateAs(admin);
 
-        var result = await Client.GetFromJsonAsync<LoanDetailDto>(
+        var result = await Client.GetFromJsonAsync<GetLoanDetailDto>(
             $"{Routings.CommonLoanRouting}/{loan.Guid}");
 
         result.Should().NotBeNull();
@@ -502,7 +502,7 @@ public class CommonLoanControllerTests : IntegrationTestBase
             specimen.Guid, admin.Guid, borrower.Guid, DateTime.UtcNow.AddDays(14));
         AuthenticateAs(admin);
 
-        var result = await Client.GetFromJsonAsync<LoanDetailDto>(
+        var result = await Client.GetFromJsonAsync<GetLoanDetailDto>(
             $"{Routings.CommonLoanRouting}/{loan.Guid}");
 
         result.Should().NotBeNull();
@@ -586,7 +586,7 @@ public class CommonLoanControllerTests : IntegrationTestBase
             specimen.Guid, admin.Guid, admin.Guid, DateTime.UtcNow.AddDays(14));
         AuthenticateAs(owner);
 
-        var result = await Client.GetFromJsonAsync<LoanDetailDto>(
+        var result = await Client.GetFromJsonAsync<GetLoanDetailDto>(
             $"{Routings.CommonLoanRouting}/{loan.Guid}");
 
         result.Should().NotBeNull();

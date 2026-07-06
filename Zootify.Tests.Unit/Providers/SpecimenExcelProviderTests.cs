@@ -31,6 +31,8 @@ public class SpecimenExcelProviderTests
             DateOfDiscovery = new DateTime(2024, 5, 1),
             TaxonomySpeciesLatinName = "Papilio machaon",
             Comment = "Found near the river",
+            Size = 42.5,
+            Weight = 7.3,
             StorageBuilding = "Building A",
             StorageCabinet = "Cabinet 3",
             StorageShelf = "Shelf 2",
@@ -58,8 +60,77 @@ public class SpecimenExcelProviderTests
         row.StorageCabinet.Should().Be(original.StorageCabinet);
         row.StorageShelf.Should().Be(original.StorageShelf);
         row.StorageCompartment.Should().Be(original.StorageCompartment);
+        row.Size.Should().Be(original.Size);
+        row.Weight.Should().Be(original.Weight);
         row.Tags.Should().Be(original.Tags);
         row.RowNumber.Should().Be(2); // first data row after the header
+    }
+
+    /// <summary>
+    /// Tests Read Import Rows – Parses Size And Weight Columns.
+    /// </summary>
+    [Fact]
+    public void ReadImportRows_ParsesSizeAndWeightColumns()
+    {
+        var bytes = BuildWorkbook(worksheet =>
+        {
+            worksheet.Cell(1, 1).Value = "Name";
+            worksheet.Cell(1, 2).Value = "Species";
+            worksheet.Cell(1, 3).Value = "Latitude";
+            worksheet.Cell(1, 4).Value = "Longitude";
+            worksheet.Cell(1, 5).Value = "Date of Discovery";
+            worksheet.Cell(1, 6).Value = "Size";
+            worksheet.Cell(1, 7).Value = "Weight";
+
+            worksheet.Cell(2, 1).Value = "Golden Eagle";
+            worksheet.Cell(2, 2).Value = "Aquila chrysaetos";
+            worksheet.Cell(2, 3).Value = 51.5074;
+            worksheet.Cell(2, 4).Value = -0.1278;
+            worksheet.Cell(2, 5).Value = new DateTime(2024, 6, 15);
+            worksheet.Cell(2, 6).Value = 42.5;
+            worksheet.Cell(2, 7).Value = 7.3;
+        });
+
+        using var stream = new MemoryStream(bytes);
+        var result = _provider.ReadImportRows(stream);
+
+        result.Failures.Should().BeEmpty();
+        var row = result.Rows.Should().ContainSingle().Subject;
+        row.Size.Should().Be(42.5);
+        row.Weight.Should().Be(7.3);
+    }
+
+    /// <summary>
+    /// Tests Read Import Rows – Missing Or Non-Numeric Size And Weight – Are Null.
+    /// </summary>
+    [Fact]
+    public void ReadImportRows_MissingOrNonNumericSizeAndWeight_AreNull()
+    {
+        var bytes = BuildWorkbook(worksheet =>
+        {
+            worksheet.Cell(1, 1).Value = "Name";
+            worksheet.Cell(1, 2).Value = "Species";
+            worksheet.Cell(1, 3).Value = "Latitude";
+            worksheet.Cell(1, 4).Value = "Longitude";
+            worksheet.Cell(1, 5).Value = "Date of Discovery";
+            worksheet.Cell(1, 6).Value = "Weight";
+
+            // No Size column at all; Weight column present but holding non-numeric text.
+            worksheet.Cell(2, 1).Value = "Golden Eagle";
+            worksheet.Cell(2, 2).Value = "Aquila chrysaetos";
+            worksheet.Cell(2, 3).Value = 51.5074;
+            worksheet.Cell(2, 4).Value = -0.1278;
+            worksheet.Cell(2, 5).Value = new DateTime(2024, 6, 15);
+            worksheet.Cell(2, 6).Value = "n/a";
+        });
+
+        using var stream = new MemoryStream(bytes);
+        var result = _provider.ReadImportRows(stream);
+
+        result.Failures.Should().BeEmpty();
+        var row = result.Rows.Should().ContainSingle().Subject;
+        row.Size.Should().BeNull();
+        row.Weight.Should().BeNull();
     }
 
     /// <summary>
