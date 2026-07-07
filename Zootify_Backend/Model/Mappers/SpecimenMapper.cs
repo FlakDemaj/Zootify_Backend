@@ -88,8 +88,6 @@ public class SpecimenMapper : Profile
                 o => o.MapFrom(s => s.StorageCompartment))
             .ForMember(d => d.StorageShelf,
                 o => o.MapFrom(s => s.StorageShelf))
-            .ForMember(d => d.CreatedAt,
-                o => o.MapFrom(s => s.CreationDate))
             .ForMember(d => d.Comment,
                 o => o.MapFrom(s => s.Comment))
             .ForMember(d => d.Size,
@@ -114,14 +112,20 @@ public class SpecimenMapper : Profile
                 o => o.MapFrom(s => s.CreatedByUser != null
                     ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}".Trim()
                     : null))
+            .ForMember(d => d.CreatedAt,
+                o => o.MapFrom(s => s.CreationDate))
             .ForMember(d => d.UpdatedByName,
                 o => o.MapFrom(s => s.UpdatedByUser != null
                     ? $"{s.UpdatedByUser.FirstName} {s.UpdatedByUser.LastName}".Trim()
                     : null))
+            .ForMember(d => d.UpdatedAt,
+                o => o.MapFrom(s => s.UpdatedDate))
             .ForMember(d => d.DeletedByName,
                 o => o.MapFrom(s => s.DeletedByUser != null
                     ? $"{s.DeletedByUser.FirstName} {s.DeletedByUser.LastName}".Trim()
                     : null))
+            .ForMember(d => d.DeletedAt,
+                o => o.MapFrom(s => s.DeletionDate))
             .ForMember(d => d.GeoPath,
                 o => o.MapFrom((s, _) =>
                 {
