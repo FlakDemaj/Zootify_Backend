@@ -771,11 +771,14 @@ public class CommonSpecimenService : ICommonSpecimenService
         var imageEntity = new SpecimenImageEntity
         {
             ImageBase64 = imagesBase64,
-            SpecimenGuid = specimen.Guid,
             UploadedAt = DateTime.UtcNow
         };
-        
+
         await _specimenImageRepository.CreateAsync(imageEntity);
+
+        // The specimen owns the foreign key, so link it to the freshly created image and persist.
+        specimen.ImageGuid = imageEntity.Guid;
+        await _specimenRepository.UpdateAsync(specimen);
     }
 
     /// <summary>

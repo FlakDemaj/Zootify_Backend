@@ -24,7 +24,7 @@ public class LoanRequestMapper : Profile
             .ForMember(d => d.SpecimenLatinName,
                 o => o.MapFrom(s => s.Specimen.LatinName))
             .ForMember(d => d.ImageGuid,
-                o => o.MapFrom(s => s.Specimen.Image != null ? s.Specimen.Image.Guid : (Guid?)null))
+                o => o.MapFrom(s => s.Specimen.ImageGuid))
             .ForMember(d => d.RequesterGuid,
                 o => o.MapFrom(s => s.RequesterGuid))
             .ForMember(d => d.RequesterName,
@@ -53,7 +53,7 @@ public class LoanRequestMapper : Profile
             .ForMember(d => d.SpecimenLatinName,
                 o => o.MapFrom(s => s.Specimen.LatinName))
             .ForMember(d => d.ImageGuid,
-                o => o.MapFrom(s => s.Specimen.Image != null ? s.Specimen.Image.Guid : (Guid?)null))
+                o => o.MapFrom(s => s.Specimen.ImageGuid))
             .ForMember(d => d.RequesterGuid,
                 o => o.MapFrom(s => s.RequesterGuid))
             .ForMember(d => d.RequesterName,

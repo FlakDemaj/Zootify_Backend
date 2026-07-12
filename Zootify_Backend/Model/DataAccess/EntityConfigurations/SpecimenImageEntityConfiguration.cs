@@ -23,18 +23,14 @@ public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<Spec
     }
 
     /// <summary>
-    /// Configures the table mapping, columns, and the one-to-one relationship to the specimen.
+    /// Configures the table mapping and columns. The one-to-one relationship to the specimen is
+    /// configured from the specimen side, which now owns the foreign key (<c>image_guid</c>).
     /// </summary>
     /// <param name="builder">The builder used to configure the entity type.</param>
     public override void Configure(EntityTypeBuilder<SpecimenImageEntity> builder)
     {
         builder.ToTable(Table, Schema);
         base.Configure(builder);
-
-        builder
-            .Property(p => p.SpecimenGuid)
-            .HasColumnName("specimen_guid")
-            .IsRequired();
 
         builder
             .Property(p => p.ImageBase64)
@@ -46,12 +42,5 @@ public class SpecimenImageEntityConfiguration : BaseGuidEntityConfiguration<Spec
             .Property(p => p.UploadedAt)
             .HasColumnName("uploaded_at")
             .IsRequired();
-
-        builder
-            .HasOne(i => i.Specimen)
-            .WithOne(s => s.Image)
-            .HasForeignKey<SpecimenImageEntity>(i => i.SpecimenGuid)
-            .OnDelete(DeleteBehavior.Cascade);
-            
     }
 }

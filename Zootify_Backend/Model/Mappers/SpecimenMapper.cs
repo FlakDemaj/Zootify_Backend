@@ -66,7 +66,7 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.Longitude,     o => o.MapFrom(s => s.Longitude))
             .ForMember(d => d.IsPublic,      o => o.MapFrom(s => s.IsPublic))
             .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status))
-            .ForMember(d => d.ImageGuid, o => o.MapFrom(s => s.Image != null ? s.Image.Guid : (Guid?)null));
+            .ForMember(d => d.ImageGuid, o => o.MapFrom(s => s.ImageGuid));
         
         // Same as SpecimenDto, plus the specimen's tags (via the TagEntity -> GetAllTagsByFilterDto map).
         CreateMap<SpecimenEntity, GetAllSpecimensWithTagsDto>()
@@ -107,7 +107,7 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.DeletedAt,
                 o => o.MapFrom(s => s.DeletionDate))
             .ForMember(d => d.ImageGuid,
-                o => o.MapFrom(s => s.Image != null ? s.Image.Guid : (Guid?)null))
+                o => o.MapFrom(s => s.ImageGuid))
             .ForMember(d => d.CreatedByName,
                 o => o.MapFrom(s => s.CreatedByUser != null
                     ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}".Trim()
