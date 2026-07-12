@@ -327,5 +327,40 @@ public class CommonSpecimenImportExportControllerTests : IntegrationTestBase
         parsed.Rows.Should().NotContain(r => r.Name == "Private");
     }
 
+    /// <summary>
+    /// Tests Export – Non Active Specimens – Are Excluded.
+    /// </summary>
+    [Fact]
+    public async Task Export_NonActiveSpecimens_AreExcluded()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("Papilio machaon", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        // The static "My Collection" (…002) contains the user's own specimens of every status, so it is
+        // used here to expose non-active specimens to the exporter.
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, SpecimenStatus.Active, createdByUserGuid: user.Guid, name: "Active");
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, SpecimenStatus.Pending, createdByUserGuid: user.Guid, name: "Pending");
+        await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, SpecimenStatus.Deleted, createdByUserGuid: user.Guid, name: "Deleted");
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonSpecimenImportExportRouting}/export?collectionGuid=00000000-0000-0000-0000-000000000002");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        using var stream = new MemoryStream(bytes);
+        var parsed = Excel.ReadImportRows(stream);
+
+        // Only the active specimen is exported; pending and deleted ones are skipped.
+        parsed.Rows.Should().ContainSingle();
+        parsed.Rows.Single().Name.Should().Be("Active");
+    }
+
     #endregion
 }

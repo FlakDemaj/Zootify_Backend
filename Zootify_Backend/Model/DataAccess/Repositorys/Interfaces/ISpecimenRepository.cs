@@ -67,12 +67,13 @@ public interface ISpecimenRepository : IBaseRepository<SpecimenEntity>
     /// <param name="filterByName">The filter for the specimens in the collections</param>
     /// <param name="status">Optional status filter.</param>
     /// <param name="paging">Paging and sorting parameters.</param>
+    /// <param name="includeNonPublic">When no owner filter is applied, set to <c>true</c> to include non-public specimens (e.g. for admins and moderators); otherwise only public specimens are returned.</param>
     /// <returns>A tuple containing the page of specimens and the total matching count.</returns>
-    Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensPagedAsync(
-        Guid? userGuid,
+    Task<(List<SpecimenEntity> Items, int TotalCount)> GetSpecimensPagedAsync(Guid? userGuid,
         string? filterByName,
         SpecimenStatus? status,
-        BaseSortAndPagingDto paging);
+        BaseSortAndPagingDto paging,
+        bool includeNonPublic = false);
 
     /// <summary>
     /// Returns a paged list of specimens for the public overview, ordered by creation date descending,

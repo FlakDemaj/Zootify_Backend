@@ -21,7 +21,7 @@ public interface ICommonSpecimenImportExportService
 
     /// <summary>
     /// Exports the specimens of the given collection (respecting the caller's visibility rules) to an
-    /// Excel workbook.
+    /// Excel workbook. Only active specimens are exported.
     /// </summary>
     /// <param name="authentication">The authentication context of the exporting user.</param>
     /// <param name="collectionGuid">The GUID of the collection whose specimens to export.</param>

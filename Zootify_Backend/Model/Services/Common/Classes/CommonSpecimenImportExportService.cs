@@ -120,7 +120,7 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
 
     /// <summary>
     /// Exports the specimens of the given collection (respecting the caller's visibility rules) to an
-    /// Excel workbook.
+    /// Excel workbook. Only active specimens are exported.
     /// </summary>
     /// <param name="authentication">The authentication context of the exporting user.</param>
     /// <param name="collectionGuid">The GUID of the collection whose specimens to export.</param>
@@ -150,7 +150,12 @@ public class CommonSpecimenImportExportService : ICommonSpecimenImportExportServ
 
         var entities = await _specimenRepository.GetSpecimensByGuidsWithSpeciesAsync(guids);
 
-        var rows = entities.Select(ToExportRow).ToList();
+        // Only active specimens are exported; pending, rejected, and deleted ones are skipped even
+        // when the caller (owner, admin, or moderator) can otherwise see them in the collection.
+        var rows = entities
+            .Where(specimen => specimen.Status == SpecimenStatus.Active)
+            .Select(ToExportRow)
+            .ToList();
         return _excelProvider.WriteExport(rows);
     }
 
