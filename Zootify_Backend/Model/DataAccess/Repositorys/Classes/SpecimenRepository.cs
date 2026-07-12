@@ -194,6 +194,8 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         var query = Context.GetTrackingSet<SpecimenEntity>()
             // Only the still-open loans are needed to derive the loan status.
             .Include(sp => sp.Loans.Where(l => l.ReturnDate == null))
+            // Only the still-pending requests are needed to derive the "requested" loan status.
+            .Include(sp => sp.LoanRequests.Where(r => r.Status == LoanRequestStatus.Pending))
             // Five levels of Parent cover the full taxonomy depth (Phylum → … → Species),
             // so the order-rank ancestor is always loaded.
             .Include(sp => sp.Species)
@@ -287,6 +289,8 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .Include(sp => sp.Collections)
             // Only the still-open loans are needed to derive the loan status.
             .Include(sp => sp.Loans.Where(l => l.ReturnDate == null))
+            // Only the still-pending requests are needed to derive the "requested" loan status.
+            .Include(sp => sp.LoanRequests.Where(r => r.Status == LoanRequestStatus.Pending))
             .Include(sp => sp.SpecimensTags)
                 .ThenInclude(st => st.Tag)
             // Five levels of Parent cover the full geographic hierarchy depth

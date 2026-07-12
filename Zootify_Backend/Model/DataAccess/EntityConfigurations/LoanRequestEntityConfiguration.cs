@@ -97,7 +97,7 @@ public class LoanRequestEntityConfiguration : BaseGuidEntityConfiguration<LoanRe
 
         builder
             .HasOne(l => l.Specimen)
-            .WithMany()
+            .WithMany(s => s.LoanRequests)
             .HasForeignKey(l => l.SpecimenGuid)
             .OnDelete(DeleteBehavior.Cascade);
 

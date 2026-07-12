@@ -55,6 +55,8 @@ public class SpecimenEntity : BaseDeletionEntity
     public SpecimenImageEntity? Image { get; set; }
     
     public ICollection<LoanEntity> Loans { get; set; } = new List<LoanEntity>();
+
+    public ICollection<LoanRequestEntity> LoanRequests { get; set; } = new List<LoanRequestEntity>();
     
     public ICollection<RelationSpecimensTagEntity> SpecimensTags { get; set; } = new  List<RelationSpecimensTagEntity>();
     

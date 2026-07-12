@@ -97,7 +97,9 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.LoanStatus,
                 o => o.MapFrom(s => s.Loans.Any(l => l.ReturnDate == null)
                     ? SpecimenLoanStatus.OnLoan
-                    : SpecimenLoanStatus.Available))
+                    : s.LoanRequests.Any(r => r.Status == LoanRequestStatus.Pending)
+                        ? SpecimenLoanStatus.Requested
+                        : SpecimenLoanStatus.Available))
             .ForMember(d => d.DateOfDiscovery,
                 o => o.MapFrom(s => s.DateOfDiscovery))
             .ForMember(d => d.Longitude,
