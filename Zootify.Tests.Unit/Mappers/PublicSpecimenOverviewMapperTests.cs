@@ -46,6 +46,8 @@ public class PublicSpecimenOverviewMapperTests
         var city = new GeographicLocationEntity { Name = "Siegen", Level = GeographicLevel.City, Parent = state };
         var house = new GeographicLocationEntity { Name = "Buchhauerstraße 37", Level = GeographicLevel.HouseNumber, Parent = city };
 
+        var image = withImage ? new SpecimenImageEntity { ImageBase64 = "data" } : null;
+
         return new SpecimenEntity
         {
             Name = name,
@@ -54,7 +56,9 @@ public class PublicSpecimenOverviewMapperTests
             Longitude = longitude,
             Species = species,
             GeographicLocation = house,
-            Image = withImage ? new SpecimenImageEntity { ImageBase64 = "data" } : null,
+            // The specimen owns the foreign key, so mirror the image reference on ImageGuid.
+            Image = image,
+            ImageGuid = image?.Guid,
         };
     }
 
