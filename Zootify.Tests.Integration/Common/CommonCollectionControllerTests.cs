@@ -1873,6 +1873,55 @@ public class CommonCollectionControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Get All Specimens In Collection – Static All Specimens – Admin Sees All Specimens Regardless Of Visibility.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_StaticAllSpecimens_Admin_SeesAllSpecimens()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: admin.Guid);
+
+        AuthenticateAs(admin);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}/00000000-0000-0000-0000-000000000001/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        // Admins see every specimen, public and private, independent of the owner.
+        result!.TotalCount.Should().Be(3);
+    }
+
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Static All Specimens – Moderator Sees All Specimens Regardless Of Visibility.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_StaticAllSpecimens_Moderator_SeesAllSpecimens()
+    {
+        var moderator = await UserRepo.CreateUserAsync("mod@test.de", role: UserRole.Moderator);
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: false, createdByUserGuid: owner.Guid);
+
+        AuthenticateAs(moderator);
+
+        var response = await Client.GetAsync(
+            $"{Routings.CommonCollectionRouting}/00000000-0000-0000-0000-000000000001/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        // Moderators, like admins, see private specimens they do not own.
+        result!.TotalCount.Should().Be(2);
+    }
+
+    /// <summary>
     /// Tests Get All Specimens In Collection – Static My Active – Returns Own Active Specimens Only.
     /// </summary>
     [Fact]

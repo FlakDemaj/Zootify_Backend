@@ -280,11 +280,14 @@ public class CommonCollectionService : ICommonCollectionService
 
         Guid? userGuid;
         SpecimenStatus? status;
+        bool includeNonPublic = false;
 
         if (collectionGuid == AllSpecimensGuid)
         {
-            // Public to everyone; a null user GUID makes the repository return only public specimens.
-            (userGuid, status) = (null, null);
+            // "All Specimens" is visible to everyone. Admins and moderators see every specimen;
+            // regular users and anonymous callers (a null user GUID) see only public ones.
+            var isAdminOrModerator = authentication?.Role is UserRole.Admin or UserRole.Moderator;
+            (userGuid, status, includeNonPublic) = (null, null, isAdminOrModerator);
         }
         else
         {
@@ -310,7 +313,8 @@ public class CommonCollectionService : ICommonCollectionService
                     userGuid,
                     filterByName,
                     status,
-                    paging);
+                    paging,
+                    includeNonPublic);
 
         return new GetAllSpecimenInCollectionResponseDto
         {

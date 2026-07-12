@@ -138,7 +138,8 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         Guid? userGuid,
         string? filterByName,
         SpecimenStatus? status,
-        BaseSortAndPagingDto paging)
+        BaseSortAndPagingDto paging,
+        bool includeNonPublic = false)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>()
             .Include(sp => sp.Image)
@@ -148,8 +149,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         {
             query = query.Where(sp => sp.CreatedByUserGuid == userGuid.Value);
         }
-        else
+        else if (!includeNonPublic)
         {
+            // No owner filter and the caller may not see non-public specimens: restrict to public ones.
             query = query.Where(sp => sp.IsPublic);
         }
 
