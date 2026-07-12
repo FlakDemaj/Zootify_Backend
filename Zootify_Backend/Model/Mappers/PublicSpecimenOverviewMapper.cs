@@ -31,7 +31,7 @@ public class PublicSpecimenOverviewMapper : Profile
             .ForMember(d => d.CreatedAt,
                 o => o.MapFrom(s => s.CreationDate))
             .ForMember(d => d.ImageGuid,
-                o => o.MapFrom(s => s.Image != null ? (Guid?)s.Image.Guid : null))
+                o => o.MapFrom(s => s.ImageGuid))
             .ForMember(d => d.LocationPath,
                 o => o.MapFrom((s, _) => BuildLocationPath(s.GeographicLocation)))
             .ForMember(d => d.TaxonGroup,

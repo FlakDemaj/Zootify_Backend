@@ -30,7 +30,7 @@ public class LoanRequestRepository : BaseRepository<LoanRequestEntity>, ILoanReq
     public async Task<LoanRequestEntity?> GetByGuidWithDetailsAsync(Guid guid)
     {
         return await Context.GetTrackingSet<LoanRequestEntity>()
-            .Include(r => r.Specimen).ThenInclude(s => s.Image)
+            .Include(r => r.Specimen)
             .Include(r => r.Requester).ThenInclude(u => u.Settings)
             .FirstOrDefaultAsync(r => r.Guid == guid);
     }
@@ -55,7 +55,7 @@ public class LoanRequestRepository : BaseRepository<LoanRequestEntity>, ILoanReq
         var isAdminOrModerator = authentication.Role is UserRole.Admin or UserRole.Moderator;
 
         return await Context.GetTrackingSet<LoanRequestEntity>()
-            .Include(r => r.Specimen).ThenInclude(s => s.Image)
+            .Include(r => r.Specimen)
             .Include(r => r.Requester)
             .Where(r => r.Status == LoanRequestStatus.Pending && r.RequesterGuid != callerGuid)
             .Where(r => (isAdminOrModerator && r.AdminApprovedAt == null)

@@ -248,16 +248,16 @@ public class SpecimenEntityTests
     }
 
     /// <summary>
-    /// Tests Create Image – Sets Specimen Guid On Image.
+    /// Tests Create Image – Sets Image Guid Reference On Specimen.
     /// </summary>
     [Fact]
-    public void CreateImage_SetsSpecimenGuidOnImage()
+    public void CreateImage_SetsImageGuidReferenceOnSpecimen()
     {
         var specimen = CreateSpecimen();
 
         specimen.CreateImage("data", Guid.CreateVersion7());
 
-        specimen.Image!.SpecimenGuid.Should().Be(specimen.Guid);
+        specimen.ImageGuid.Should().Be(specimen.Image!.Guid);
     }
 
     /// <summary>

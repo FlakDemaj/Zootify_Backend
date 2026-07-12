@@ -108,9 +108,15 @@ public class SpecimenEntityConfiguration : BaseDeletionEntityConfiguration<Speci
             .HasColumnName("is_public");
 
         builder
-            .Property(p => p.IsPublic)
-            .HasColumnName("is_public");
-        
+            .Property(p => p.ImageGuid)
+            .HasColumnName("image_guid");
+
+        builder
+            .HasOne(s => s.Image)
+            .WithOne()
+            .HasForeignKey<SpecimenEntity>(s => s.ImageGuid)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder
             .HasOne(s => s.Species)
             .WithMany(t => t.Specimens)

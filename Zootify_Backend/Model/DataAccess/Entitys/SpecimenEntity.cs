@@ -45,7 +45,13 @@ public class SpecimenEntity : BaseDeletionEntity
     public SpecimenStatus Status { get; set; } = SpecimenStatus.Active;
 
     public DateTime? RejectedAt { get; set; }
-    
+
+    /// <summary>
+    /// Reference to the specimen's image. The image content itself is loaded separately by this GUID,
+    /// so the (potentially large) image row does not have to be fetched together with the specimen.
+    /// </summary>
+    public Guid? ImageGuid { get; set; }
+
     public SpecimenImageEntity? Image { get; set; }
     
     public ICollection<LoanEntity> Loans { get; set; } = new List<LoanEntity>();
@@ -161,11 +167,13 @@ public class SpecimenEntity : BaseDeletionEntity
     /// <param name="requester">The GUID of the user performing the update.</param>
     public void CreateImage(string newImage, Guid requester)
     {
+        // The specimen holds the foreign key (ImageGuid). The image GUID is generated in-app, so set
+        // both the navigation and the reference to keep the entity consistent before it is saved.
         Image = new SpecimenImageEntity
         {
-            SpecimenGuid = Guid,
             ImageBase64 = newImage,
         };
+        ImageGuid = Image.Guid;
 
         SetUpdatedBy(requester);
     }

@@ -142,7 +142,6 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         bool includeNonPublic = false)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>()
-            .Include(sp => sp.Image)
             .AsQueryable();
 
         if (userGuid.HasValue)
@@ -193,7 +192,6 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         // AsNoTracking (read-only). Aside from the filtered open-loans collection (used to derive the loan
         // status), only to-one navigations are included, keeping the paged query lean.
         var query = Context.GetTrackingSet<SpecimenEntity>()
-            .Include(sp => sp.Image)
             // Only the still-open loans are needed to derive the loan status.
             .Include(sp => sp.Loans.Where(l => l.ReturnDate == null))
             // Five levels of Parent cover the full taxonomy depth (Phylum → … → Species),
@@ -285,7 +283,6 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
             .Include(sp => sp.CreatedByUser)
             .Include(sp => sp.UpdatedByUser)
             .Include(sp => sp.DeletedByUser)
-            .Include(sp => sp.Image)
             .Include(sp => sp.Species)
             .Include(sp => sp.Collections)
             // Only the still-open loans are needed to derive the loan status.

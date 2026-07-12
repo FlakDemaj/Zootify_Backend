@@ -124,9 +124,21 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
     protected async Task<List<SpecimenImageEntity>> GetImagesForSpecimenFromDbAsync(Guid specimenGuid)
     {
+        // The specimen now owns the foreign key, so resolve its image via ImageGuid.
+        var imageGuid = await _dbContext.Set<SpecimenEntity>()
+            .AsNoTracking()
+            .Where(s => s.Guid == specimenGuid)
+            .Select(s => s.ImageGuid)
+            .FirstOrDefaultAsync();
+
+        if (imageGuid == null)
+        {
+            return [];
+        }
+
         return await _dbContext.Set<SpecimenImageEntity>()
             .AsNoTracking()
-            .Where(i => i.SpecimenGuid == specimenGuid)
+            .Where(i => i.Guid == imageGuid.Value)
             .ToListAsync();
     }
 

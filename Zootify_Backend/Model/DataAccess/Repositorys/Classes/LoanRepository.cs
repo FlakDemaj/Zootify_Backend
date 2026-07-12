@@ -37,7 +37,7 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
         // Only to-one navigations are included, so paging stays a single query.
         var query = Context.GetTrackingSet<LoanEntity>()
             .Include(l => l.Borrower)
-            .Include(l => l.Specimen).ThenInclude(s => s.Image)
+            .Include(l => l.Specimen)
             .Where(l => l.ReturnDate == null);
 
         // Regular users only see loans of specimens they created; moderators and admins see all.
@@ -68,7 +68,7 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
         var query = Context.GetTrackingSet<LoanEntity>()
             .Include(l => l.Borrower)
             .Include(l => l.Lender)
-            .Include(l => l.Specimen).ThenInclude(s => s.Image)
+            .Include(l => l.Specimen)
             .Where(l => l.ReturnDate == null);
 
         // Regular users only see loans of specimens they created; moderators and admins see all.
@@ -99,7 +99,7 @@ public class LoanRepository : BaseRepository<LoanEntity>, ILoanRepository
     {
         return await Context.GetTrackingSet<LoanEntity>()
             .Include(l => l.Borrower)
-            .Include(l => l.Specimen).ThenInclude(s => s.Image)
+            .Include(l => l.Specimen)
             .Where(l => l.BorrowerGuid == borrowerGuid && l.ReturnDate == null)
             .OrderBy(l => l.DueDate)
             .ToListAsync();

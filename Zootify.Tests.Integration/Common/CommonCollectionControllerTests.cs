@@ -1843,6 +1843,29 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result.CreatedAt.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Specimen With Image – Returns Image Guid.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_SpecimenWithImage_ReturnsImageGuid()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: user.Guid);
+
+        var specimen = await SpecimenRepo.CreateSpecimenWithImageAsync(
+            species.Guid, location.Guid, createdByUserGuid: user.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.Specimens.Single().ImageGuid.Should().Be(specimen.ImageGuid);
+    }
+
     #endregion
 
     #region GetAllSpecimensInCollection – Static Collections

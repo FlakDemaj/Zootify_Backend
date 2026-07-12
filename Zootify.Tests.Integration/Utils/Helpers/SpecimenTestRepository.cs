@@ -102,10 +102,11 @@ public class SpecimenTestRepository
         var specimen = await CreateSpecimenAsync(speciesGuid, geoLocationGuid, status, createdByUserGuid: createdByUserGuid);
         var image = new SpecimenImageEntity
         {
-            SpecimenGuid = specimen.Guid,
             ImageBase64 = imageBase64
         };
         _dbContext.Add(image);
+        // The specimen owns the foreign key to the image.
+        specimen.ImageGuid = image.Guid;
         await _dbContext.SaveChangesAsync();
         return specimen;
     }
@@ -123,10 +124,11 @@ public class SpecimenTestRepository
         var specimen = await CreateSpecimenAsync(speciesGuid, geoLocationGuid, status, createdByUserGuid: createdByUserGuid);
         var image = new SpecimenImageEntity
         {
-            SpecimenGuid = specimen.Guid,
             ImageBase64 = imageBase64
         };
         _dbContext.Add(image);
+        // The specimen owns the foreign key to the image.
+        specimen.ImageGuid = image.Guid;
         await _dbContext.SaveChangesAsync();
         return image;
     }
