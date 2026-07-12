@@ -230,7 +230,10 @@ public class AdminTaxonomyService : IAdminTaxonomyService
     }
 
     /// <summary>
-    /// Rejects a taxonomy node, hard-deletes its entire subtree, rejects all associated specimens, and notifies affected users.
+    /// Rejects a taxonomy node: the node itself and every still-pending descendant are moved to the
+    /// rejected status (approved descendants are left untouched), the specimens of the rejected species
+    /// are rejected, and affected users are notified. The rejected nodes are not deleted immediately;
+    /// the <c>RejectedTaxonomyPurgeJob</c> hard-deletes them once the retention period has passed.
     /// </summary>
     /// <param name="taxonomyGuid">The GUID of the taxonomy node to reject.</param>
     /// <param name="request">Contains the rejection comment to send to affected users.</param>
@@ -248,7 +251,22 @@ public class AdminTaxonomyService : IAdminTaxonomyService
 
         var allNodes = await _taxonomyRepository.GetAllNodesForTreeAsync();
         var subtreeNodes = CollectSubtreeNodesDeepestFirst(taxonomyGuid, allNodes);
-        var subtreeSpeciesGuids = subtreeNodes
+
+        // The rejected node itself and every still-pending descendant are moved to "rejected"; already
+        // approved descendants (and everything below them) keep their status. The nodes are not deleted
+        // here — the RejectedTaxonomyPurgeJob removes them once the retention period has passed.
+        var rejectedAt = DateTime.UtcNow;
+        var nodesToReject = subtreeNodes
+            .Where(n => n.Guid == taxonomyGuid || n.ApprovalStatus == ApprovalStatus.Pending)
+            .ToList();
+
+        foreach (var toReject in nodesToReject)
+        {
+            toReject.ApprovalStatus = ApprovalStatus.Rejected;
+            toReject.RejectedDate = rejectedAt;
+        }
+
+        var rejectedSpeciesGuids = nodesToReject
             .Where(n => n.Rank == TaxonomyRank.Species)
             .Select(n => n.Guid)
             .ToList();
@@ -259,15 +277,14 @@ public class AdminTaxonomyService : IAdminTaxonomyService
             affectedUserGuids.Add(node.CreatedByUserGuid.Value);
         }
 
-        if (subtreeSpeciesGuids.Count > 0)
+        if (rejectedSpeciesGuids.Count > 0)
         {
             var specimens = await _specimenRepository
-                .GetSpecimensBySpeciesGuidsAsync(subtreeSpeciesGuids);
+                .GetSpecimensBySpeciesGuidsAsync(rejectedSpeciesGuids);
 
-            var toReject = specimens.Where(s => s.Status != SpecimenStatus.Rejected).ToList();
-            var rejectedAt = DateTime.UtcNow;
+            var specimensToReject = specimens.Where(s => s.Status != SpecimenStatus.Rejected).ToList();
 
-            foreach (var specimen in toReject)
+            foreach (var specimen in specimensToReject)
             {
                 specimen.Status = SpecimenStatus.Rejected;
                 specimen.IsPublic = false;
@@ -279,15 +296,13 @@ public class AdminTaxonomyService : IAdminTaxonomyService
                 }
             }
 
-            if (toReject.Count > 0)
+            if (specimensToReject.Count > 0)
             {
-                await _specimenRepository.MassUpdateAsync(toReject);
+                await _specimenRepository.MassUpdateAsync(specimensToReject);
             }
         }
 
-        // Hard-delete the entire subtree (deepest first to satisfy FK Restrict on ParentGuid).
-        // The SetNull cascade on specimens.species_guid runs as part of this delete.
-        await _taxonomyRepository.MassDeleteAsync(subtreeNodes);
+        await _taxonomyRepository.MassUpdateAsync(nodesToReject);
 
         var affectedUserGuidList = affectedUserGuids.ToList();
         var users = await _userRepository.GetUsersByGuidsAsync(affectedUserGuidList);

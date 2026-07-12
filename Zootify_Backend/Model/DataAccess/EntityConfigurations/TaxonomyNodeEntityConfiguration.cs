@@ -60,6 +60,10 @@ public class TaxonomyNodeEntityConfiguration : BaseCreationEntityConfiguration<T
             .HasColumnName("approved_date");
 
         builder
+            .Property(p => p.RejectedDate)
+            .HasColumnName("rejected_date");
+
+        builder
             .HasOne(t => t.Parent)
             .WithMany(t => t.Children)
             .HasForeignKey(t => t.ParentGuid)

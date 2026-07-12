@@ -70,7 +70,7 @@ public class AdminTaxonomyControllerEmailLanguageTests : IntegrationTestBase
         // A specimen owned by the user under the rejected subtree makes that user an email recipient.
         var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "leo", TaxonomyRank.Species, ApprovalStatus.Approved, parentGuid: phylum.Guid);
+            "leo", TaxonomyRank.Species, ApprovalStatus.Pending, parentGuid: phylum.Guid);
 
         var geo = await SpecimenRepo.CreateGeographicLocationAsync();
         await SpecimenRepo.CreateSpecimenAsync(

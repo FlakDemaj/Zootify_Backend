@@ -67,6 +67,7 @@ public class Startup
         builder.Services.AddHostedService<CollectionPurgeJob>();
         builder.Services.AddHostedService<SpecimenPurgeJob>();
         builder.Services.AddHostedService<RejectedSpecimenPurgeJob>();
+        builder.Services.AddHostedService<RejectedTaxonomyPurgeJob>();
     }
 
     /// <summary>

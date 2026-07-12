@@ -72,4 +72,26 @@ public class TaxonomyRepository : BaseRepository<TaxonomyNodeEntity>, ITaxonomyR
             .ThenBy(t => t.Name)
             .ToListAsync();
     }
+
+    /// <summary>
+    /// Returns a batch of rejected leaf taxonomy nodes whose rejection date is older than the given
+    /// cutoff. Only leaves (nodes without children) are returned so the delete never violates the
+    /// foreign-key <c>Restrict</c> on <c>parent_guid</c>; a rejected parent is purged in a later batch
+    /// once its children have been removed.
+    /// </summary>
+    /// <param name="cutoff">The exclusive upper bound for the rejection date.</param>
+    /// <param name="batchSize">The maximum number of nodes to return.</param>
+    public async Task<List<TaxonomyNodeEntity>> GetRejectedTaxonomyLeafNodesForPurgeAsync(
+        DateTime cutoff,
+        int batchSize)
+    {
+        return await Context.GetTrackingSet<TaxonomyNodeEntity>()
+            .Where(n => n.ApprovalStatus == ApprovalStatus.Rejected
+                && n.RejectedDate != null
+                && n.RejectedDate < cutoff
+                && !Context.Set<TaxonomyNodeEntity>().Any(child => child.ParentGuid == n.Guid))
+            .OrderBy(n => n.RejectedDate)
+            .Take(batchSize)
+            .ToListAsync();
+    }
 }

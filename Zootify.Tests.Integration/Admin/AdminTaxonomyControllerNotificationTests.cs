@@ -102,7 +102,7 @@ public class AdminTaxonomyControllerNotificationTests : IntegrationTestBase
 
         var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "leo", TaxonomyRank.Species, ApprovalStatus.Approved, parentGuid: phylum.Guid);
+            "leo", TaxonomyRank.Species, ApprovalStatus.Pending, parentGuid: phylum.Guid);
         var geo = await SpecimenRepo.CreateGeographicLocationAsync();
         await SpecimenRepo.CreateSpecimenAsync(
             species.Guid, geo.Guid, status: SpecimenStatus.Active, createdByUserGuid: user.Guid);

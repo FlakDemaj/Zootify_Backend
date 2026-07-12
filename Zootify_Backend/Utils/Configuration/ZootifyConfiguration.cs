@@ -106,6 +106,19 @@ public class ZootifyConfiguration : BaseConfiguration
 
     #endregion
 
+    #region RejectedTaxonomyPurgeJob
+
+    public static int RejectedTaxonomyPurgeJobIntervalInHours =>
+        SafeGetParsed("RejectedTaxonomyPurgeJob:IntervalInHours", 12);
+
+    public static int RejectedTaxonomyPurgeJobRetentionDays =>
+        SafeGetParsed("RejectedTaxonomyPurgeJob:RetentionDays", 14);
+
+    public static int RejectedTaxonomyPurgeJobBatchSize =>
+        SafeGetParsed("RejectedTaxonomyPurgeJob:BatchSize", 100);
+
+    #endregion
+
     #region LoanReminderJob
 
     public static int LoanReminderJobIntervalInHours =>

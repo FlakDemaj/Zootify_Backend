@@ -216,10 +216,10 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
     #region RejectTaxonomy
 
     /// <summary>
-    /// Tests Reject Taxonomy – Success – Node Is Hard Deleted.
+    /// Tests Reject Taxonomy – Success – Node Is Marked Rejected (not deleted immediately).
     /// </summary>
     [Fact]
-    public async Task RejectTaxonomy_Success_NodeIsHardDeleted()
+    public async Task RejectTaxonomy_Success_NodeIsMarkedRejected()
     {
         var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
         AuthenticateAs(admin);
@@ -232,8 +232,61 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var deleted = await GetTaxonomyNodeFromDbAsync(node.Guid);
-        deleted.Should().BeNull();
+        // The node is kept and marked rejected; the purge job deletes it after the retention period.
+        var rejected = await GetTaxonomyNodeFromDbAsync(node.Guid);
+        rejected.Should().NotBeNull();
+        rejected!.ApprovalStatus.Should().Be(ApprovalStatus.Rejected);
+        rejected.RejectedDate.Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// Tests Reject Taxonomy – Pending Descendants Are Also Rejected.
+    /// </summary>
+    [Fact]
+    public async Task RejectTaxonomy_PendingDescendants_AreAlsoRejected()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
+        var @class = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Mammalia", TaxonomyRank.Class, ApprovalStatus.Pending, parentGuid: phylum.Guid);
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "leo", TaxonomyRank.Species, ApprovalStatus.Pending, parentGuid: @class.Guid);
+
+        var request = new RejectTaxonomyRequestDto { Comment = "Incorrect classification." };
+        var response = await Client.PostAsJsonAsync(
+            $"{Routings.AdminTaxonomyRouting}/{phylum.Guid}/reject", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await GetTaxonomyNodeFromDbAsync(phylum.Guid))!.ApprovalStatus.Should().Be(ApprovalStatus.Rejected);
+        (await GetTaxonomyNodeFromDbAsync(@class.Guid))!.ApprovalStatus.Should().Be(ApprovalStatus.Rejected);
+        (await GetTaxonomyNodeFromDbAsync(species.Guid))!.ApprovalStatus.Should().Be(ApprovalStatus.Rejected);
+    }
+
+    /// <summary>
+    /// Tests Reject Taxonomy – Approved Descendants Are Not Rejected.
+    /// </summary>
+    [Fact]
+    public async Task RejectTaxonomy_ApprovedDescendants_AreNotRejected()
+    {
+        var admin = await UserRepo.CreateUserAsync("admin@test.de", role: UserRole.Admin);
+        AuthenticateAs(admin);
+
+        var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
+        var approvedClass = await SpecimenRepo.CreateTaxonomyNodeAsync(
+            "Mammalia", TaxonomyRank.Class, ApprovalStatus.Approved, parentGuid: phylum.Guid);
+
+        var request = new RejectTaxonomyRequestDto { Comment = "Incorrect classification." };
+        var response = await Client.PostAsJsonAsync(
+            $"{Routings.AdminTaxonomyRouting}/{phylum.Guid}/reject", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await GetTaxonomyNodeFromDbAsync(phylum.Guid))!.ApprovalStatus.Should().Be(ApprovalStatus.Rejected);
+        // The already-approved descendant keeps its status; only pending descendants are rejected.
+        (await GetTaxonomyNodeFromDbAsync(approvedClass.Guid))!.ApprovalStatus.Should().Be(ApprovalStatus.Approved);
     }
 
     /// <summary>
@@ -248,9 +301,9 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
         var @class = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "Mammalia", TaxonomyRank.Class, ApprovalStatus.Approved, parentGuid: phylum.Guid);
+            "Mammalia", TaxonomyRank.Class, ApprovalStatus.Pending, parentGuid: phylum.Guid);
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "leo", TaxonomyRank.Species, ApprovalStatus.Approved, parentGuid: @class.Guid);
+            "leo", TaxonomyRank.Species, ApprovalStatus.Pending, parentGuid: @class.Guid);
 
         var geo = await SpecimenRepo.CreateGeographicLocationAsync();
         var activeSpecimen = await SpecimenRepo.CreateSpecimenAsync(
@@ -284,7 +337,7 @@ public class AdminTaxonomyControllerTests : IntegrationTestBase
 
         var phylum = await SpecimenRepo.CreateTaxonomyNodeAsync("Chordata", TaxonomyRank.Phylum, ApprovalStatus.Pending);
         var species = await SpecimenRepo.CreateTaxonomyNodeAsync(
-            "leo", TaxonomyRank.Species, ApprovalStatus.Approved, parentGuid: phylum.Guid);
+            "leo", TaxonomyRank.Species, ApprovalStatus.Pending, parentGuid: phylum.Guid);
 
         var geo = await SpecimenRepo.CreateGeographicLocationAsync();
         var alreadyRejected = await SpecimenRepo.CreateSpecimenAsync(

@@ -26,4 +26,13 @@ public interface ITaxonomyRepository : IBaseRepository<TaxonomyNodeEntity>
     /// Returns all taxonomy nodes ordered by rank and name, used to build the full taxonomy tree.
     /// </summary>
     Task<List<TaxonomyNodeEntity>> GetAllNodesForTreeAsync();
+
+    /// <summary>
+    /// Returns a batch of rejected leaf taxonomy nodes (nodes without children) whose rejection date is
+    /// older than the given cutoff, for purging. Restricting to leaves keeps the delete within the
+    /// foreign-key <c>Restrict</c> on <c>parent_guid</c>; parents become eligible once their children are gone.
+    /// </summary>
+    /// <param name="cutoff">The exclusive upper bound for the rejection date.</param>
+    /// <param name="batchSize">The maximum number of nodes to return.</param>
+    Task<List<TaxonomyNodeEntity>> GetRejectedTaxonomyLeafNodesForPurgeAsync(DateTime cutoff, int batchSize);
 }
