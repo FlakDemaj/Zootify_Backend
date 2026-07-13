@@ -1866,6 +1866,73 @@ public class CommonCollectionControllerTests : IntegrationTestBase
         result!.Specimens.Single().ImageGuid.Should().Be(specimen.ImageGuid);
     }
 
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Specimen Without Loan Or Request – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_NoLoanOrRequest_LoanStatusIsAvailable()
+    {
+        var user = await UserRepo.CreateUserAsync("user@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: user.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: user.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+
+        AuthenticateAs(user);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.Specimens.Single().LoanStatus.Should().Be(SpecimenLoanStatus.Available);
+    }
+
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Specimen With Pending Request – Loan Status Is Requested.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_PendingRequest_LoanStatusIsRequested()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var requester = await UserRepo.CreateUserAsync("requester@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+        await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.Specimens.Single().LoanStatus.Should().Be(SpecimenLoanStatus.Requested);
+    }
+
+    /// <summary>
+    /// Tests Get All Specimens In Collection – Specimen With Open Loan – Loan Status Is On Loan.
+    /// </summary>
+    [Fact]
+    public async Task GetAllSpecimensInCollection_OpenLoan_LoanStatusIsOnLoan()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var borrower = await UserRepo.CreateUserAsync("borrower@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync();
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+        await LoanRepo.CreateLoanAsync(specimen.Guid, owner.Guid, borrower.Guid, DateTime.UtcNow.AddDays(14));
+
+        AuthenticateAs(owner);
+
+        var response = await Client.GetAsync($"{Routings.CommonCollectionRouting}/{collection.Guid}/specimens");
+
+        var result = await response.Content.ReadFromJsonAsync<GetAllSpecimenInCollectionResponseDto>();
+        result!.Specimens.Single().LoanStatus.Should().Be(SpecimenLoanStatus.OnLoan);
+    }
+
     #endregion
 
     #region GetAllSpecimensInCollection – Static Collections

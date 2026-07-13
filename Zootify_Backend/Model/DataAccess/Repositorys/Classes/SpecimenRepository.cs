@@ -98,6 +98,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         BaseSortAndPagingDto paging)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>()
+            // Only the still-open loans and pending requests are needed to derive the loan status.
+            .Include(sp => sp.Loans.Where(l => l.ReturnDate == null))
+            .Include(sp => sp.LoanRequests.Where(r => r.Status == LoanRequestStatus.Pending))
             .Where(sp => sp.Status == SpecimenStatus.Active)
             .Where(sp => sp.Collections.Any(sc => sc.CollectionGuid == collectionGuid));
 
@@ -142,6 +145,9 @@ public class SpecimenRepository : BaseRepository<SpecimenEntity>, ISpecimenRepos
         bool includeNonPublic = false)
     {
         var query = Context.GetTrackingSet<SpecimenEntity>()
+            // Only the still-open loans and pending requests are needed to derive the loan status.
+            .Include(sp => sp.Loans.Where(l => l.ReturnDate == null))
+            .Include(sp => sp.LoanRequests.Where(r => r.Status == LoanRequestStatus.Pending))
             .AsQueryable();
 
         if (userGuid.HasValue)
