@@ -1477,6 +1477,29 @@ public class CommonSpecimenControllerTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Get Specimen Detail - Specimen With Pending Request - Loan Status Is Requested.
+    /// </summary>
+    [Fact]
+    public async Task GetSpecimenDetail_WithPendingRequest_LoanStatusIsRequested()
+    {
+        var owner = await UserRepo.CreateUserAsync("owner@test.de");
+        var requester = await UserRepo.CreateUserAsync("requester@test.de");
+        var species = await SpecimenRepo.CreateTaxonomyNodeAsync("leo", TaxonomyRank.Species);
+        var location = await SpecimenRepo.CreateGeographicLocationAsync("DE", GeographicLevel.Country);
+        var collection = await CollectionRepo.CreateCollectionAsync(isPublic: true, createdByUserGuid: owner.Guid);
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(species.Guid, location.Guid, isPublic: true, createdByUserGuid: owner.Guid);
+        await CollectionRepo.CreateSpecimenCollectionAsync(collection.Guid, specimen.Guid);
+        await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
+
+        AuthenticateAs(owner);
+
+        var result = await Client.GetFromJsonAsync<GetSpecimenDetailResponseDto>(
+            $"{Routings.CommonSpecimenRouting}/{collection.Guid}/{specimen.Guid}");
+
+        result!.LoanStatus.Should().Be(SpecimenLoanStatus.Requested);
+    }
+
+    /// <summary>
     /// Tests Get Specimen Detail – Taxonomy Path Ordered By Rank Ascending.
     /// </summary>
     [Fact]

@@ -223,4 +223,48 @@ public class PublicSpecimenOverviewMapperTests
 
         dto.LoanStatus.Should().Be(SpecimenLoanStatus.Available);
     }
+
+    /// <summary>
+    /// Tests Map – Pending Request – Loan Status Is Requested.
+    /// </summary>
+    [Fact]
+    public void Map_PendingRequest_LoanStatusIsRequested()
+    {
+        var specimen = BuildSpecimen();
+        specimen.LoanRequests.Add(new LoanRequestEntity { Status = LoanRequestStatus.Pending });
+
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
+
+        dto.LoanStatus.Should().Be(SpecimenLoanStatus.Requested);
+    }
+
+    /// <summary>
+    /// Tests Map – Open Loan And Pending Request – Loan Status Is On Loan.
+    /// </summary>
+    [Fact]
+    public void Map_OpenLoanAndPendingRequest_LoanStatusIsOnLoan()
+    {
+        var specimen = BuildSpecimen();
+        specimen.Loans.Add(new LoanEntity { ReturnDate = null });
+        specimen.LoanRequests.Add(new LoanRequestEntity { Status = LoanRequestStatus.Pending });
+
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
+
+        // An active loan takes precedence over a pending request.
+        dto.LoanStatus.Should().Be(SpecimenLoanStatus.OnLoan);
+    }
+
+    /// <summary>
+    /// Tests Map – Non Pending Request – Loan Status Is Available.
+    /// </summary>
+    [Fact]
+    public void Map_NonPendingRequest_LoanStatusIsAvailable()
+    {
+        var specimen = BuildSpecimen();
+        specimen.LoanRequests.Add(new LoanRequestEntity { Status = LoanRequestStatus.Rejected });
+
+        var dto = _mapper.Map<GetPublicSpecimenOverviewDto>(specimen);
+
+        dto.LoanStatus.Should().Be(SpecimenLoanStatus.Available);
+    }
 }

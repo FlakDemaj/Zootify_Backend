@@ -330,5 +330,24 @@ public class HomeControllerTests : IntegrationTestBase
             .LoanStatus.Should().Be(SpecimenLoanStatus.Available);
     }
 
+    /// <summary>
+    /// Tests Get Overview - Specimen With Pending Request - Loan Status Is Requested.
+    /// </summary>
+    [Fact]
+    public async Task GetOverview_SpecimenWithPendingRequest_LoanStatusIsRequested()
+    {
+        var (species, location) = await ArrangeAsync();
+        var lender = await UserRepo.CreateUserAsync("lender@test.de");
+        var requester = await UserRepo.CreateUserAsync("requester@test.de");
+        var specimen = await SpecimenRepo.CreateSpecimenAsync(
+            species.Guid, location.Guid, isPublic: true, createdByUserGuid: lender.Guid);
+        await LoanRequestRepo.CreateLoanRequestAsync(specimen.Guid, requester.Guid);
+
+        var result = await Client.GetFromJsonAsync<GetPublicSpecimenOverviewResponseDto>(Routings.HomeAnimalsRouting);
+
+        result!.Specimens.Single(s => s.SpecimenGuid == specimen.Guid)
+            .LoanStatus.Should().Be(SpecimenLoanStatus.Requested);
+    }
+
     #endregion
 }

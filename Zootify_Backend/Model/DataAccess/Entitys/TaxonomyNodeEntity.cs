@@ -20,6 +20,12 @@ public class TaxonomyNodeEntity : BaseCreationEntity
 
     public DateTime? ApprovedDate { get; set; }
 
+    /// <summary>
+    /// When the node was rejected. Set when the node is moved to <see cref="ApprovalStatus.Rejected"/>;
+    /// used by the purge job to hard-delete rejected nodes once the retention period has passed.
+    /// </summary>
+    public DateTime? RejectedDate { get; set; }
+
     public TaxonomyNodeEntity? Parent { get; set; }
 
     public UserEntity? ApprovedByUser { get; set; }

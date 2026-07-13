@@ -27,7 +27,12 @@ public class GetAllSpecimensDto
 
     /// <summary>The specimen's lifecycle status.</summary>
     public SpecimenStatus Status { get; init; } =  SpecimenStatus.Active;
-    
+
+    /// <summary>
+    /// The specimen's loan status: on loan, requested (an open loan request exists), or available.
+    /// </summary>
+    public SpecimenLoanStatus LoanStatus { get; init; }
+
     /// <summary>The specimen's image guid.</summary>
     public Guid? ImageGuid { get; init; }
 }

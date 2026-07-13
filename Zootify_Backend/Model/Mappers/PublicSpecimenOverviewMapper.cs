@@ -39,7 +39,9 @@ public class PublicSpecimenOverviewMapper : Profile
             .ForMember(d => d.LoanStatus,
                 o => o.MapFrom(s => s.Loans.Any(l => l.ReturnDate == null)
                     ? SpecimenLoanStatus.OnLoan
-                    : SpecimenLoanStatus.Available));
+                    : s.LoanRequests.Any(r => r.Status == LoanRequestStatus.Pending)
+                        ? SpecimenLoanStatus.Requested
+                        : SpecimenLoanStatus.Available));
     }
 
     /// <summary>

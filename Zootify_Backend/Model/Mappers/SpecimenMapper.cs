@@ -66,6 +66,11 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.Longitude,     o => o.MapFrom(s => s.Longitude))
             .ForMember(d => d.IsPublic,      o => o.MapFrom(s => s.IsPublic))
             .ForMember(d => d.Status,        o => o.MapFrom(s => s.Status))
+            .ForMember(d => d.LoanStatus,    o => o.MapFrom(s => s.Loans.Any(l => l.ReturnDate == null)
+                ? SpecimenLoanStatus.OnLoan
+                : s.LoanRequests.Any(r => r.Status == LoanRequestStatus.Pending)
+                    ? SpecimenLoanStatus.Requested
+                    : SpecimenLoanStatus.Available))
             .ForMember(d => d.ImageGuid, o => o.MapFrom(s => s.ImageGuid));
         
         // Same as SpecimenDto, plus the specimen's tags (via the TagEntity -> GetAllTagsByFilterDto map).
@@ -97,7 +102,9 @@ public class SpecimenMapper : Profile
             .ForMember(d => d.LoanStatus,
                 o => o.MapFrom(s => s.Loans.Any(l => l.ReturnDate == null)
                     ? SpecimenLoanStatus.OnLoan
-                    : SpecimenLoanStatus.Available))
+                    : s.LoanRequests.Any(r => r.Status == LoanRequestStatus.Pending)
+                        ? SpecimenLoanStatus.Requested
+                        : SpecimenLoanStatus.Available))
             .ForMember(d => d.DateOfDiscovery,
                 o => o.MapFrom(s => s.DateOfDiscovery))
             .ForMember(d => d.Longitude,
