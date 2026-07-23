@@ -86,6 +86,35 @@ public class LoanReminderServiceTests : IntegrationTestBase
     }
 
     /// <summary>
+    /// Tests Stage1 – Two Loans Sharing Borrower And Lender – Both Are Marked.
+    /// Regression: the batch update used to attach the whole navigation graph, so the second loan's
+    /// borrower collided with the first loan's already-tracked instance of the same user.
+    /// </summary>
+    [Fact]
+    public async Task Stage1_TwoLoansSharingParticipants_MarksBothWithoutIdentityConflict()
+    {
+        SetupBrevoMock();
+        var (lender, borrower, specimen) = await CreateLoanParticipantsAsync();
+        var otherSpecimen = await SpecimenRepo.CreateSpecimenAsync(specimen.TaxonomySpeciesGuid!.Value, specimen.GeographicLocationGuid);
+
+        var firstLoan = await LoanRepo.CreateLoanAsync(
+            specimen.Guid, lender.Guid, borrower.Guid,
+            dueDate: DateTime.UtcNow.Date.AddDays(5));
+        var secondLoan = await LoanRepo.CreateLoanAsync(
+            otherSpecimen.Guid, lender.Guid, borrower.Guid,
+            dueDate: DateTime.UtcNow.Date.AddDays(6));
+
+        using var scope = CreateScope();
+        await scope.ServiceProvider.GetRequiredService<ILoanReminderService>().SendReminderBatchAsync();
+
+        var updated = await Fixture.DbContext.Set<LoanEntity>().AsNoTracking()
+            .Where(l => l.Guid == firstLoan.Guid || l.Guid == secondLoan.Guid)
+            .ToListAsync();
+        updated.Should().HaveCount(2);
+        updated.Should().OnlyContain(l => l.Stage1ReminderSentAt != null);
+    }
+
+    /// <summary>
     /// Tests Stage1 – Already Sent – Does Not Send Again.
     /// </summary>
     [Fact]

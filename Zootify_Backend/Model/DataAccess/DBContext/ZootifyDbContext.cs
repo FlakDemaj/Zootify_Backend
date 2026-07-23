@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Configuration;
+using Zootify_Backend.Model.DataAccess.Converters;
 
 namespace Zootify_Backend.Model.DataAccess.DBContext;
 
@@ -45,6 +46,19 @@ public class ZootifyDbContext : DbContext
             {
                 o.CommandTimeout(120);
             });
+    }
+
+    /// <summary>
+    /// Applies the UTC converters to every <see cref="DateTime"/> property so values survive the
+    /// round trip through the offset-less <c>DATETIME2</c> columns with their kind intact.
+    /// </summary>
+    /// <param name="configurationBuilder">The builder used to configure model-wide conventions.</param>
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        configurationBuilder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
     }
 
     /// <summary>

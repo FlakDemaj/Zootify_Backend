@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Zootify_Backend.Extensions;
 using Zootify_Backend.Model.DataAccess.DBContext;
 using Zootify_Backend.Model.DataAccess.Entitys.Base;
@@ -71,20 +72,24 @@ public abstract class BaseRepository<T> : ZootifyRepository, IBaseRepository<T>
     }
 
     /// <summary>
-    /// Saves changes made to a set of tracked entities back to the database.
+    /// Saves changes made to a set of entities back to the database.
+    /// Only the roots are marked modified — unlike <c>UpdateRange</c>, which attaches the whole
+    /// navigation graph and throws an identity conflict as soon as two roots from a no-tracking
+    /// query reference the same related entity (e.g. two loans sharing a borrower).
     /// </summary>
     /// <param name="objectsToUpdate">The list of entities to update.</param>
     public async Task MassUpdateAsync(List<T> objectsToUpdate)
     {
-        try
+        foreach (var objectToUpdate in objectsToUpdate)
         {
-            Context.Set<T>().UpdateRange(objectsToUpdate);
-            await Context.SaveChangesAsync();
+            var entry = Context.Entry(objectToUpdate);
+
+            if (entry.State == EntityState.Detached)
+            {
+                entry.State = EntityState.Modified;
+            }
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+
+        await Context.SaveChangesAsync();
     }
 }

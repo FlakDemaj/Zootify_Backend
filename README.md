@@ -111,8 +111,10 @@ Brevo__ApiKey=xkeysib-ihr-brevo-api-key
 > (`ConnectionStrings__DefaultConnectionString` → `ConnectionStrings:DefaultConnectionString`). Die `.env`
 > ist per `.gitignore` ausgeschlossen und wird **nicht** eingecheckt.
 
-### Variante A: API im Docker-Container
+Am Ende sieht die Ordnerstruktur wie folgt aus:
 
+![img_1.png](img.png)
+### Variante A: API im Docker-Container
 Compose reicht die `.env` per `env_file` als Umgebungsvariablen in den Container. Es wird **kein** eigener
 SQL Server gestartet – die API verbindet sich mit der Uni-DB.
 
